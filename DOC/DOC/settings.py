@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'app',
     'auth_app',
     'user',
+    'hospital',
 ]
 
 MIDDLEWARE = [

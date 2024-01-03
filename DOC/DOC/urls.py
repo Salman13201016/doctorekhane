@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/app/', include('app.urls')),
     path('api/auth-app/', include('auth_app.urls')),
     path('api/user/', include('user.urls')),
+    path('api/hospital/', include('hospital.urls')),
     path('create-password/password-reset-confirm/<uidb64>/<token>/',
          PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 
