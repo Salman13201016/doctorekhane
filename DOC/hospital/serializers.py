@@ -1,5 +1,5 @@
 from rest_framework import serializers
-
+from django.core.exceptions import ValidationError
 from .models import Hospital
 
 class HospitalManagementSerializer(serializers.ModelSerializer):
@@ -17,6 +17,17 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             'website': {'required': False},
         }
     def validate(self, value):
+        # Check if name already exists
+        if Hospital.objects.exclude(pk=self.pk).filter(name=self.name).exists():
+            raise ValidationError({'name': 'Name already exists.'})
+
+        # Check if email already exists
+        if Hospital.objects.exclude(pk=self.pk).filter(email=self.email).exists():
+            raise ValidationError({'email': 'Email already exists.'})
+
+        # Check if phone_number already exists
+        if Hospital.objects.exclude(pk=self.pk).filter(phone_number=self.phone_number).exists():
+            raise ValidationError({'phone_number': 'Phone number already exists.'})
         return value
     
     def create(self, validated_data):

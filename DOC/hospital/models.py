@@ -1,6 +1,7 @@
 from django.db import models
 from app.models import District, Division, State
 from django_resized import ResizedImageField
+from ckeditor.fields import RichTextField
 
 
 class Hospital(models.Model):
@@ -13,17 +14,17 @@ class Hospital(models.Model):
     email = models.EmailField(null=True, blank=True)
     phone_number = models.CharField(max_length=100,null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
-    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.CharField(max_length=100,null=True, blank=True)
+    latitude = models.CharField(max_length=100,null=True, blank=True)
     slug = models.SlugField(unique=True)
 
 
     # Hospital Profile Fields
     hospital_image = ResizedImageField(upload_to='hospital/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
-    facilities = models.TextField(null=True, blank=True)
+    facilities = RichTextField(blank=True, null=True)
     services_offered = models.TextField(null=True, blank=True)
     specialties = models.TextField(null=True, blank=True)
-    accreditation_details = models.CharField(max_length=255, null=True, blank=True)
+    accreditation_details = RichTextField(blank=True, null=True)
     emergency_contact = models.CharField(max_length=20, null=True, blank=True)
     is_emergency_services_available = models.BooleanField(default=False)
     is_pharmacy_available = models.BooleanField(default=False)
