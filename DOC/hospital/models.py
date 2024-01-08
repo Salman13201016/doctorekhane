@@ -2,7 +2,8 @@ from django.db import models
 from app.models import District, Division, State
 from django_resized import ResizedImageField
 from ckeditor.fields import RichTextField
-
+from django.utils.text import slugify
+from django import forms
 
 class Hospital(models.Model):
     name = models.CharField(max_length=255,null=True, blank=True)
@@ -16,7 +17,7 @@ class Hospital(models.Model):
     description = models.TextField(null=True, blank=True)
     longitude = models.CharField(max_length=100,null=True, blank=True)
     latitude = models.CharField(max_length=100,null=True, blank=True)
-    slug = models.SlugField(unique=True)
+    
 
 
     # Hospital Profile Fields
@@ -31,8 +32,15 @@ class Hospital(models.Model):
     is_ambulance_available = models.BooleanField(default=False)
     website = models.URLField(null=True, blank=True)
 
+    slug = models.SlugField(unique=True, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super(Hospital, self).save(*args, **kwargs)
   
     def __str__(self):
         return self.name
+
     
 

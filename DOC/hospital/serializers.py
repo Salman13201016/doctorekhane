@@ -12,31 +12,36 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             'services_offered': {'required': False},
             'specialties': {'required': False},
             'accreditation_details': {'required': False},
-            'slug':{'required':False},
+            'slug': {'required': False},
             'emergency_contact': {'required': False},
             'website': {'required': False},
         }
-    def validate(self, value):
+
+    def validate(self, data):
         # Check if name already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(name=self.name).exists():
+        name = data.get('name')
+        if name and (self.instance is None or name != self.instance.name) and Hospital.objects.filter(name=name).exists():
             raise ValidationError({'name': 'Name already exists.'})
 
         # Check if email already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(email=self.email).exists():
+        email = data.get('email')
+        if email and (self.instance is None or email != self.instance.email) and Hospital.objects.filter(email=email).exists():
             raise ValidationError({'email': 'Email already exists.'})
 
         # Check if phone_number already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(phone_number=self.phone_number).exists():
+        phone_number = data.get('phone_number')
+        if phone_number and (self.instance is None or phone_number != self.instance.phone_number) and Hospital.objects.filter(phone_number=phone_number).exists():
             raise ValidationError({'phone_number': 'Phone number already exists.'})
-        return value
-    
+
+        return data
+
     def create(self, validated_data):
         """
         Override the create method to set the slug to be the same as the title.
         """
-        validated_data['slug'] = validated_data['name'].lower().replace(" ", "-")
+        validated_data['slug'] = validated_data.get('name', '').lower().replace(" ", "-")
         return super().create(validated_data)
-    
+
     def update(self, instance, validated_data):
         """
         Override the update method to update the instance and set the slug based on the title.
@@ -44,7 +49,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         for field in self.Meta.model._meta.fields:
             field_name = field.name
             if field_name in validated_data:
-                setattr(instance, field_name, validated_data[field_name])
+                setattr(instance, field_name, validated_data.get(field_name))
 
         # Set the slug based on the updated title
         instance.slug = instance.name.lower().replace(" ", "-")
@@ -52,4 +57,18 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class HospitalProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = ['facilities', 'services_offered', 'specialties', 'accreditation_details']
+
+# serializers.py
+from rest_framework import serializers
+from .models import Hospital
+
+class HospitalUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = "__all__"
+        read_only_fields = ['slug']  # Assuming 'slug' should not be updated directly
 

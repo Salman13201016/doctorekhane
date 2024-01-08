@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Hospital
-from .serializers import HospitalManagementSerializer
+from .serializers import HospitalManagementSerializer, HospitalProfileSerializer
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
@@ -79,3 +79,8 @@ class HospitalManagementView(viewsets.GenericViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Hospital.DoesNotExist:
             return Response({'detail': 'Hospital not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+class HospitalProfileViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Hospital.objects.all()
+    serializer_class = HospitalProfileSerializer
+
