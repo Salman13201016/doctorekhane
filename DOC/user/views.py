@@ -8,7 +8,7 @@ from rest_framework import serializers
 from .serializers import  SuperUserManagementSerializer, UserManagementSerializer, UserProfileSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
-from auth_app.permissions import IsAdmin, IsModerator 
+from auth_app.permissions import IsSuperAdmin, IsModerator 
 
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
@@ -81,12 +81,12 @@ class UserManagementView(viewsets.GenericViewSet):
     def destroy(self, request, pk=None):
         requested_user = self.get_object()
         if requested_user.profile.role=="admin":
-            raise serializers.ValidationError({"no access": 'You are not authorised to do this action'})
+            raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         requested_user.delete()
-        return Response({'status':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
 
 class SuperUserManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
     serializer_class = SuperUserManagementSerializer
     queryset = User.objects.all().exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
@@ -119,5 +119,5 @@ class SuperUserManagementView(viewsets.GenericViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'status':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
     

@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 # model
 from django.contrib.auth.models import User
 from user.models import Profile
+from drf_extra_fields.fields import Base64ImageField
 
 
 '''
@@ -16,9 +17,12 @@ by the help of 👇 UserProfileSerializer
 '''
 class UserProfileSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(required=True)
+    profile_image = Base64ImageField(required=False, allow_null=True)
+
     class Meta:
         model = Profile
-        fields = ["phone_number"]
+        fields = ["phone_number", "profile_image"]
+
 
 class UserRegistraionSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(required=True)
@@ -32,11 +36,11 @@ class UserRegistraionSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         if User.objects.filter(email=attrs.get('email')).exists():
-            raise serializers.ValidationError({"email": 'Email already exists.'})
+            raise serializers.ValidationError({"message": 'Email already exists.'})
         
         if attrs.get('profile', None).get('phone_number', None):
             if Profile.objects.filter(phone_number=attrs.get('profile', None).get('phone_number', None)).exists():
-                raise serializers.ValidationError({"phone_number": 'Phone number already exists.'})
+                raise serializers.ValidationError({"message": 'Phone number already exists.'})
         # 2) validated by django default password validation
         try:
             validate_password(attrs['password'])
