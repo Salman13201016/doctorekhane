@@ -6,7 +6,7 @@ class DoctorModelAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'designation',
-        'experience',
+        'experience_year',
         'license_no',
     )
     list_filter = (

@@ -2,14 +2,9 @@ from django.db import models
 from app.models import Unions
 from django.contrib.auth.models import User
 from django_resized import ResizedImageField
+from app.models import ROLES
 
-ROLES = [
-    ('admin', 'Admin'),
-    ('general', 'General'),
-    ('superadmin', 'Super Admin'),
-    ('doctor', 'Doctor'),
-    ('hospital', 'hospital'),
-]
+
 GENDER_CHOCIES=[
         ('male',"Male"),
         ("female","Female"),
@@ -45,4 +40,12 @@ class Profile(models.Model):
     address = models.TextField(max_length=500, blank=True, null=False)
     def __str__(self):
         return str(self.user)
+    
+    def delete(self, *args, **kwargs):
+        # You have to prepare what you need before delete the model
+        storage, path = self.img.storage, self.img.path
+        # Delete the model before the file
+        super(Profile, self).delete(*args, **kwargs)
+        # Delete the file after the model
+        storage.delete(path)
     

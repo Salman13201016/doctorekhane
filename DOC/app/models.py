@@ -2,7 +2,13 @@ from django.db import models
 from django_resized import ResizedImageField
 
 # Create your models here.
-
+ROLES = [
+    ('admin', 'Admin'),
+    ('general', 'General'),
+    ('superadmin', 'Super Admin'),
+    ('doctor', 'Doctor'),
+    ('hospital', 'hospital'),
+]
 # Create your models here.
 class Divisions(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -32,3 +38,11 @@ class Services(models.Model):
     service_name = models.CharField(max_length=100,blank=True,null=True)
     service_description = models.CharField(max_length=250,blank=True,null=True)
     service_logo = ResizedImageField(upload_to = 'specialist_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
+    
+    def delete(self, *args, **kwargs):
+        # You have to prepare what you need before delete the model
+        storage, path = self.img.storage, self.img.path
+        # Delete the model before the file
+        super(Services, self).delete(*args, **kwargs)
+        # Delete the file after the model
+        storage.delete(path)
