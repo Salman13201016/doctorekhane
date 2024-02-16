@@ -145,7 +145,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def list(self, request):
-        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True, context={"request":request})
         page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -153,13 +153,13 @@ class DoctorManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def create(self, request):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={"request":request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def partial_update(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True, context={"request":request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)

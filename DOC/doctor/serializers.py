@@ -125,4 +125,11 @@ class DoctorSerializer(serializers.ModelSerializer):
                     'name': union.union_name,
                 },
             }
+        specialist_ids = data.pop('specialists', [])
+        specialist_names = []
+        for specialist_id in specialist_ids:
+            specialist = Specialist.objects.filter(id=specialist_id).first()
+            if specialist:
+                specialist_names.append(specialist.specialist_name)  # Replace 'specialist_name' with the correct attribute name
+        data['specialist'] = specialist_names
         return data

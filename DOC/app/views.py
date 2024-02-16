@@ -9,7 +9,7 @@ from rest_framework import serializers
 from .serializers import  DivisionSerializer, DistrictSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
-
+from auth_app.permissions import IsModerator
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # filter search sort
@@ -43,7 +43,7 @@ class UnionListAPIView(generics.ListAPIView):
 
     
 class ServicesManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = ServicesSerializer
     queryset = Services.objects.all()
     pagination_class = LimitOffsetPagination
