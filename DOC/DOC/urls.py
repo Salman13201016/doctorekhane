@@ -19,14 +19,18 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from dj_rest_auth.views import PasswordResetConfirmView
+from .views import index
 
 urlpatterns = [
-    # path('', include('app.urls')),
+    path('', index, name="index"),         
     path('admin/', admin.site.urls),
     path('api/app/', include('app.urls')),
     path('api/auth-app/', include('auth_app.urls')),
     path('api/user/', include('user.urls')),
-    path('api/hospital/', include('hospital.urls')),
+    path('api/contact/', include('contact.urls')),
+    path('api/blog/', include('blog.urls')),
+    path('api/doctor/', include('doctor.urls')),
+    
     path('create-password/password-reset-confirm/<uidb64>/<token>/',
          PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
 

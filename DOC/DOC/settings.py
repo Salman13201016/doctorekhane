@@ -55,7 +55,9 @@ INSTALLED_APPS = [
     'app',
     'auth_app',
     'user',
-    'hospital',
+    'contact',
+    'blog',
+    'doctor',
 ]
 
 MIDDLEWARE = [

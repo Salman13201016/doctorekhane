@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 
 #serializer
-from app.serializers import DistrictSerializer, DivisionSerializer, StateSerializer
 
 import random
 import string
@@ -37,15 +36,34 @@ class ProfileSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        if 'profile_image' in data and data['profile_image']:
+            data['profile_image'] = instance.profile_image.url
 
-        # Include data for foreign key relationships
-        data['division'] = DivisionSerializer(instance.division).data if instance.division else None
-        data['district'] = DistrictSerializer(instance.district).data if instance.district else None
-        data['state'] = StateSerializer(instance.state).data if instance.state else None
+        # Including division, district, and upazila information in the representation
+        if 'location' in data and data['location']:
+            union = instance.location
+            upazila = union.upazila
+            district = upazila.district
+            division = district.division
 
-        # Exclude user ID
-        data.pop('user', None)
-
+            data['location'] = {
+                'division': {
+                    'id': division.id,
+                    'name': division.division_name,
+                },
+                'district': {
+                    'id': district.id,
+                    'name': district.district_name,
+                },
+                'upazila': {
+                    'id': upazila.id,
+                    'name': upazila.upazila_name,
+                },
+                'union': {
+                    'id': union.id,
+                    'name': union.union_name,
+                },
+            }
         return data
     
 
@@ -62,19 +80,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
         profile = attrs.get('profile', None)
         if self.instance:
             if "role" in profile:
-                raise serializers.ValidationError({"Unauthorised": 'You are not authorised to do this action'})
+                raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
                 
         if self.instance and User.objects.filter(email=attrs.get('email')).exclude(id=self.instance.id).exists():
-            raise serializers.ValidationError({"email": 'Email already exists'})
+            raise serializers.ValidationError({"message": 'Email already exists'})
         elif not self.instance and User.objects.filter(email=attrs.get('email')).exists():
-            raise serializers.ValidationError({"email": 'Email already exists'})
+            raise serializers.ValidationError({"message": 'Email already exists'})
         
         if profile:
             phone_number = profile.get('phone_number')
             if self.instance and phone_number and Profile.objects.filter(phone_number=phone_number).exclude(id=self.instance.profile.id).exists():
-                raise serializers.ValidationError({"phone_number": 'Phone number already exists'})
+                raise serializers.ValidationError({"message": 'Phone number already exists'})
             elif not self.instance and phone_number and Profile.objects.filter(phone_number=phone_number).exists():
-                raise serializers.ValidationError({"phone_number": 'Phone number already exists'})
+                raise serializers.ValidationError({"message": 'Phone number already exists'})
         return super().validate(attrs)
         
     
@@ -95,15 +113,34 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        if 'profile_image' in data and data['profile_image']:
+            data['profile_image'] = instance.profile_image.url
 
-        # Include data for foreign key relationships
-        data['division'] = DivisionSerializer(instance.division).data if instance.division else None
-        data['district'] = DistrictSerializer(instance.district).data if instance.district else None
-        data['state'] = StateSerializer(instance.state).data if instance.state else None
+        # Including division, district, and upazila information in the representation
+        if 'location' in data and data['location']:
+            union = instance.location
+            upazila = union.upazila
+            district = upazila.district
+            division = district.division
 
-        # Exclude user ID
-        data.pop('user', None)
-
+            data['location'] = {
+                'division': {
+                    'id': division.id,
+                    'name': division.division_name,
+                },
+                'district': {
+                    'id': district.id,
+                    'name': district.district_name,
+                },
+                'upazila': {
+                    'id': upazila.id,
+                    'name': upazila.upazila_name,
+                },
+                'union': {
+                    'id': union.id,
+                    'name': union.union_name,
+                },
+            }
         return data
     
 
@@ -124,22 +161,22 @@ class UserManagementSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         profile = attrs.get('profile', None)
         if "role" in profile:
-            raise serializers.ValidationError({"Unauthorised": 'You are not authorised to do this action'})
+            raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         if self.instance:
             if self.instance.profile.role == "admin":
-                raise serializers.ValidationError({"Unauthorised": 'You are not authorised to do this action'})
+                raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         
         if self.instance and User.objects.filter(email=attrs.get('email')).exclude(id=self.instance.id).exists():
-            raise serializers.ValidationError({"email": 'Email already exists'})
+            raise serializers.ValidationError({"message": 'Email already exists'})
         elif not self.instance and User.objects.filter(email=attrs.get('email')).exists():
-            raise serializers.ValidationError({"email": 'Email already exists'})
+            raise serializers.ValidationError({"message": 'Email already exists'})
         
         if profile:
             phone_number = profile.get('phone_number')
             if self.instance and phone_number and Profile.objects.filter(phone_number=phone_number).exclude(id=self.instance.profile.id).exists():
-                raise serializers.ValidationError({"phone_number": 'Phone number already exists'})
+                raise serializers.ValidationError({"message": 'Phone number already exists'})
             elif not self.instance and phone_number and Profile.objects.filter(phone_number=phone_number).exists():
-                raise serializers.ValidationError({"phone_number": 'Phone number already exists'})
+                raise serializers.ValidationError({"message": 'Phone number already exists'})
         return super().validate(attrs)
     
     def create(self, validated_data):
@@ -175,7 +212,6 @@ class UserManagementSerializer(serializers.ModelSerializer):
         
         return user
 
-
     def update(self, instance, validated_data):
         if 'profile' in validated_data:
             for item, value in validated_data.pop('profile').items():
@@ -193,6 +229,34 @@ class UserManagementSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        if 'profile_image' in data and data['profile_image']:
+            data['profile_image'] = instance.profile_image.url
+
+        # Including division, district, and upazila information in the representation
+        if 'location' in data and data['location']:
+            union = instance.location
+            upazila = union.upazila
+            district = upazila.district
+            division = district.division
+
+            data['location'] = {
+                'division': {
+                    'id': division.id,
+                    'name': division.division_name,
+                },
+                'district': {
+                    'id': district.id,
+                    'name': district.district_name,
+                },
+                'upazila': {
+                    'id': upazila.id,
+                    'name': upazila.upazila_name,
+                },
+                'union': {
+                    'id': union.id,
+                    'name': union.union_name,
+                },
+            }
 
         return data
 
@@ -214,16 +278,16 @@ class SuperUserManagementSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         profile = attrs.get('profile', None)
         if self.instance and User.objects.filter(email=attrs.get('email')).exclude(id=self.instance.id).exists():
-            raise serializers.ValidationError({"email": 'Email already exists'})
+            raise serializers.ValidationError({"message": 'Email already exists'})
         elif not self.instance and User.objects.filter(email=attrs.get('email')).exists():
-            raise serializers.ValidationError({"email": 'Email already exists'})
+            raise serializers.ValidationError({"message": 'Email already exists'})
 
         if profile:
             phone_number = profile.get('phone_number')
             if self.instance and phone_number and Profile.objects.filter(phone_number=phone_number).exclude(id=self.instance.profile.id).exists():
-                raise serializers.ValidationError({"phone_number": 'Phone number already exists'})
+                raise serializers.ValidationError({"message": 'Phone number already exists'})
             elif not self.instance and phone_number and Profile.objects.filter(phone_number=phone_number).exists():
-                raise serializers.ValidationError({"phone_number": 'Phone number already exists'})
+                raise serializers.ValidationError({"message": 'Phone number already exists'})
         return super().validate(attrs)
     
     def create(self, validated_data):
@@ -287,5 +351,33 @@ class SuperUserManagementSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        if 'profile_image' in data and data['profile_image']:
+            data['profile_image'] = instance.profile_image.url
+
+        # Including division, district, and upazila information in the representation
+        if 'location' in data and data['location']:
+            union = instance.location
+            upazila = union.upazila
+            district = upazila.district
+            division = district.division
+
+            data['location'] = {
+                'division': {
+                    'id': division.id,
+                    'name': division.division_name,
+                },
+                'district': {
+                    'id': district.id,
+                    'name': district.district_name,
+                },
+                'upazila': {
+                    'id': upazila.id,
+                    'name': upazila.upazila_name,
+                },
+                'union': {
+                    'id': union.id,
+                    'name': union.union_name,
+                },
+            }
 
         return data

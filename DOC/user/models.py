@@ -1,13 +1,10 @@
 from django.db import models
-from app.models import District,Division,State
+from app.models import Unions
 from django.contrib.auth.models import User
 from django_resized import ResizedImageField
+from app.models import ROLES
 
-ROLES = [
-    ('admin', 'Admin'),
-    ('general', 'General'),
-    ('superadmin', 'Super Admin'),
-]
+
 GENDER_CHOCIES=[
         ('male',"Male"),
         ("female","Female"),
@@ -39,11 +36,16 @@ class Profile(models.Model):
         max_length=6, blank=True, null=True,
         choices=BLOOD_GROUPS,
         )
-    division = models.ForeignKey(Division,on_delete=models.CASCADE,blank=True,null=True )  
-    district = models.ForeignKey(District,on_delete=models.CASCADE,blank=True,null=True)
-    state = models.ForeignKey(State,on_delete=models.CASCADE,blank=True,null=True)
-    postal_code = models.IntegerField(null=True,blank=True) 
+    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
     def __str__(self):
         return str(self.user)
+    
+    def delete(self, *args, **kwargs):
+        # You have to prepare what you need before delete the model
+        storage, path = self.img.storage, self.img.path
+        # Delete the model before the file
+        super(Profile, self).delete(*args, **kwargs)
+        # Delete the file after the model
+        storage.delete(path)
     

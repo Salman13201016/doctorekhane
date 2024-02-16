@@ -29,7 +29,7 @@ class UserRegistraionView(viewsets.GenericViewSet):
             from_email = DEFAULT_FROM_EMAIL
             to_email = request.data["email"]
             send_mail(subject, message, from_email, [to_email], fail_silently=True)
-            return Response({"success":"account created successfully"} , status=status.HTTP_201_CREATED)
+            return Response({"message":"account created successfully"} , status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomLoginView(LoginView):

@@ -1,55 +1,41 @@
 from rest_framework import serializers
+from drf_extra_fields.fields import Base64ImageField
 #model
-from .models import Division, District, State
+from .models import Divisions, Districts, Upazilas,Unions,Services
 
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Division
-        fields = "__all__"
-
-    def validate(self, data):
-        # Check if a division with the same name (case-insensitive) already exists
-        name = data.get('name', None)
-        existing_division = Division.objects.filter(name__iexact=name).exclude(id=self.instance.id if self.instance else None).first()
-        # If an existing division with the same name is found, raise a validation error
-        if existing_division:
-            raise serializers.ValidationError({"error":"A division with this name already exists."})
-
-        return super().validate(data)
-
+        model = Divisions
+        fields = ['id', 'division_name']
 
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
-        model = District
-        fields = "__all__"
+        model = Districts
+        fields = ['id', 'division','district_name']
 
-    def validate(self, data):
-        # Check if a division with the same name (case-insensitive) already exists
-        name = data.get('name', None)
-        existing_district = District.objects.filter(name__iexact=name).exclude(id=self.instance.id if self.instance else None).first()
-        # If an existing division with the same name is found, raise a validation error
-        if existing_district:
-            raise serializers.ValidationError({"error":"A district with this name already exists."})
-        if "division" in data and not Division.objects.filter(id=data.get("division").id).exists():
-            raise serializers.ValidationError({"error": 'Division does not exist.'})
-        return super().validate(data)
-
-
-class StateSerializer(serializers.ModelSerializer):
+class UpazilaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = State
-        fields = "__all__"
-    
-    def validate(self, data):
-        # Check if a division with the same name (case-insensitive) already exists
-        name = data.get('name', None)
-        existing_state = State.objects.filter(name__iexact=name).exclude(id=self.instance.id if self.instance else None).first()
-        # If an existing division with the same name is found, raise a validation error
-        if existing_state:
-            raise serializers.ValidationError({"error":"A state with this name already exists."})
-        if "division" in data and not Division.objects.filter(id=data.get("division").id).exists():
-            raise serializers.ValidationError({"error": 'Division does not exist.'})
-        if "district" in data and not District.objects.filter(id=data.get("district").id).exists():
-            raise serializers.ValidationError({"error": 'District does not exist.'})
-        
-        return super().validate(data)
+        model = Upazilas
+        fields = ['id','district','upazila_name']
+
+class UnionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Unions
+        fields = ['id','upazila','union_name']
+
+
+class ServicesSerializer(serializers.ModelSerializer):
+    service_logo = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Services
+        fields = ['id', 'service_name','service_description', 'service_logo']
+
+    def validate(self, attrs):
+        if self.instance:
+            if Services.objects.filter(service_name__iexact=attrs.get('service_name')).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'Category already exists.'})
+            
+        elif Services.objects.filter(service_name__iexact=attrs.get('service_name')).exists():
+            raise serializers.ValidationError({"message": 'Service Name already exists.'})
+        return attrs
