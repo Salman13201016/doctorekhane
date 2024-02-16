@@ -7,6 +7,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         model = Hospital
         fields = "__all__"
         extra_kwargs = {
+            'name': {'required': True},
             'hospital_image': {'required': False},
             'facilities': {'required': False},
             'services_offered': {'required': False},
@@ -16,19 +17,25 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             'emergency_contact': {'required': False},
             'website': {'required': False},
         }
-    def validate(self, value):
-        # Check if name already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(name=self.name).exists():
-            raise ValidationError({'name': 'Name already exists.'})
+    def validate(self, data):
+        name = data.get('name')
+        email = data.get('email')
+        phone_number = data.get('phone_number')
 
-        # Check if email already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(email=self.email).exists():
-            raise ValidationError({'email': 'Email already exists.'})
+        if self.instance is not None:
+            # Check if name already exists for an existing instance
+            if Hospital.objects.exclude(pk=self.instance.pk).filter(name=name).exists():
+                raise ValidationError({'name': 'Name already exists.'})
 
-        # Check if phone_number already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(phone_number=self.phone_number).exists():
-            raise ValidationError({'phone_number': 'Phone number already exists.'})
-        return value
+            # Check if email already exists for an existing instance
+            if Hospital.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
+                raise ValidationError({'email': 'Email already exists.'})
+
+            # Check if phone_number already exists for an existing instance
+            if Hospital.objects.exclude(pk=self.instance.pk).filter(phone_number=phone_number).exists():
+                raise ValidationError({'phone_number': 'Phone number already exists.'})
+
+        return data
     
     def create(self, validated_data):
         """
