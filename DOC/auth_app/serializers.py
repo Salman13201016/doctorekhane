@@ -17,14 +17,18 @@ by the help of 👇 UserProfileSerializer
 '''
 class UserProfileSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(required=True)
+    gender = serializers.CharField(required=True)
     profile_image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Profile
-        fields = ["phone_number", "profile_image"]
+        fields = ["phone_number", "profile_image",'gender']
+        extra_kwargs = {
+            'profile_image' : {'required': False},
+        }
 
 
-class UserRegistraionSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(required=True)
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
@@ -41,14 +45,6 @@ class UserRegistraionSerializer(serializers.ModelSerializer):
         if attrs.get('profile', None).get('phone_number', None):
             if Profile.objects.filter(phone_number=attrs.get('profile', None).get('phone_number', None)).exists():
                 raise serializers.ValidationError({"message": 'Phone number already exists.'})
-        # 2) validated by django default password validation
-        try:
-            validate_password(attrs['password'])
-            # Additional check for the combination of characters and numbers
-            if not re.search(r'[a-zA-Z]+\d+', attrs['password']):
-                raise exceptions.ValidationError("Password must contain a combination of letters and numbers.")
-        except exceptions.ValidationError as e:
-            raise serializers.ValidationError(e.messages)
         
         return super().validate(attrs)
     
