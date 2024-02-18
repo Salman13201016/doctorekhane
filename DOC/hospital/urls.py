@@ -4,7 +4,7 @@ from . import views
 
 # /hospital/
 router = DefaultRouter()
-router.register('hospital', views.HospitalManagementView, basename='hospital')
+router.register('hospital-management', views.HospitalManagementView, basename='hospital')
 
 
 urlpatterns = [

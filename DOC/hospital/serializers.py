@@ -11,6 +11,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         model = Hospital
         fields = "__all__"
         extra_kwargs = {
+            'name': {'required': True},
             'hospital_image': {'required': False},
             'longitude': {'required': False},
             'latitude': {'required': False},

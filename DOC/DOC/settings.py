@@ -267,8 +267,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'doctorekhane.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'abdullah.skills23@gmail.com' 
-DEFAULT_FROM_EMAIL = 'abdullah.skills23@gmail.com' 
-EMAIL_HOST_PASSWORD = 'ybochnxqpmonicpe'
+EMAIL_HOST_USER = 'support@doctorekhane.com' 
+DEFAULT_FROM_EMAIL = 'support@doctorekhane.com' 
+EMAIL_HOST_PASSWORD = 'Doctor@0011'
