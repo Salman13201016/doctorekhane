@@ -20,6 +20,7 @@ class DoctorModelAdmin(admin.ModelAdmin):
 
 class ChamberModelAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'doctor',
         'fee',
         'availability',

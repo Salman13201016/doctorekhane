@@ -18,23 +18,56 @@ class SpecialistSerializer(serializers.ModelSerializer):
 class ChamberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chamber
-        fields = "__all__"
+        exclude = ["doctor"]
+        extra_kwargs = {
+            'id' : {'read_only': False},
+        }
+
+    def validate(self, attrs):
+        if self.instance:
+            if Chamber.objects.filter(hospital__iexact=attrs.get('hospital'), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'Doctor With Same Chamber already exists'})
+        elif Chamber.objects.filter(hospital__iexact=attrs.get('hospital'), doctor=attrs.get('doctor')).exists():
+            raise serializers.ValidationError({"message": 'Doctor With Same Chamber already exists'})
+        return attrs
 
 class ExperienceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Experience
-        fields = "__all__"
+        exclude = ["doctor"]
+        extra_kwargs = {
+            'id' : {'read_only': False},
+        }
 
+    def validate(self, attrs):
+        if self.instance:
+            if Experience.objects.filter(working_place__iexact=attrs.get('working_place'), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'Doctor With Same Working Place Experience already exists'})
+        elif Experience.objects.filter(working_place__iexact=attrs.get('working_place'), doctor=attrs.get('doctor')).exists():
+            raise serializers.ValidationError({"message": 'Doctor With Same Working Place Experience already exists'})
+        return attrs
+    
 class DoctorServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = DoctorService
-        fields = "__all__"
+        exclude = ["doctor"]
+        extra_kwargs = {
+            'id' : {'read_only': False},
+        }
+
+    def validate(self, attrs):
+        if self.instance:
+            if DoctorService.objects.filter(service_name__iexact=attrs.get('service_name'), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
+        elif DoctorService.objects.filter(service_name__iexact=attrs.get('service_name'), doctor=attrs.get('doctor')).exists():
+            raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
+        return attrs
 
 class DoctorSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
     chamber = ChamberSerializer(required = False, allow_null = True, many = True)
-    experience_details = ExperienceSerializer(required = False, allow_null = True, many = True)
-    doctor_service = DoctorServiceSerializer(required = False, allow_null = True, many = True)
+    experiences = ExperienceSerializer(required = False, allow_null = True, many = True)
+    services = DoctorServiceSerializer(required = False, allow_null = True, many = True)
     class Meta:
         model = Doctor
         fields = "__all__"
@@ -54,8 +87,8 @@ class DoctorSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         getchamberInfo = validated_data.pop('chamber', [])
-        getexperience_detailsInfo = validated_data.pop('experience_details', [])
-        getdoctor_serviceInfo = validated_data.pop('doctor_service', [])
+        getexperience_detailsInfo = validated_data.pop('experiences', [])
+        getdoctor_serviceInfo = validated_data.pop('services', [])
         specialists_data = validated_data.pop('specialists', [])
 
         doctor = Doctor.objects.create(**validated_data)
@@ -73,27 +106,65 @@ class DoctorSerializer(serializers.ModelSerializer):
         return doctor
 
     def update(self, instance, validated_data):
-        if 'chember' in validated_data:
-            for item, value in validated_data.pop('chember').items():
-                setattr(instance.chember, item, value)
-            
-            instance.chamber.save()
-        if 'experience' in validated_data:
-            for item, value in validated_data.pop('experience').items():
-                setattr(instance.experience, item, value)
-            
-            instance.experience.save()
-        if 'doctor_service' in validated_data:
-            for item, value in validated_data.pop('doctor_service').items():
-                setattr(instance.doctor_service, item, value)
-            
-            instance.doctor_service.save()
-        # update user
-        for item, value in validated_data.items():
-            setattr(instance, item, value)
+        chambers_data = validated_data.pop('chamber', None)
+        experiences_data = validated_data.pop('experiences', None)
+        services_data = validated_data.pop('services', None)
+        if 'specialists' in validated_data:
+            instance.specialists.set(validated_data.pop('specialists'))
+
+        # Update doctor fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        # Save doctor instance
         instance.save()
-        
+        # Update related chamber
+        if chambers_data is not None:
+            for chamber_data in chambers_data:
+                chamber_id = chamber_data.get('id')
+                if chamber_id:
+                    # Update existing experience
+                    chamber_instance = instance.chamber.filter(doctor=instance,id=chamber_id).first()
+                    if chamber_instance:
+                        for attr, value in chamber_data.items():
+                            setattr(chamber_instance, attr, value)
+                        chamber_instance.save()
+                else:
+                    # Create new experience
+                    Chamber.objects.create(doctor=instance, **chamber_data)
+
+        # Update related experiences
+        if experiences_data is not None:
+            for experience_data in experiences_data:
+                experience_id = experience_data.get('id')
+                if experience_id:
+                    # Update existing experience
+                    experience_instance = instance.experiences.filter(doctor=instance,id=experience_id).first()
+                    if experience_instance:
+                        for attr, value in experience_data.items():
+                            setattr(experience_instance, attr, value)
+                        experience_instance.save()
+                else:
+                    # Create new experience
+                    Experience.objects.create(doctor=instance, **experience_data)
+
+        # Update related services
+        if services_data is not None:
+            for service_data in services_data:
+                service_id = service_data.get('id')
+                if service_id:
+                    # Update existing service
+                    service_instance = instance.services.filter(doctor=instance,id=service_id).first()
+                    if service_instance:
+                        for attr, value in service_data.items():
+                            setattr(service_instance, attr, value)
+                        service_instance.save()
+                else:
+                    # Create new service
+                    DoctorService.objects.create(doctor=instance, **service_data)
+
         return instance
+
     
     def to_representation(self, instance):
         data = super().to_representation(instance)

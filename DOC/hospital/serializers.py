@@ -1,55 +1,91 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
+from drf_extra_fields.fields import Base64ImageField
+
 from .models import Hospital
+from doctor.models import Specialist
 
 class HospitalManagementSerializer(serializers.ModelSerializer):
+    hospital_image = Base64ImageField(required=False,allow_null=True)
     class Meta:
         model = Hospital
         fields = "__all__"
         extra_kwargs = {
             'hospital_image': {'required': False},
-            'facilities': {'required': False},
-            'services_offered': {'required': False},
-            'specialties': {'required': False},
-            'accreditation_details': {'required': False},
-            'slug':{'required':False},
-            'emergency_contact': {'required': False},
+            'longitude': {'required': False},
+            'latitude': {'required': False},
+            'slug':{'read_only':True},
             'website': {'required': False},
         }
-    def validate(self, value):
+    def validate(self, attrs):
         # Check if name already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(name=self.name).exists():
-            raise ValidationError({'name': 'Name already exists.'})
+        if Hospital.objects.filter(name__iexact=attrs.get('name'), address=attrs.get('address')).exclude(id=self.instance.id).exists():
+            raise ValidationError({'message': 'Hospital this address already exists.'})
 
         # Check if email already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(email=self.email).exists():
-            raise ValidationError({'email': 'Email already exists.'})
+        if Hospital.objects.filter(email__iexact=attrs.get('email')).exclude(id=self.instance.id).exists():
+            raise ValidationError({'message': 'Email already exists.'})
 
         # Check if phone_number already exists
-        if Hospital.objects.exclude(pk=self.pk).filter(phone_number=self.phone_number).exists():
-            raise ValidationError({'phone_number': 'Phone number already exists.'})
-        return value
+        if Hospital.objects.filter(phone_number__iexact=attrs.get('phone_number')).exclude(id=self.instance.id).exists():
+            raise ValidationError({'message': 'Phone number already exists.'})
+        return attrs
     
     def create(self, validated_data):
-        """
-        Override the create method to set the slug to be the same as the title.
-        """
-        validated_data['slug'] = validated_data['name'].lower().replace(" ", "-")
-        return super().create(validated_data)
+        specialists_data = validated_data.pop('specialists', [])
+        services_data = validated_data.pop('services', [])
+
+        hospital = Hospital.objects.create(**validated_data)
+        hospital.specialists.set(specialists_data)
+        hospital.services.set(services_data)
+
+        return hospital
+
     
     def update(self, instance, validated_data):
-        """
-        Override the update method to update the instance and set the slug based on the title.
-        """
-        for field in self.Meta.model._meta.fields:
-            field_name = field.name
-            if field_name in validated_data:
-                setattr(instance, field_name, validated_data[field_name])
 
-        # Set the slug based on the updated title
-        instance.slug = instance.name.lower().replace(" ", "-")
-
-        instance.save()
+        # Update doctor fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         return instance
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if 'hospital_image' in data and data['hospital_image']:
+            data['hospital_image'] = instance.profile_image.url
+
+        # Including division, district, and upazila information in the representation
+        if 'location' in data and data['location']:
+            union = instance.location
+            upazila = union.upazila
+            district = upazila.district
+            division = district.division
+
+            data['location'] = {
+                'division': {
+                    'id': division.id,
+                    'name': division.division_name,
+                },
+                'district': {
+                    'id': district.id,
+                    'name': district.district_name,
+                },
+                'upazila': {
+                    'id': upazila.id,
+                    'name': upazila.upazila_name,
+                },
+                'union': {
+                    'id': union.id,
+                    'name': union.union_name,
+                },
+            }
+        specialist_ids = data.pop('specialists', [])
+        specialist_names = []
+        for specialist_id in specialist_ids:
+            specialist = Specialist.objects.filter(id=specialist_id).first()
+            if specialist:
+                specialist_names.append(specialist.specialist_name)  # Replace 'specialist_name' with the correct attribute name
+        data['specialist'] = specialist_names
+        return data
 
 

@@ -61,7 +61,7 @@ class Chamber(models.Model):
     availability = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
-        return self.doctor.name
+        return self.hospital
 
 class Experience(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='experiences', null = True, blank = True)
@@ -71,14 +71,14 @@ class Experience(models.Model):
     working_place = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
-        return self.doctor.name
+        return self.working_place
     
 class DoctorService(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='services', null = True, blank = True)
     service_name = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
-        return self.doctor.name
+        return self.service_name
 
 class Review(models.Model):
     user = models.ForeignKey(User, null=True,on_delete=models.SET_NULL,blank=True)

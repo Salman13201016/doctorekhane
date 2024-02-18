@@ -1,4 +1,3 @@
-##from model
 import json
 from app.models import Divisions, Districts, Upazilas , Unions
 with open('app/divisions.json', 'r', encoding='utf-8') as file:
