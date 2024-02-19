@@ -1,7 +1,8 @@
 from django.db import models
 from django_resized import ResizedImageField
 from django.contrib.auth.models import User
-from app.models import ROLES, Unions
+from app.models import ROLES, Unions,Specialist
+from hospital.models import Hospital
 from django.utils.text import slugify
 
 # Create your models here.
@@ -12,18 +13,6 @@ RATING_TYPE_CHOICES=[
     (4,'4'),
     (5,'5'),
 ]
-
-class Specialist(models.Model):
-    specialist_name = models.CharField(max_length=100,blank=True,null=True)
-    specialist_logo = ResizedImageField(upload_to = 'specialist_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
-
-    def delete(self, *args, **kwargs):
-        # You have to prepare what you need before delete the model
-        storage, path = self.img.storage, self.img.path
-        # Delete the model before the file
-        super(Specialist, self).delete(*args, **kwargs)
-        # Delete the file after the model
-        storage.delete(path)
             
 class Doctor(models.Model):
     name = models.CharField(max_length=100, null = True, blank = True)
@@ -55,13 +44,13 @@ class Doctor(models.Model):
     
 class Chamber(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='chamber', null = True, blank = True)
-    hospital = models.CharField(max_length=500, null = True, blank = True)
+    hospital = models.ForeignKey(Hospital,on_delete=models.CASCADE, max_length=500, null = True, blank = True)
     address = models.CharField(max_length=500, null = True, blank = True)
     fee = models.CharField(max_length=500, null = True, blank = True)
     availability = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
-        return self.hospital
+        return str(self.hospital)
 
 class Experience(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='experiences', null = True, blank = True)

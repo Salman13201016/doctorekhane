@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'contact',
     'blog',
     'doctor',
+    'hospital',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

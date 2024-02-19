@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 # model
-from .models import Specialist, Doctor, DoctorService, Chamber, Experience
+from .models import Doctor, DoctorService, Chamber, Experience
 # serializer
 from rest_framework import serializers
-from .serializers import  SpecialistSerializer, DoctorSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
+from .serializers import  DoctorSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin, IsModerator, IsDoctor
@@ -18,109 +18,63 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 # Create your views here.
-class SpecialistManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
-    serializer_class = SpecialistSerializer
-    queryset = Specialist.objects.all()
-    pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
 
-    search_fields = ['specialist_name']
-    ordering_fields = ['specialist_name']
+# class ChamberManagementView(viewsets.GenericViewSet):
+#     permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
+#     serializer_class = ChamberSerializer
+#     queryset = Chamber.objects.all()
 
-    def get_permissions(self):
-        if self.action == "list":
-            self.permission_classes = []
-        return super().get_permissions()
+#     def get_object(self):
+#         return self.request.user
+
+#     def retrieve(self, request, pk=None):
+#         serializer = self.get_serializer(self.get_object())
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+#     def partial_update(self, request, pk=None):
+#         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+# #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def list(self, request):
-        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
-        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
-        
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
+# class ExperienceManagementView(viewsets.GenericViewSet):
+#     permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
+#     serializer_class = ExperienceSerializer
+#     queryset = Experience.objects.all()
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def retrieve(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object())
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#     def get_object(self):
+#         return self.request.user
 
-    def partial_update(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def retrieve(self, request, pk=None):
+#         serializer = self.get_serializer(self.get_object())
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def destroy(self, request, pk=None):
-        self.get_object().delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
-
-class ChamberManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
-    serializer_class = ChamberSerializer
-    queryset = Chamber.objects.all()
-
-    def get_object(self):
-        return self.request.user
-
-    def retrieve(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object())
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def partial_update(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+#     def partial_update(self, request, pk=None):
+#         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class ExperienceManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
-    serializer_class = ExperienceSerializer
-    queryset = Experience.objects.all()
 
-    def get_object(self):
-        return self.request.user
+# class DoctorServiceManagementView(viewsets.GenericViewSet):
+#     permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
+#     serializer_class = DoctorServiceSerializer
+#     queryset = DoctorService.objects.all()
 
-    def retrieve(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object())
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#     def get_object(self):
+#         return self.request.user
 
-    def partial_update(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def retrieve(self, request, pk=None):
+#         serializer = self.get_serializer(self.get_object())
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class DoctorServiceManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
-    serializer_class = DoctorServiceSerializer
-    queryset = DoctorService.objects.all()
-
-    def get_object(self):
-        return self.request.user
-
-    def retrieve(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object())
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def partial_update(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def partial_update(self, request, pk=None):
+#         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True,)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class DoctorManagementView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
@@ -132,8 +86,11 @@ class DoctorManagementView(viewsets.GenericViewSet):
         'specialists__specialist_name': ['in'],
         'location__upazila__district__district_name': ['in'],
         'location__upazila__district__division__division_name': ['in'],
+        'chamber__hospital__name': ['in'],
     }
-    search_fields = ['name']
+    search_fields = ['name',"address"]
+    ordering_fields = ['name']
+
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or  self.action=="get_doctor_by_slug":

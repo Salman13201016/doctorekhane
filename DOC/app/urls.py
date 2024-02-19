@@ -4,6 +4,7 @@ from . import views
 
 # /profile/
 router = DefaultRouter()
+router.register('specialist', views.SpecialistManagementView, basename='specialist')
 router.register('services', views.ServicesManagementView, basename='services')
 urlpatterns = [
     path('', include(router.urls)),

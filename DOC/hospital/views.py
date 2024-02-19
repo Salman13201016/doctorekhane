@@ -11,28 +11,26 @@ from .serializers import HospitalManagementSerializer
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
 from rest_framework.permissions import IsAuthenticated
-from auth_app.permissions import IsAdmin
+from auth_app.permissions import IsSuperAdmin,IsHospital
 # Create your views here.
 class HospitalManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated, IsHospital]
     serializer_class = HospitalManagementSerializer
     queryset = Hospital.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
 
     filterset_fields = {
-        'services_offered': ["in"],
-        'specialties': ["in"],
-        'name': ["exact"],
-        'division': ["exact"],
-        'district': ["exact"],
-        'state': ["exact"],
+        'specialists__specialist_name': ['in'],
+        'services__service_name': ['in'],
+        'location__upazila__district__district_name': ['in'],
+        'location__upazila__district__division__division_name': ['in'],
     }
-    search_fields = ['name','specialties','services_offered']
+    search_fields = ['name',"address"]
     ordering_fields = ['name']
 
     def get_permissions(self):
-        if self.action == "list" or self.action == "retrieve" or self.action=="get_blog_by_slug":
+        if self.action == "list" or self.action == "retrieve" or self.action=="get_hospital_by_slug":
             self.permission_classes = []
         return super().get_permissions()
     
@@ -69,13 +67,13 @@ class HospitalManagementView(viewsets.GenericViewSet):
     
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'status':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=['GET'], url_path='get-hospital-by-slug/(?P<slug>[-\w]+)')
-    def get_blog_by_slug(self, request, slug=None):
+    def get_hospital_by_slug(self, request, slug=None):
         try:
             hospital = Hospital.objects.get(slug=slug)
             serializer = self.get_serializer(hospital)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Hospital.DoesNotExist:
-            return Response({'detail': 'Hospital not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'message': 'Hospital not found.'}, status=status.HTTP_404_NOT_FOUND)

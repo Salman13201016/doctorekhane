@@ -1,10 +1,8 @@
 from django.db import models
-from app.models import District, Division, State
 from django_resized import ResizedImageField
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
-from app.models import ROLES, Unions,Services
-from doctor.models import Specialist
+from app.models import ROLES, Unions,Services,Specialist
 
 
 class Hospital(models.Model):

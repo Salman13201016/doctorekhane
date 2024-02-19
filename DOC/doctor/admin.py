@@ -1,9 +1,10 @@
 from django.contrib import admin
-from .models import Specialist, Doctor, Chamber, Experience, DoctorService
+from .models import Doctor, Chamber, Experience, DoctorService
 # Register your models here.
 class DoctorModelAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug" : ('name',)}
     list_display = (
+        'id',
         'name',
         'designation',
         'experience_year',
@@ -28,6 +29,7 @@ class ChamberModelAdmin(admin.ModelAdmin):
 
 class ExperienceModelAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'doctor',
         'start_date',
         'end_date',
@@ -45,6 +47,7 @@ class ExperienceModelAdmin(admin.ModelAdmin):
 
 class ReviewModelAdmin(admin.ModelAdmin):
     list_display=(
+        'id',
         'doctor',
         'rating',
         'created_at',
@@ -54,7 +57,6 @@ class ReviewModelAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(Specialist,list_display=('id','specialist_name'))
 admin.site.register(DoctorService,list_display=('id','doctor','service_name'))
 admin.site.register(Doctor,DoctorModelAdmin)
 admin.site.register(Chamber,ChamberModelAdmin)
