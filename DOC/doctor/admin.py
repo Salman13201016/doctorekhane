@@ -6,12 +6,10 @@ class DoctorModelAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
-        'designation',
         'experience_year',
         'license_no',
     )
     list_filter = (
-        'designation',
         'qualification',
         'specialists__specialist_name',
     )

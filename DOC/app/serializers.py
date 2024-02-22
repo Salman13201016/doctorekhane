@@ -27,7 +27,7 @@ class SpecialistSerializer(serializers.ModelSerializer):
     specialist_logo = Base64ImageField(required=False,allow_null=True)
     class Meta:
         model = Specialist
-        fields = ['id','specialist_name',"specialist_logo"]
+        fields = ['id','specialist_name',"specialist_description","specialist_logo"]
         def validate(self , attrs):
             if self.instance:
                 if  Specialist.objects.filter(specialist_name__iexact=attrs.get('specialist_name')).exclude(id=self.instance.id).exists():

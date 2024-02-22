@@ -32,12 +32,17 @@ class Profile(models.Model):
         choices=GENDER_CHOCIES,
         )
     date_of_birth = models.DateField(null=True,blank=True)
+    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
+    address = models.TextField(max_length=500, blank=True, null=False)
+    donor = models.BooleanField(blank = True, null = True,default = False)
     blood_group = models.CharField(
         max_length=6, blank=True, null=True,
         choices=BLOOD_GROUPS,
         )
-    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
-    address = models.TextField(max_length=500, blank=True, null=False)
+    height = models.FloatField(blank = True, null = True)
+    weight = models.FloatField(blank = True, null = True)
+    last_donate_date = models.DateField(blank = True, null = True)
+
     def __str__(self):
         return str(self.user)
     

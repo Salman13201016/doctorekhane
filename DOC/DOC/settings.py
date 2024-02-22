@@ -41,10 +41,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # 'django.contrib.sites',
     # django rest api
     'rest_framework',
     'django_filters',
+    'django_extensions',
     # auth
     'dj_rest_auth',
     'rest_framework.authtoken',
@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     'blog',
     'doctor',
     'hospital',
-    'django_extensions',
 ]
 
 MIDDLEWARE = [

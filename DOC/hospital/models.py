@@ -4,6 +4,11 @@ from ckeditor.fields import RichTextField
 from django.utils.text import slugify
 from app.models import ROLES, Unions,Services,Specialist
 
+CATEGORY_CHOICES = [
+('hospital', 'Hospital'),
+('clinic', 'Clinic'),
+('diagnostic_center', 'Diagnostic Center'),
+]
 
 class Hospital(models.Model):
     name = models.CharField(max_length=255,null=True, blank=True)
@@ -14,6 +19,7 @@ class Hospital(models.Model):
     emergency_contact = models.CharField(max_length=100,null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     availability = models.CharField(max_length=500, null = True, blank = True)
+    category = models.CharField(max_length=20, null = True, blank = True, choices=CATEGORY_CHOICES)
     longitude = models.CharField(max_length=100,null=True, blank=True)
     latitude = models.CharField(max_length=100,null=True, blank=True)
     specialists = models.ManyToManyField(Specialist, blank = True,)
@@ -23,7 +29,10 @@ class Hospital(models.Model):
     # Hospital Profile Fields
     hospital_image = ResizedImageField(upload_to='hospital/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     website = models.URLField(null=True, blank=True)
-  
+    ambulance = models.BooleanField(default = False)
+    ac = models.BooleanField(default = False)
+    ambulance_phone_number = models.CharField(max_length=100,null=True, blank=True)
+
     def __str__(self):
         return self.name
     

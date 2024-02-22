@@ -7,7 +7,7 @@ router = DefaultRouter()
 router.register('profile', views.ProfileView, basename='profile')
 router.register('management', views.UserManagementView, basename='user-management')
 router.register('super-management', views.SuperUserManagementView, basename='super-user-management')
-# router.register('changepassword', views.ChangeOwnPasswordView, basename='user-changeownpassword'),
+router.register('donor', views.DonorListView, basename='donor'),
 
 
 urlpatterns = [

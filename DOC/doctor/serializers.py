@@ -20,6 +20,13 @@ class ChamberSerializer(serializers.ModelSerializer):
         elif Chamber.objects.filter(hospital__name=attrs.get('hospital'), doctor=attrs.get('doctor')).exists():
             raise serializers.ValidationError({"message": 'Doctor With Same Chamber already exists'})
         return attrs
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        print(instance.hospital)
+        data["hospital_name"] = instance.hospital.name
+        data["hospital_address"] = instance.hospital.address
+        del data["hospital"]
+        return data
 
 class ExperienceSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
@@ -159,10 +166,11 @@ class DoctorSerializer(serializers.ModelSerializer):
 
     
     def to_representation(self, instance):
+        request = self.context.get("request")
         data = super().to_representation(instance)
         if 'profile_image' in data and data['profile_image']:
-            data['profile_image'] = instance.profile_image.url
-
+            data['profile_image'] = request.build_absolute_uri(instance.profile_image.url)
+        
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
             union = instance.location

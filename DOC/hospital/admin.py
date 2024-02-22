@@ -9,6 +9,7 @@ class HospitalModelAdmin(admin.ModelAdmin):
         'address',
         'availability',
         'phone_number',
+        'category',
     )
     list_filter = (
         'specialists__specialist_name',

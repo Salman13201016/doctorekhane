@@ -36,6 +36,7 @@ class Unions(models.Model):
 
 class Specialist(models.Model):
     specialist_name = models.CharField(max_length=100,blank=True,null=True)
+    specialist_description = models.TextField(blank=True,null=True)
     specialist_logo = ResizedImageField(upload_to = 'specialist_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
 
     def delete(self, *args, **kwargs):
@@ -48,7 +49,7 @@ class Specialist(models.Model):
 
 class Services(models.Model):
     service_name = models.CharField(max_length=100,blank=True,null=True)
-    service_description = models.CharField(max_length=250,blank=True,null=True)
+    service_description = models.TextField(blank=True,null=True)
     service_logo = ResizedImageField(upload_to = 'specialist_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
     
     def delete(self, *args, **kwargs):

@@ -16,7 +16,6 @@ RATING_TYPE_CHOICES=[
             
 class Doctor(models.Model):
     name = models.CharField(max_length=100, null = True, blank = True)
-    designation = models.CharField(max_length=500, null = True, blank = True)
     qualification = models.CharField(max_length=500, null = True, blank = True)
     profile_image = ResizedImageField(upload_to='Doctor_Profile/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     experience_year = models.CharField(max_length=100, null = True, blank = True)
@@ -45,7 +44,6 @@ class Doctor(models.Model):
 class Chamber(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='chamber', null = True, blank = True)
     hospital = models.ForeignKey(Hospital,on_delete=models.CASCADE, max_length=500, null = True, blank = True)
-    address = models.CharField(max_length=500, null = True, blank = True)
     fee = models.CharField(max_length=500, null = True, blank = True)
     availability = models.CharField(max_length=500, null = True, blank = True)
 

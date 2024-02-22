@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from django.contrib.auth.models import User
 # serializer
 from rest_framework import serializers
-from .serializers import  SuperUserManagementSerializer, UserManagementSerializer, UserProfileSerializer
+from .serializers import  DonorListSerializer, SuperUserManagementSerializer, UserManagementSerializer, UserProfileSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin, IsModerator 
@@ -120,3 +120,23 @@ class SuperUserManagementView(viewsets.GenericViewSet):
         self.get_object().delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
     
+class DonorListView(viewsets.GenericViewSet):
+    serializer_class = DonorListSerializer
+    queryset = User.objects.all().exclude(profile__donor = False)
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    # filterset_fields = ['is_superuser','is_staff',]
+    filterset_fields = {
+        'profile__blood_group': ['in'],
+        'profile__location__upazila__district__district_name': ['in'],
+        'profile__location__upazila__district__division__division_name': ['in'],
+        }
+    search_fields = ['profile__blood_group','profile__address']
+
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

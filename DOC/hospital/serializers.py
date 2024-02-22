@@ -16,6 +16,8 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             'hospital_image': {'required': False},
             'longitude': {'required': False},
             'latitude': {'required': False},
+            'ac': {'required': False},
+            'ambulance_phone_number': {'required': False},
             'slug':{'read_only':True},
             'website': {'required': False},
         }
@@ -60,9 +62,10 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         return instance
     
     def to_representation(self, instance):
+        request = self.context.get("request")
         data = super().to_representation(instance)
         if 'hospital_image' in data and data['hospital_image']:
-            data['hospital_image'] = instance.hospital_image.url
+            data['hospital_image'] = request.build_absolute_uri(instance.hospital_image.url)
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
@@ -108,3 +111,24 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         return data
 
 
+class AmbulanceListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hospital
+        fields = ['id','hospital_image','name', 'ac','ambulance_phone_number']
+
+    def to_representation(self, instance):
+        request = self.context.get("request")
+        data = super().to_representation(instance)
+        if 'hospital_image' in data and data['hospital_image']:
+            data['hospital_image'] = request.build_absolute_uri(instance.hospital_image.url)
+        address = instance.address
+        location = instance.location
+
+        union_name = location.union_name if location else ""
+        upazila_name = location.upazila.upazila_name if location and location.upazila else ""
+        district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
+        division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+    
+        data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+        
+        return data

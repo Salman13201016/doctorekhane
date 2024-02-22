@@ -31,7 +31,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'phone_number' : {'required': True},
             'user' : {'read_only': True},
-            # 'profile_image_b64' : {'read_only': True},
         }
     
     def to_representation(self, instance):
@@ -112,9 +111,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return instance
     
     def to_representation(self, instance):
+        request = self.context.get("request")
         data = super().to_representation(instance)
         if 'profile_image' in data and data['profile_image']:
-            data['profile_image'] = instance.profile_image.url
+            data['profile_image'] = request.build_absolute_uri(instance.hospital_image.url)
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
@@ -228,9 +228,10 @@ class UserManagementSerializer(serializers.ModelSerializer):
         return instance
     
     def to_representation(self, instance):
+        request = self.context.get("request")
         data = super().to_representation(instance)
         if 'profile_image' in data and data['profile_image']:
-            data['profile_image'] = instance.profile_image.url
+            data['profile_image'] = request.build_absolute_uri(instance.hospital_image.url)
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
@@ -350,9 +351,10 @@ class SuperUserManagementSerializer(serializers.ModelSerializer):
         return instance
     
     def to_representation(self, instance):
+        request = self.context.get("request")
         data = super().to_representation(instance)
         if 'profile_image' in data and data['profile_image']:
-            data['profile_image'] = instance.profile_image.url
+            data['profile_image'] = request.build_absolute_uri(instance.hospital_image.url)
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
@@ -380,4 +382,27 @@ class SuperUserManagementSerializer(serializers.ModelSerializer):
                 },
             }
 
+        return data
+
+class DonorListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id','first_name', 'last_name']
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        data = super().to_representation(instance)
+        address = instance.profile.address
+        location = instance.profile.location
+
+        union_name = location.union_name if location else ""
+        upazila_name = location.upazila.upazila_name if location and location.upazila else ""
+        district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
+        division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+        
+        data['Profile Image'] = request.build_absolute_uri(instance.profile.profile_image.url) if instance.profile.profile_image else None
+        data['Blood Group'] = instance.profile.blood_group
+        data['Phone Number'] = instance.profile.phone_number
+        data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+        
         return data
