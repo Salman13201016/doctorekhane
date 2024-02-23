@@ -22,7 +22,6 @@ class ChamberSerializer(serializers.ModelSerializer):
         return attrs
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        print(instance.hospital)
         data["hospital_name"] = instance.hospital.name
         data["hospital_address"] = instance.hospital.address
         del data["hospital"]

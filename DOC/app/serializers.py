@@ -28,6 +28,9 @@ class SpecialistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialist
         fields = ['id','specialist_name',"specialist_description","specialist_logo"]
+        extra_kwargs = {
+            'slug':{'required':False},
+        }
         def validate(self , attrs):
             if self.instance:
                 if  Specialist.objects.filter(specialist_name__iexact=attrs.get('specialist_name')).exclude(id=self.instance.id).exists():
@@ -43,6 +46,9 @@ class ServicesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Services
         fields = ['id', 'service_name','service_description', 'service_logo']
+        extra_kwargs = {
+            'slug':{'required':False},
+        }
 
     def validate(self, attrs):
         if self.instance:

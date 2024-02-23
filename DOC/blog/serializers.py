@@ -26,9 +26,6 @@ class BlogManagementSerializer(serializers.ModelSerializer):
         Override the create method to set the slug to be the same as the title.
         """
         validated_data['author'] = self.context['request'].user
-        if validated_data['author'].profile.role == "admin" or validated_data['author'].profile.role == "superadmin":
-            validated_data['published'] = True
-        validated_data['slug'] = validated_data['title'].lower().replace(" ", "-").replace(",", "").replace("&","and")
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
@@ -39,9 +36,6 @@ class BlogManagementSerializer(serializers.ModelSerializer):
             field_name = field.name
             if field_name in validated_data:
                 setattr(instance, field_name, validated_data[field_name])
-
-        # Set the slug based on the updated title
-        instance.slug = instance.title.lower().replace(" ", "-").replace(",", "").replace("&","and")
 
         instance.save()
         return instance

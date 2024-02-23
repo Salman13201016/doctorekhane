@@ -83,10 +83,10 @@ class DoctorManagementView(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_fields = {
-        'specialists__specialist_name': ['in'],
-        'location__upazila__district__district_name': ['in'],
-        'location__upazila__district__division__division_name': ['in'],
-        'chamber__hospital__name': ['in'],
+        'specialists__id': ['in'],
+        'services__id': ['in'],
+        'location__upazila__district__id': ['in'],
+        'location__upazila__district__division__id': ['in'],
     }
     search_fields = ['name',"address"]
     ordering_fields = ['name']
@@ -135,3 +135,87 @@ class DoctorManagementView(viewsets.GenericViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Doctor.DoesNotExist:
             return Response({'message': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+class DoctorFilterApi(viewsets.GenericViewSet):
+    queryset = Doctor.objects.all()
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+
+    filterset_fields = {
+        'specialists__id': ['in'],
+        'services__id': ['in'],
+        'location__upazila__district__id': ['in'],
+        'location__upazila__district__division__id': ['in'],
+    }
+
+    search_fields = ['name',"address",'chamber__hospital__name']
+    ordering_fields = ['name']
+
+    def list(self, request):
+        specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.all().values_list('specialists__id', flat=True).distinct())
+        doctorservices_data = request.GET.get("services__id__in").split(",") if "services__id__in" in request.GET else list(Doctor.objects.all().values_list('services__id', flat=True).distinct())
+        district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__district__id', flat=True).distinct())
+        division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__district__division__id', flat=True).distinct())
+        filter_specialists = list(
+            Doctor.objects.filter(
+                services__id__in = doctorservices_data,
+                location__upazila__district__id__in = district_data,
+                location__upazila__district__division__id__in = division_data,
+            ).values_list('specialists__id', 'specialists__specialist_name').distinct()
+        )
+        filter_doctorservices = list(
+            Doctor.objects.filter(
+                specialists__id__in = specialists_data,
+                location__upazila__district__id__in = district_data,
+                location__upazila__district__division__id__in = division_data,
+            ).values_list('services__id', 'services__service_name').distinct()
+        )
+        filter_district = list(
+            Doctor.objects.filter(
+                specialists__id__in = specialists_data,
+                services__id__in = doctorservices_data,
+                location__upazila__district__division__id__in = division_data,
+            ).values_list('location__upazila__district__id', 'location__upazila__district__district_name').distinct()
+        )
+        filter_division = list(
+            Doctor.objects.filter(
+                specialists__id__in = specialists_data,
+                services__id__in = doctorservices_data,
+                location__upazila__district__id__in = district_data,
+            ).values_list('location__upazila__district__division__id', 'location__upazila__district__division__division_name').distinct()
+        )
+
+        # Additional filters
+        filter_keys = {
+            "specialist_filters": [
+                {
+                    "id": item[0],
+                    "specialist_name": item[1],
+                    "count": len(Doctor.objects.filter(specialists__id=item[0]).distinct())
+                } for item in filter_specialists
+            ],
+            "division_filters": [
+                {
+                    "id": item[0],
+                    "division_name": item[1],
+                    "count": len(Doctor.objects.filter(location__upazila__district__division__id=item[0]).distinct())
+                } for item in filter_division
+            ],
+            "doctorservices_filter": [
+                {
+                    "id": item[0],
+                    "services_name": item[1],
+                    "count": len(Doctor.objects.filter(services__id=item[0]).distinct())
+                } for item in filter_doctorservices
+            ],
+            "district_filter": [
+                {
+                    "id": item[0],
+                    "district_name": item[1],
+                    "count": len(Doctor.objects.filter(location__upazila__district__id=item[0]).distinct())
+                } for item in filter_district
+            ]
+        }
+
+        response_data = filter_keys
+
+        return Response(response_data, status=status.HTTP_200_OK)

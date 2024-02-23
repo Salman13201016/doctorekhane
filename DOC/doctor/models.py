@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from app.models import ROLES, Unions,Specialist
 from hospital.models import Hospital
 from django.utils.text import slugify
+from unidecode import unidecode
+
 
 # Create your models here.
 RATING_TYPE_CHOICES=[
@@ -30,12 +32,18 @@ class Doctor(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
-        super(Doctor, self).save(*args, **kwargs)
+        if not self.slug:
+            base_slug = slugify(unidecode(self.name), allow_unicode=False)
+            self.slug = base_slug
+            n = 1
+            while Doctor.objects.filter(slug=self.slug).exists():
+                self.slug = '{}-{}'.format(base_slug, n)
+                n += 1
+        super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
-        storage, path = self.img.storage, self.img.path
+        storage, path = self.profile_image.storage, self.profile_image.path
         # Delete the model before the file
         super(Doctor, self).delete(*args, **kwargs)
         # Delete the file after the model

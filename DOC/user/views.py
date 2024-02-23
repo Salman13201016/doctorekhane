@@ -125,11 +125,10 @@ class DonorListView(viewsets.GenericViewSet):
     queryset = User.objects.all().exclude(profile__donor = False)
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
-    # filterset_fields = ['is_superuser','is_staff',]
     filterset_fields = {
         'profile__blood_group': ['in'],
-        'profile__location__upazila__district__district_name': ['in'],
-        'profile__location__upazila__district__division__division_name': ['in'],
+        'profile__location__upazila__district__id': ['in'],
+        'profile__location__upazila__district__division__id': ['in'],
         }
     search_fields = ['profile__blood_group','profile__address']
 
@@ -140,3 +139,66 @@ class DonorListView(viewsets.GenericViewSet):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DonorFilterApi(viewsets.GenericViewSet):
+    queryset = User.objects.all().exclude(profile__donor = False)
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+
+    filterset_fields = {
+        'profile__blood_group': ['in'],
+        'profile__location__upazila__district__id': ['in'],
+        'profile__location__upazila__district__division__id': ['in'],
+        }
+    search_fields = ['profile__blood_group','profile__address']
+
+    def list(self, request):
+        blood_group_data = request.GET.get("profile__blood_group__in").split(",") if "profile__blood_group__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__blood_group', flat=True).distinct())
+        district_data = request.GET.get("profile__location__upazila__district__id__in").split(",") if "profile__location__upazila__district__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__id', flat=True).distinct())
+        division_data = request.GET.get("profile__location__upazila__district__division__id__in").split(",") if "profile__location__upazila__district__division__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__division__id', flat=True).distinct())
+        filter_blood_group = list(
+            User.objects.filter(
+                profile__location__upazila__district__id__in = district_data,
+                profile__location__upazila__district__division__id__in = division_data,
+            ).values_list('profile__blood_group').distinct()
+        )
+        filter_district = list(
+            User.objects.filter(
+                profile__blood_group__in = blood_group_data,
+                profile__location__upazila__district__division__id__in = division_data,
+            ).values_list('profile__location__upazila__district__id', 'profile__location__upazila__district__district_name').distinct()
+        )
+        filter_division = list(
+            User.objects.filter(
+                profile__blood_group__in = blood_group_data,
+                profile__location__upazila__district__id__in = district_data,
+            ).values_list('profile__location__upazila__district__division__id', 'profile__location__upazila__district__division__division_name').distinct()
+        )
+
+        # Additional filters
+        filter_keys = {
+            "division_filters": [
+                {
+                    "id": item[0],
+                    "division_name": item[1],
+                    "count": len(User.objects.filter(profile__location__upazila__district__division__id=item[0],profile__donor=True).distinct())
+                } for item in filter_division
+            ],
+            "blood_group_filter": [
+                {
+                    "blood_group": item[0],
+                    "count": len(User.objects.filter(profile__blood_group=item[0],profile__donor=True).distinct())
+                } for item in filter_blood_group
+            ],
+            "district_filter": [
+                {
+                    "id": item[0],
+                    "district_name": item[1],
+                    "count": len(User.objects.filter(profile__location__upazila__district__id=item[0],profile__donor=True).distinct())
+                } for item in filter_district
+            ]
+        }
+
+        response_data = filter_keys
+
+        return Response(response_data, status=status.HTTP_200_OK)

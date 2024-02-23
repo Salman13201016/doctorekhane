@@ -52,7 +52,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
     ordering_fields = ['specialist_name']
 
     def get_permissions(self):
-        if self.action == "list":
+        if self.action == "list" or self.action=="get_speicilist_by_slug":
             self.permission_classes = []
         return super().get_permissions()
     
@@ -88,7 +88,15 @@ class SpecialistManagementView(viewsets.GenericViewSet):
         self.get_object().delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
 
-    
+    @action(detail=False, methods=['GET'], url_path='get-specialist-by-slug/(?P<slug>[-\w]+)')
+    def get_speicilist_by_slug(self, request, slug=None):
+        try:
+            blog = Specialist.objects.get(slug=slug)
+            serializer = self.get_serializer(blog)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Specialist.DoesNotExist:
+            return Response({'message': 'Specialist not found.'}, status=status.HTTP_404_NOT_FOUND)
+
 class ServicesManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = ServicesSerializer
@@ -101,7 +109,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
     ordering_fields = ['service_name']
 
     def get_permissions(self):
-        if self.action == "list":
+        if self.action == "list" or self.action=="get_service_by_slug":
             self.permission_classes = []
         return super().get_permissions()
     
@@ -136,3 +144,12 @@ class ServicesManagementView(viewsets.GenericViewSet):
     def destroy(self, request, pk=None):
         self.get_object().delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=['GET'], url_path='get-service-by-slug/(?P<slug>[-\w]+)')
+    def get_service_by_slug(self, request, slug=None):
+        try:
+            blog = Services.objects.get(slug=slug)
+            serializer = self.get_serializer(blog)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Services.DoesNotExist:
+            return Response({'message': 'Service not found.'}, status=status.HTTP_404_NOT_FOUND)

@@ -181,7 +181,6 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
         return Response(response_data, status=status.HTTP_200_OK)
 
 class HospitalFilterApi(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
     queryset = Hospital.objects.all()
     filter_backends = [SearchFilter, DjangoFilterBackend]
 

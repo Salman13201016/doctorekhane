@@ -1,5 +1,7 @@
 from django.db import models
 from django_resized import ResizedImageField
+from django.utils.text import slugify
+from unidecode import unidecode
 
 # Create your models here.
 ROLES = [
@@ -38,6 +40,17 @@ class Specialist(models.Model):
     specialist_name = models.CharField(max_length=100,blank=True,null=True)
     specialist_description = models.TextField(blank=True,null=True)
     specialist_logo = ResizedImageField(upload_to = 'specialist_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
+    slug = models.SlugField(unique=True,blank=True, null = True)
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(unidecode(self.specialist_name), allow_unicode=False)
+            self.slug = base_slug
+            n = 1
+            while Specialist.objects.filter(slug=self.slug).exists():
+                self.slug = '{}-{}'.format(base_slug, n)
+                n += 1
+        super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
@@ -50,8 +63,19 @@ class Specialist(models.Model):
 class Services(models.Model):
     service_name = models.CharField(max_length=100,blank=True,null=True)
     service_description = models.TextField(blank=True,null=True)
-    service_logo = ResizedImageField(upload_to = 'specialist_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
+    service_logo = ResizedImageField(upload_to = 'services_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
+    slug = models.SlugField(unique=True,blank=True, null = True)
     
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(unidecode(self.service_name), allow_unicode=False)
+            self.slug = base_slug
+            n = 1
+            while Services.objects.filter(slug=self.slug).exists():
+                self.slug = '{}-{}'.format(base_slug, n)
+                n += 1
+        super().save(*args, **kwargs)
+
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
         storage, path = self.img.storage, self.img.path

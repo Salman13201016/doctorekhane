@@ -3,6 +3,7 @@ from django_resized import ResizedImageField
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
 from app.models import ROLES, Unions,Services,Specialist
+from unidecode import unidecode
 
 CATEGORY_CHOICES = [
 ('hospital', 'Hospital'),
@@ -37,11 +38,18 @@ class Hospital(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
-        super(Hospital, self).save(*args, **kwargs)
+        if not self.slug:
+            base_slug = slugify(unidecode(self.name), allow_unicode=False)
+            self.slug = base_slug
+            n = 1
+            while Hospital.objects.filter(slug=self.slug).exists():
+                self.slug = '{}-{}'.format(base_slug, n)
+                n += 1
+        super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
+        print(self.img.path)
         storage, path = self.img.storage, self.img.path
         # Delete the model before the file
         super(Hospital, self).delete(*args, **kwargs)
