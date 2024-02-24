@@ -192,36 +192,65 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
                     "ac": item[0],
                     "count": len(Hospital.objects.filter(ac=item[0],ambulance = True).distinct())
                 } for item in filter_non_ac
-            ],
-            "division_filters": [
-                {
-                    "id": item[0],
-                    "division_name": item[1],
-                    "count": len(Hospital.objects.filter(location__upazila__district__division__id=item[0],ambulance = True).distinct())
-                } for item in filter_division
-            ],
-            "district_filter": [
-                {
-                    "id": item[0],
-                    "district_name": item[1],
-                    "count": len(Hospital.objects.filter(location__upazila__district__id=item[0],ambulance = True).distinct())
-                } for item in filter_district
-            ],
-            "upazila_filter": [
-                {
-                    "id": item[0],
-                    "upazila_name": item[1],
-                    "count": len(Hospital.objects.filter(location__upazila__id=item[0],ambulance = True).distinct())
-                } for item in filter_upazila
-            ],
-            "union_filter": [
-                {
-                    "id": item[0],
-                    "union_name": item[1],
-                    "count": len(Hospital.objects.filter(location__union_name=item[0],ambulance = True).distinct())
-                } for item in filter_union
             ]
         }
+        # Iterate over division filters
+        for division_item in filter_division:
+            division_id, division_name = division_item
+            # Initialize division data
+            division_data = {
+                "id": division_id,
+                "division_name": division_name,
+                "count": len(Hospital.objects.filter(location__upazila__district__division__id=division_id,ambulance = True).distinct())
+            }
+            # Initialize an empty list to hold district filters
+            division_data["district_filter"] = []
+            
+            # Iterate over district filters
+            for district_item in filter_district:
+                district_id, district_name = district_item
+                # Check if the district belongs to the current division
+                if Hospital.objects.filter(location__upazila__district__id=district_id, location__upazila__district__division__id=division_id,ambulance = True).exists():
+                    # Initialize district data
+                    district_data = {
+                        "id": district_id,
+                        "district_name": district_name,
+                        "count": len(Hospital.objects.filter(location__upazila__district__id=district_id,ambulance = True).distinct())
+                    }
+                    # Initialize an empty list to hold upazila filters
+                    district_data["upazila_filter"] = []
+
+                    # Iterate over upazila filters
+                    for upazila_item in filter_upazila:
+                        upazila_id, upazila_name = upazila_item
+                        # Check if the upazila belongs to the current district
+                        if Hospital.objects.filter(location__upazila__id=upazila_id, location__upazila__district__id=district_id,ambulance = True).exists():
+                            # Initialize upazila data
+                            upazila_data = {
+                                "id": upazila_id,
+                                "upazila_name": upazila_name,
+                                "count": len(Hospital.objects.filter(location__upazila__id=upazila_id,ambulance = True).distinct())
+                            }
+                            # Initialize an empty list to hold union filters
+                            upazila_data["union_filter"] = []
+
+                            # Iterate over union filters
+                            for union_item in filter_union:
+                                union_name = union_item[0]
+                                # Check if the union belongs to the current upazila
+                                if Hospital.objects.filter(location__union_name=union_name, location__upazila__id=upazila_id,ambulance = True).exists():
+                                    # Add union data
+                                    union_data = {
+                                        "union_name": union_name,
+                                        "count": len(Hospital.objects.filter(location__union_name=union_name,ambulance = True).distinct())
+                                    }
+                                    upazila_data["union_filter"].append(union_data)
+
+                            district_data["upazila_filter"].append(upazila_data)
+
+                    division_data["district_filter"].append(district_data)
+
+            filter_keys.setdefault("division_filters", []).append(division_data)
 
         response_data = filter_keys
 
@@ -345,26 +374,6 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                     "count": len(Hospital.objects.filter(services__id=item[0]).distinct())
                 } for item in filter_services
             ],
-            "district_filter": [
-                {
-                    "id": item[0],
-                    "district_name": item[1],
-                    "count": len(Hospital.objects.filter(location__upazila__district__id=item[0]).distinct())
-                } for item in filter_district
-            ],
-            "upazila_filter": [
-                {
-                    "id": item[0],
-                    "upazila_name": item[1],
-                    "count": len(Hospital.objects.filter(location__upazila__id=item[0]).distinct())
-                } for item in filter_upazila
-            ],
-            "union_filter": [
-                {
-                    "union_name": item[0],
-                    "count": len(Hospital.objects.filter(location__union_name=item[0]).distinct())
-                } for item in filter_union
-            ],
             "category_filters": [
                 {
                     "category": item[0],
@@ -372,6 +381,63 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 } for item in filter_category
             ],
         }
+        # Iterate over division filters
+        for division_item in filter_division:
+            division_id, division_name = division_item
+            # Initialize division data
+            division_data = {
+                "id": division_id,
+                "division_name": division_name,
+                "count": len(Hospital.objects.filter(location__upazila__district__division__id=division_id).distinct())
+            }
+            # Initialize an empty list to hold district filters
+            division_data["district_filter"] = []
+            
+            # Iterate over district filters
+            for district_item in filter_district:
+                district_id, district_name = district_item
+                # Check if the district belongs to the current division
+                if Hospital.objects.filter(location__upazila__district__id=district_id, location__upazila__district__division__id=division_id).exists():
+                    # Initialize district data
+                    district_data = {
+                        "id": district_id,
+                        "district_name": district_name,
+                        "count": len(Hospital.objects.filter(location__upazila__district__id=district_id).distinct())
+                    }
+                    # Initialize an empty list to hold upazila filters
+                    district_data["upazila_filter"] = []
+
+                    # Iterate over upazila filters
+                    for upazila_item in filter_upazila:
+                        upazila_id, upazila_name = upazila_item
+                        # Check if the upazila belongs to the current district
+                        if Hospital.objects.filter(location__upazila__id=upazila_id, location__upazila__district__id=district_id).exists():
+                            # Initialize upazila data
+                            upazila_data = {
+                                "id": upazila_id,
+                                "upazila_name": upazila_name,
+                                "count": len(Hospital.objects.filter(location__upazila__id=upazila_id).distinct())
+                            }
+                            # Initialize an empty list to hold union filters
+                            upazila_data["union_filter"] = []
+
+                            # Iterate over union filters
+                            for union_item in filter_union:
+                                union_name = union_item[0]
+                                # Check if the union belongs to the current upazila
+                                if Hospital.objects.filter(location__union_name=union_name, location__upazila__id=upazila_id).exists():
+                                    # Add union data
+                                    union_data = {
+                                        "union_name": union_name,
+                                        "union_count": len(Hospital.objects.filter(location__union_name=union_name).distinct())
+                                    }
+                                    upazila_data["union_filter"].append(union_data)
+
+                            district_data["upazila_filter"].append(upazila_data)
+
+                    division_data["district_filter"].append(district_data)
+
+            filter_keys.setdefault("division_filters", []).append(division_data)
 
         response_data = filter_keys
 

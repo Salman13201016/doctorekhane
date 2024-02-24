@@ -205,41 +205,70 @@ class DonorFilterApi(viewsets.GenericViewSet):
 
         # Additional filters
         filter_keys = {
-            "division_filters": [
-                {
-                    "id": item[0],
-                    "division_name": item[1],
-                    "count": len(User.objects.filter(profile__location__upazila__district__division__id=item[0],profile__donor=True).distinct())
-                } for item in filter_division
-            ],
             "blood_group_filter": [
                 {
                     "blood_group": item[0],
                     "count": len(User.objects.filter(profile__blood_group=item[0],profile__donor=True).distinct())
                 } for item in filter_blood_group
-            ],
-            "district_filter": [
-                {
-                    "id": item[0],
-                    "district_name": item[1],
-                    "count": len(User.objects.filter(profile__location__upazila__district__id=item[0],profile__donor=True).distinct())
-                } for item in filter_district
-            ],
-            "upazila_filter": [
-                {
-                    "id": item[0],
-                    "upazila_name": item[1],
-                    "count": len(User.objects.filter(profile__location__upazila__id=item[0],profile__donor=True).distinct())
-                } for item in filter_upazila
-            ],
-            "union_filter": [
-                {
-                    "id": item[0],
-                    "union_name": item[1],
-                    "count": len(User.objects.filter(profile__location__union_name=item[0],profile__donor=True).distinct())
-                } for item in filter_union
             ]
         }
+        # Iterate over division filters
+        for division_item in filter_division:
+            division_id, division_name = division_item
+            # Initialize division data
+            division_data = {
+                "id": division_id,
+                "division_name": division_name,
+                "count": len(User.objects.filter(profile__location__upazila__district__division__id=division_id,profile__donor=True).distinct())
+            }
+            # Initialize an empty list to hold district filters
+            division_data["district_filter"] = []
+            
+            # Iterate over district filters
+            for district_item in filter_district:
+                district_id, district_name = district_item
+                # Check if the district belongs to the current division
+                if User.objects.filter(profile__location__upazila__district__id=district_id, profile__location__upazila__district__division__id=division_id,profile__donor=True).exists():
+                    # Initialize district data
+                    district_data = {
+                        "id": district_id,
+                        "district_name": district_name,
+                        "count": len(User.objects.filter(profile__location__upazila__district__id=district_id,profile__donor=True).distinct())
+                    }
+                    # Initialize an empty list to hold upazila filters
+                    district_data["upazila_filter"] = []
+
+                    # Iterate over upazila filters
+                    for upazila_item in filter_upazila:
+                        upazila_id, upazila_name = upazila_item
+                        # Check if the upazila belongs to the current district
+                        if User.objects.filter(profile__location__upazila__id=upazila_id, profile__location__upazila__district__id=district_id,profile__donor=True).exists():
+                            # Initialize upazila data
+                            upazila_data = {
+                                "id": upazila_id,
+                                "upazila_name": upazila_name,
+                                "count": len(User.objects.filter(profile__location__upazila__id=upazila_id,profile__donor=True).distinct())
+                            }
+                            # Initialize an empty list to hold union filters
+                            upazila_data["union_filter"] = []
+
+                            # Iterate over union filters
+                            for union_item in filter_union:
+                                union_name = union_item[0]
+                                # Check if the union belongs to the current upazila
+                                if User.objects.filter(profile__location__union_name=union_name, profile__location__upazila__id=upazila_id,profile__donor=True).exists():
+                                    # Add union data
+                                    union_data = {
+                                        "union_name": union_name,
+                                        "count": len(User.objects.filter(profile__location__union_name=union_name,profile__donor=True).distinct())
+                                    }
+                                    upazila_data["union_filter"].append(union_data)
+
+                            district_data["upazila_filter"].append(upazila_data)
+
+                    division_data["district_filter"].append(district_data)
+
+            filter_keys.setdefault("division_filters", []).append(division_data)
 
         response_data = filter_keys
 

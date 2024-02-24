@@ -204,7 +204,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__upazila__district__id__in = district_data,
                 location__upazila__id__in = upazila_data,
                 location__upazila__district__division__id__in = division_data,
-            ).values_list('location__union_name','location__upazila__id','location__upazila__district__id','location__upazila__district__division__id').distinct()
+            ).values_list('location__union_name').distinct()
         )
         filter_upazila = list(
             Doctor.objects.filter(
@@ -231,40 +231,64 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                     "count": len(Doctor.objects.filter(services__id=item[0]).distinct())
                 } for item in filter_doctorservices
             ],
-            "division_filters": [
-                {
-                    "id": item[0],
-                    "division_name": item[1],
-                    "count": len(Doctor.objects.filter(location__upazila__district__division__id=item[0]).distinct())
-                } for item in filter_division
-            ],
-            "district_filter": [
-                {
-                    "id": item[0],
-                    "district_name": item[1],
-                    "count": len(Doctor.objects.filter(location__upazila__district__id=item[0]).distinct())
-                } for item in filter_district
-            ],
-            "upazila_filter": [
-                {
-                    "id": item[0],
-                    "upazila_name": item[1],
-                    "count": len(Doctor.objects.filter(location__upazila__id=item[0]).distinct())
-                } for item in filter_upazila
-            ],
-            "union_filter": [
-                {
-                    "union_name": item[0],
-                    "union_count": len(Doctor.objects.filter(location__union_name=item[0]).distinct()),
-                    "upazila_name": item[1],
-                    "upazila_count": len(Doctor.objects.filter(location__upazila__id=item[1]).distinct()),
-                    "district_name": item[2],
-                    "district_count": len(Doctor.objects.filter(location__upazila__district__id=item[2]).distinct()),
-                    "division_name": item[3],
-                    "division_count": len(Doctor.objects.filter(location__upazila__district__division__id=item[3]).distinct())
-                } for item in filter_union
-            ]
         }
+        # Iterate over division filters
+        for division_item in filter_division:
+            division_id, division_name = division_item
+            # Initialize division data
+            division_data = {
+                "id": division_id,
+                "division_name": division_name,
+                "count": len(Doctor.objects.filter(location__upazila__district__division__id=division_id).distinct())
+            }
+            # Initialize an empty list to hold district filters
+            division_data["district_filter"] = []
+            
+            # Iterate over district filters
+            for district_item in filter_district:
+                district_id, district_name = district_item
+                # Check if the district belongs to the current division
+                if Doctor.objects.filter(location__upazila__district__id=district_id, location__upazila__district__division__id=division_id).exists():
+                    # Initialize district data
+                    district_data = {
+                        "id": district_id,
+                        "district_name": district_name,
+                        "count": len(Doctor.objects.filter(location__upazila__district__id=district_id).distinct())
+                    }
+                    # Initialize an empty list to hold upazila filters
+                    district_data["upazila_filter"] = []
+
+                    # Iterate over upazila filters
+                    for upazila_item in filter_upazila:
+                        upazila_id, upazila_name = upazila_item
+                        # Check if the upazila belongs to the current district
+                        if Doctor.objects.filter(location__upazila__id=upazila_id, location__upazila__district__id=district_id).exists():
+                            # Initialize upazila data
+                            upazila_data = {
+                                "id": upazila_id,
+                                "upazila_name": upazila_name,
+                                "count": len(Doctor.objects.filter(location__upazila__id=upazila_id).distinct())
+                            }
+                            # Initialize an empty list to hold union filters
+                            upazila_data["union_filter"] = []
+
+                            # Iterate over union filters
+                            for union_item in filter_union:
+                                union_name = union_item[0]
+                                # Check if the union belongs to the current upazila
+                                if Doctor.objects.filter(location__union_name=union_name, location__upazila__id=upazila_id).exists():
+                                    # Add union data
+                                    union_data = {
+                                        "union_name": union_name,
+                                        "count": len(Doctor.objects.filter(location__union_name=union_name).distinct())
+                                    }
+                                    upazila_data["union_filter"].append(union_data)
+
+                            district_data["upazila_filter"].append(upazila_data)
+
+                    division_data["district_filter"].append(district_data)
+
+            filter_keys.setdefault("division_filters", []).append(division_data)
 
         response_data = filter_keys
 
