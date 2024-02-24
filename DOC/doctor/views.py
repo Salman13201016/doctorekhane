@@ -85,6 +85,8 @@ class DoctorManagementView(viewsets.GenericViewSet):
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],
+        'location__union_name': ['in'],
+        'location__upazila__id': ['in'],
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
     }
@@ -143,6 +145,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],
+        'location__union_name': ['in'],
+        'location__upazila__id': ['in'],
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
     }
@@ -153,6 +157,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
     def list(self, request):
         specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.all().values_list('specialists__id', flat=True).distinct())
         doctorservices_data = request.GET.get("services__id__in").split(",") if "services__id__in" in request.GET else list(Doctor.objects.all().values_list('services__id', flat=True).distinct())
+        union_data = request.GET.get("location__union_name__in").split(",") if "location__union_name__in" in request.GET else list(Doctor.objects.all().values_list('location__union_name', flat=True).distinct())
+        upazila_data = request.GET.get("location__upazila__id__in").split(",") if "location__upazila__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__id', flat=True).distinct())
         district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__district__id', flat=True).distinct())
         division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__district__division__id', flat=True).distinct())
         filter_specialists = list(
@@ -160,6 +166,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 services__id__in = doctorservices_data,
                 location__upazila__district__id__in = district_data,
                 location__upazila__district__division__id__in = division_data,
+                location__upazila__id__in = upazila_data,
+                location__union_name__in = union_data,
             ).values_list('specialists__id', 'specialists__specialist_name').distinct()
         )
         filter_doctorservices = list(
@@ -167,6 +175,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 specialists__id__in = specialists_data,
                 location__upazila__district__id__in = district_data,
                 location__upazila__district__division__id__in = division_data,
+                location__upazila__id__in = upazila_data,
+                location__union_name__in = union_data,
             ).values_list('services__id', 'services__service_name').distinct()
         )
         filter_district = list(
@@ -174,6 +184,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 specialists__id__in = specialists_data,
                 services__id__in = doctorservices_data,
                 location__upazila__district__division__id__in = division_data,
+                location__upazila__id__in = upazila_data,
+                location__union_name__in = union_data,
             ).values_list('location__upazila__district__id', 'location__upazila__district__district_name').distinct()
         )
         filter_division = list(
@@ -181,9 +193,28 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 specialists__id__in = specialists_data,
                 services__id__in = doctorservices_data,
                 location__upazila__district__id__in = district_data,
+                location__upazila__id__in = upazila_data,
+                location__union_name__in = union_data,
             ).values_list('location__upazila__district__division__id', 'location__upazila__district__division__division_name').distinct()
         )
-
+        filter_union = list(
+            Doctor.objects.filter(
+                specialists__id__in = specialists_data,
+                services__id__in = doctorservices_data,
+                location__upazila__district__id__in = district_data,
+                location__upazila__id__in = upazila_data,
+                location__upazila__district__division__id__in = division_data,
+            ).values_list('location__union_name','location__upazila__id','location__upazila__district__id','location__upazila__district__division__id').distinct()
+        )
+        filter_upazila = list(
+            Doctor.objects.filter(
+                specialists__id__in = specialists_data,
+                services__id__in = doctorservices_data,
+                location__upazila__district__id__in = district_data,
+                location__union_name__in = union_data,
+                location__upazila__district__division__id__in = division_data,
+            ).values_list('location__upazila__id', 'location__upazila__upazila_name').distinct()
+        )
         # Additional filters
         filter_keys = {
             "specialist_filters": [
@@ -193,13 +224,6 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                     "count": len(Doctor.objects.filter(specialists__id=item[0]).distinct())
                 } for item in filter_specialists
             ],
-            "division_filters": [
-                {
-                    "id": item[0],
-                    "division_name": item[1],
-                    "count": len(Doctor.objects.filter(location__upazila__district__division__id=item[0]).distinct())
-                } for item in filter_division
-            ],
             "doctorservices_filter": [
                 {
                     "id": item[0],
@@ -207,12 +231,38 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                     "count": len(Doctor.objects.filter(services__id=item[0]).distinct())
                 } for item in filter_doctorservices
             ],
+            "division_filters": [
+                {
+                    "id": item[0],
+                    "division_name": item[1],
+                    "count": len(Doctor.objects.filter(location__upazila__district__division__id=item[0]).distinct())
+                } for item in filter_division
+            ],
             "district_filter": [
                 {
                     "id": item[0],
                     "district_name": item[1],
                     "count": len(Doctor.objects.filter(location__upazila__district__id=item[0]).distinct())
                 } for item in filter_district
+            ],
+            "upazila_filter": [
+                {
+                    "id": item[0],
+                    "upazila_name": item[1],
+                    "count": len(Doctor.objects.filter(location__upazila__id=item[0]).distinct())
+                } for item in filter_upazila
+            ],
+            "union_filter": [
+                {
+                    "union_name": item[0],
+                    "union_count": len(Doctor.objects.filter(location__union_name=item[0]).distinct()),
+                    "upazila_name": item[1],
+                    "upazila_count": len(Doctor.objects.filter(location__upazila__id=item[1]).distinct()),
+                    "district_name": item[2],
+                    "district_count": len(Doctor.objects.filter(location__upazila__district__id=item[2]).distinct()),
+                    "division_name": item[3],
+                    "division_count": len(Doctor.objects.filter(location__upazila__district__division__id=item[3]).distinct())
+                } for item in filter_union
             ]
         }
 

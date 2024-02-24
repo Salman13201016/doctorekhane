@@ -127,6 +127,8 @@ class DonorListView(viewsets.GenericViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_fields = {
         'profile__blood_group': ['in'],
+        'profile__location__union_name': ['in'],
+        'profile__location__upazila__id': ['in'],
         'profile__location__upazila__district__id': ['in'],
         'profile__location__upazila__district__division__id': ['in'],
         }
@@ -147,6 +149,8 @@ class DonorFilterApi(viewsets.GenericViewSet):
 
     filterset_fields = {
         'profile__blood_group': ['in'],
+        'profile__location__union_name': ['in'],
+        'profile__location__upazila__id': ['in'],
         'profile__location__upazila__district__id': ['in'],
         'profile__location__upazila__district__division__id': ['in'],
         }
@@ -154,25 +158,49 @@ class DonorFilterApi(viewsets.GenericViewSet):
 
     def list(self, request):
         blood_group_data = request.GET.get("profile__blood_group__in").split(",") if "profile__blood_group__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__blood_group', flat=True).distinct())
+        union_data = request.GET.get("profile__location__union_name__in").split(",") if "profile__location__union_name__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__union_name', flat=True).distinct())
+        upazila_data = request.GET.get("profile__location__upazila__id__in").split(",") if "profile__location__upazila__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__id', flat=True).distinct())
         district_data = request.GET.get("profile__location__upazila__district__id__in").split(",") if "profile__location__upazila__district__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__id', flat=True).distinct())
         division_data = request.GET.get("profile__location__upazila__district__division__id__in").split(",") if "profile__location__upazila__district__division__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__division__id', flat=True).distinct())
         filter_blood_group = list(
             User.objects.filter(
                 profile__location__upazila__district__id__in = district_data,
                 profile__location__upazila__district__division__id__in = division_data,
+                profile__location__upazila__id__in = upazila_data,
+                profile__location__union_name__in = union_data,
             ).values_list('profile__blood_group').distinct()
         )
         filter_district = list(
             User.objects.filter(
                 profile__blood_group__in = blood_group_data,
                 profile__location__upazila__district__division__id__in = division_data,
+                profile__location__upazila__id__in = upazila_data,
+                profile__location__union_name__in = union_data,
             ).values_list('profile__location__upazila__district__id', 'profile__location__upazila__district__district_name').distinct()
         )
         filter_division = list(
             User.objects.filter(
                 profile__blood_group__in = blood_group_data,
                 profile__location__upazila__district__id__in = district_data,
+                profile__location__upazila__id__in = upazila_data,
+                profile__location__union_name__in = union_data,
             ).values_list('profile__location__upazila__district__division__id', 'profile__location__upazila__district__division__division_name').distinct()
+        )
+        filter_union = list(
+            User.objects.filter(
+                profile__blood_group__in = blood_group_data,
+                profile__location__upazila__district__id__in = district_data,
+                profile__location__upazila__id__in = upazila_data,
+                profile__location__upazila__district__division__id__in = division_data,
+            ).values_list('profile__location__union_name', 'profile__location__union_name').distinct()
+        )
+        filter_upazila = list(
+            User.objects.filter(
+                profile__blood_group__in = blood_group_data,
+                profile__location__upazila__district__id__in = district_data,
+                profile__location__union_name__in = union_data,
+                profile__location__upazila__district__division__id__in = division_data,
+            ).values_list('profile__location__upazila__id', 'profile__location__upazila__upazila_name').distinct()
         )
 
         # Additional filters
@@ -196,6 +224,20 @@ class DonorFilterApi(viewsets.GenericViewSet):
                     "district_name": item[1],
                     "count": len(User.objects.filter(profile__location__upazila__district__id=item[0],profile__donor=True).distinct())
                 } for item in filter_district
+            ],
+            "upazila_filter": [
+                {
+                    "id": item[0],
+                    "upazila_name": item[1],
+                    "count": len(User.objects.filter(profile__location__upazila__id=item[0],profile__donor=True).distinct())
+                } for item in filter_upazila
+            ],
+            "union_filter": [
+                {
+                    "id": item[0],
+                    "union_name": item[1],
+                    "count": len(User.objects.filter(profile__location__union_name=item[0],profile__donor=True).distinct())
+                } for item in filter_union
             ]
         }
 
