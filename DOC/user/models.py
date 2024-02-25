@@ -48,7 +48,7 @@ class Profile(models.Model):
     
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
-        storage, path = self.img.storage, self.img.path
+        storage, path = self.profile_image.storage, self.profile_image.path
         # Delete the model before the file
         super(Profile, self).delete(*args, **kwargs)
         # Delete the file after the model

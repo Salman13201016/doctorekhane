@@ -54,7 +54,7 @@ class Specialist(models.Model):
 
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
-        storage, path = self.img.storage, self.img.path
+        storage, path = self.specialist_logo.storage, self.specialist_logo.path
         # Delete the model before the file
         super(Specialist, self).delete(*args, **kwargs)
         # Delete the file after the model
@@ -78,7 +78,7 @@ class Services(models.Model):
 
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
-        storage, path = self.img.storage, self.img.path
+        storage, path = self.service_logo.storage, self.service_logo.path
         # Delete the model before the file
         super(Services, self).delete(*args, **kwargs)
         # Delete the file after the model

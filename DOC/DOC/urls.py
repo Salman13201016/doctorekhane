@@ -19,10 +19,11 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from dj_rest_auth.views import PasswordResetConfirmView
-from .views import index
+from .views import index,nearby_hospitals
 
 urlpatterns = [
-    path('', index, name="index"),         
+    path('', index, name="index"),
+    path('nearby-hospitals/', nearby_hospitals, name="nearby_hospitals"),
     path('admin/', admin.site.urls),
     path('api/app/', include('app.urls')),
     path('api/auth-app/', include('auth_app.urls')),
