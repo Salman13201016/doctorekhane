@@ -59,6 +59,15 @@ INSTALLED_APPS = [
     'blog',
     'doctor',
     'hospital',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'dj_rest_auth.registration',
+    
+    
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -70,10 +79,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'corsheaders.middleware.CorsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = "DOC.urls"
-
+SITE_ID = 1
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -196,7 +206,7 @@ AUTH_PASSWORD_VALIDATORS = [
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=365) if os.environ['DEBUG'] == '1' else timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=365),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': False,
 
@@ -273,3 +283,4 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'support@doctorekhane.com' 
 DEFAULT_FROM_EMAIL = 'support@doctorekhane.com' 
 EMAIL_HOST_PASSWORD = 'Doctor@0011'
+# SOCIAL_AUTH_JSONFIELD_ENABLED = True

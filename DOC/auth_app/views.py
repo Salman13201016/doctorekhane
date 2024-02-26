@@ -12,6 +12,8 @@ from dj_rest_auth.views import LoginView
 from django.utils.crypto import get_random_string
 # model
 from user.models import Profile
+from doctor.models import Doctor
+from hospital.models import Hospital
 from django.contrib.auth.models import User
 from .models import OTP
 # serializer
@@ -46,7 +48,6 @@ class CustomLoginView(LoginView):
                 profile = Profile.objects.get(user__email=user)
             else:
                 profile = Profile.objects.get(phone_number=user)
-
             self.request.data['username'] = profile.user.username
             self.request = request
             self.serializer = self.get_serializer(data=self.request.data)
@@ -199,3 +200,18 @@ class VerifyOTPViewReg(APIView):
         otp_obj.delete()
 
         return Response({"message":"OTP Verified"}, status=status.HTTP_200_OK)
+
+# auth
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+
+'''
+Social authjentecation
+'''
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+class FacebookLogin(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter

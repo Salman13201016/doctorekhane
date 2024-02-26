@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from .models import Doctor, DoctorService, Chamber, Experience
 # serializer
 from rest_framework import serializers
-from .serializers import  DoctorSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
+from .serializers import  DoctorManagementSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin, IsModerator, IsDoctor
@@ -78,7 +78,7 @@ from django_filters.rest_framework import DjangoFilterBackend
         
 class DoctorManagementView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
-    serializer_class = DoctorSerializer
+    serializer_class = DoctorManagementSerializer
     queryset = Doctor.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]

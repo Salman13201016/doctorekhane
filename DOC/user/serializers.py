@@ -191,7 +191,7 @@ class UserManagementSerializer(serializers.ModelSerializer):
         random_number = random.randint(100000, 999999)
         username = first_name+last_name+str(random_number)
         user, created = User.objects.get_or_create(username=username, email=email, first_name=first_name, last_name=last_name)
-        subject = 'Welcome To DOC',
+        subject = 'Welcome To Doctor Ekhane',
         message =(
                 f'Dear {user.first_name}'
                 f'\nYour username is {user.username}'

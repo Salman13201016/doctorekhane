@@ -17,3 +17,4 @@ def create_others(sender, instance, created, **kwargs):
         # Creating DoctorServices
         for service_data in instance.services.all():
             DoctorService.objects.create(doctor=instance, service_name=service_data.service_name)
+

@@ -16,4 +16,7 @@ urlpatterns = [
     path('change-password/', views.UpdatePasswordView.as_view()),
     path('signup-otp/', views.SendOTPViewReg.as_view()),
     path('verify-signup-otp/', views.VerifyOTPViewReg.as_view()),
+    path('social/google/', views.GoogleLogin.as_view(), name='google_login'),
+    path('social/facebook/', views.FacebookLogin.as_view(), name='fb_login'),
+    path('accounts/', include('allauth.urls'), name='socialaccount_signup'),
 ]

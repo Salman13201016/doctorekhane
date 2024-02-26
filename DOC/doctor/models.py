@@ -27,6 +27,9 @@ class Doctor(models.Model):
     role = models.CharField(max_length=50, null=False, default="doctor", choices=ROLES)
     location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
+    email = models.EmailField(null=True, blank=True)
+    phone_number = models.CharField(max_length=100,null=True, blank=True)
+    password = models.CharField(max_length=100,null=True, blank=True)
 
     def __str__(self):
         return self.name

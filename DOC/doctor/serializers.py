@@ -2,7 +2,15 @@ from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 from .models import Doctor, Chamber , DoctorService , Experience
 from app.models import Specialist
-
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from DOC.settings import DEFAULT_FROM_EMAIL
+import random
+import string
+def generate_random_password():
+    """Generate a random password string."""
+    chars = string.ascii_letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(8))
 
 class ChamberSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
@@ -61,7 +69,7 @@ class DoctorServiceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
         return attrs
 
-class DoctorSerializer(serializers.ModelSerializer):
+class DoctorManagementSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
     chamber = ChamberSerializer(required = False, allow_null = True, many = True)
     experiences = ExperienceSerializer(required = False, allow_null = True, many = True)
@@ -73,6 +81,8 @@ class DoctorSerializer(serializers.ModelSerializer):
              'license_no' : { 'required': True }, 
              'specialists' : { 'required': True }, 
              'qualification' : { 'required': True }, 
+             'phone_number' : { 'required': True }, 
+             'email' : { 'required': True }, 
              'slug': {'read_only': True},
         }
         def validate(self , attrs):
