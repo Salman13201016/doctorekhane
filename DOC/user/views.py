@@ -2,7 +2,8 @@ from rest_framework import  status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 # model
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+from user.models import User
 # serializer
 from rest_framework import serializers
 from .serializers import  DonorListSerializer, SuperUserManagementSerializer, UserManagementSerializer, UserProfileSerializer
@@ -22,7 +23,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 class ProfileView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.filter(role='general')
 
     def get_object(self):
         return self.request.user
@@ -82,7 +83,8 @@ class UserManagementView(viewsets.GenericViewSet):
         if requested_user.profile.role=="admin":
             raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         requested_user.delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
 
 class SuperUserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
@@ -118,7 +120,8 @@ class SuperUserManagementView(viewsets.GenericViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
     
 class DonorListView(viewsets.GenericViewSet):
     serializer_class = DonorListSerializer

@@ -74,7 +74,8 @@ class BlogManagementView(viewsets.GenericViewSet):
     
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
     
     @action(detail=False, methods=['GET'], url_path='get-blog-by-slug/(?P<slug>[-\w]+)')
     def get_blog_by_slug(self, request, slug=None):

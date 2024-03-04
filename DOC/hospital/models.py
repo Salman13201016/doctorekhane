@@ -30,9 +30,6 @@ class Hospital(models.Model):
     # Hospital Profile Fields
     hospital_image = ResizedImageField(upload_to='hospital/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     website = models.URLField(null=True, blank=True)
-    ambulance = models.BooleanField(default = False)
-    ac = models.BooleanField(default = False)
-    ambulance_phone_number = models.CharField(max_length=100,null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -56,4 +53,24 @@ class Hospital(models.Model):
         # Delete the file after the model
         storage.delete(path)
     
-
+class Ambulance(models.Model):
+    name = models.CharField(max_length=100,null=True, blank=True)
+    hospital = models.BooleanField(default = True)
+    hospital_name = models.ForeignKey(Hospital,on_delete=models.CASCADE,blank = True, null = True)
+    ac = models.BooleanField(default = False)
+    phone_number = models.CharField(max_length=100,null=True, blank=True)
+    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
+    address = models.TextField(max_length=500, blank=True, null=False)
+    slug = models.SlugField(unique=True)
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(unidecode(self.name), allow_unicode=False)
+            self.slug = base_slug
+            n = 1
+            while Ambulance.objects.filter(slug=self.slug).exists():
+                self.slug = '{}-{}'.format(base_slug, n)
+                n += 1
+        super().save(*args, **kwargs)

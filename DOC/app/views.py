@@ -86,7 +86,8 @@ class SpecialistManagementView(viewsets.GenericViewSet):
 
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
 
     @action(detail=False, methods=['GET'], url_path='get-specialist-by-slug/(?P<slug>[-\w]+)')
     def get_speicilist_by_slug(self, request, slug=None):
@@ -143,7 +144,8 @@ class ServicesManagementView(viewsets.GenericViewSet):
 
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
     
     @action(detail=False, methods=['GET'], url_path='get-service-by-slug/(?P<slug>[-\w]+)')
     def get_service_by_slug(self, request, slug=None):

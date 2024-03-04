@@ -23,7 +23,7 @@ from .views import index,nearby_hospitals
 
 urlpatterns = [
     path('', index, name="index"),
-    path('nearby-hospitals/', nearby_hospitals, name="nearby_hospitals"),
+    path('api/nearby-hospitals/', nearby_hospitals, name="nearby_hospitals"),
     path('admin/', admin.site.urls),
     path('api/app/', include('app.urls')),
     path('api/auth-app/', include('auth_app.urls')),

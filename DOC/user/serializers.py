@@ -6,7 +6,8 @@ from DOC.settings import DEFAULT_FROM_EMAIL
 
 # model
 from .models import Profile
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+from user.models import User
 from django.contrib.auth.password_validation import validate_password
 
 #serializer
@@ -76,11 +77,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'is_superuser' : {'read_only': True},
         }
     def validate(self, attrs):
-        profile = attrs.get('profile', None)
-        if self.instance:
-            if "role" in profile:
-                raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
-                
+        profile = attrs.get('profile', None)                
         if self.instance and User.objects.filter(email=attrs.get('email')).exclude(id=self.instance.id).exists():
             raise serializers.ValidationError({"message": 'Email already exists'})
         elif not self.instance and User.objects.filter(email=attrs.get('email')).exists():

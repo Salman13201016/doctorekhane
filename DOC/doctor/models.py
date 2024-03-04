@@ -1,6 +1,7 @@
 from django.db import models
 from django_resized import ResizedImageField
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+from user.models import User
 from app.models import ROLES, Unions,Specialist
 from hospital.models import Hospital
 from django.utils.text import slugify
@@ -8,6 +9,11 @@ from unidecode import unidecode
 
 
 # Create your models here.
+GENDER_CHOCIES=[
+        ('male',"Male"),
+        ("female","Female"),
+        ("other","Other")
+    ]
 RATING_TYPE_CHOICES=[
     (1,'1'),
     (2,'2'),
@@ -17,6 +23,7 @@ RATING_TYPE_CHOICES=[
 ]
             
 class Doctor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100, null = True, blank = True)
     qualification = models.CharField(max_length=500, null = True, blank = True)
     profile_image = ResizedImageField(upload_to='Doctor_Profile/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
@@ -27,9 +34,8 @@ class Doctor(models.Model):
     role = models.CharField(max_length=50, null=False, default="doctor", choices=ROLES)
     location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
-    email = models.EmailField(null=True, blank=True)
-    phone_number = models.CharField(max_length=100,null=True, blank=True)
-    password = models.CharField(max_length=100,null=True, blank=True)
+    phone_number = models.CharField(max_length=50, null=True)
+    gender = models.CharField(max_length=6, blank=True, null=True, choices=GENDER_CHOCIES)
 
     def __str__(self):
         return self.name
@@ -78,13 +84,13 @@ class DoctorService(models.Model):
     def __str__(self):
         return self.service_name
 
-class Review(models.Model):
-    user = models.ForeignKey(User, null=True,on_delete=models.SET_NULL,blank=True)
-    # order = models.ForeignKey("sale.Order", on_delete=models.CASCADE,null=True,blank=True)
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='review',null=True,blank=True)
-    rating=models.IntegerField(choices=RATING_TYPE_CHOICES,blank=True,null=True)
-    content = models.TextField(max_length=1500,blank=True,null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+# class Review(models.Model):
+#     user = models.ForeignKey(User, null=True,on_delete=models.SET_NULL,blank=True)
+#     # order = models.ForeignKey("sale.Order", on_delete=models.CASCADE,null=True,blank=True)
+#     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='review',null=True,blank=True)
+#     rating=models.IntegerField(choices=RATING_TYPE_CHOICES,blank=True,null=True)
+#     content = models.TextField(max_length=1500,blank=True,null=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ('user', 'doctor')
+#     class Meta:
+#         unique_together = ('user', 'doctor')

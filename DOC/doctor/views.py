@@ -4,9 +4,10 @@ from rest_framework.decorators import action
 
 # model
 from .models import Doctor, DoctorService, Chamber, Experience
+from user.models import User
 # serializer
 from rest_framework import serializers
-from .serializers import  DoctorManagementSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
+from .serializers import  DoctorProfileSerializer,DoctorProfileManagementSerializer,DoctorManagementSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin, IsModerator, IsDoctor
@@ -75,7 +76,26 @@ from django_filters.rest_framework import DjangoFilterBackend
 #             serializer.save()
 #             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
+class DoctorProfileView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsDoctor]
+    serializer_class = DoctorProfileManagementSerializer
+    queryset = User.objects.filter(role='doctor')
+    def get_object(self):
+        return self.request.user
+
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class DoctorManagementView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
     serializer_class = DoctorManagementSerializer
@@ -128,7 +148,8 @@ class DoctorManagementView(viewsets.GenericViewSet):
         if requested_user.profile.role=="admin":
             raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         requested_user.delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['GET'], url_path='get-doctor-by-slug/(?P<slug>[-\w]+)')
     def get_doctor_by_slug(self, request, slug=None):
         try:

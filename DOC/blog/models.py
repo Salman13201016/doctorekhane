@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+from user.models import User
 from ckeditor.fields import RichTextField
 from django_resized import ResizedImageField
 from django.utils.text import slugify

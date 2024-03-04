@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 
-from .models import Hospital
+from .models import Hospital,Ambulance
 from app.models import Services,Specialist
 from doctor.models import Chamber
 
@@ -16,8 +16,6 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             'hospital_image': {'required': False},
             'longitude': {'required': False},
             'latitude': {'required': False},
-            'ac': {'required': False},
-            'ambulance_phone_number': {'required': False},
             'slug':{'read_only':True},
             'website': {'required': False},
         }
@@ -113,14 +111,15 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
 
 class AmbulanceListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Hospital
-        fields = ['id','hospital_image','name', 'ac','ambulance_phone_number']
+        model = Ambulance
+        fields = "__all__"
+        extra_kwargs = {
+            'hospital_name': {'required': False},
+            'slug':{'read_only':True},
+        }
 
     def to_representation(self, instance):
-        request = self.context.get("request")
         data = super().to_representation(instance)
-        if 'hospital_image' in data and data['hospital_image']:
-            data['hospital_image'] = request.build_absolute_uri(instance.hospital_image.url)
         address = instance.address
         location = instance.location
 

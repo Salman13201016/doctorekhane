@@ -183,6 +183,7 @@ if 'MYSQL' in os.environ and os.environ['MYSQL']==1:
         'sql_mode':'traditional'
     }
 
+AUTH_USER_MODEL = 'user.User'
 
 
 # Password validation

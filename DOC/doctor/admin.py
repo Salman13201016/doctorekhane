@@ -5,6 +5,7 @@ class DoctorModelAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug" : ('name',)}
     list_display = (
         'id',
+        'user',
         'name',
         'experience_year',
         'license_no',
