@@ -48,7 +48,7 @@ class ProfileView(viewsets.GenericViewSet):
 class UserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = UserManagementSerializer
-    queryset = User.objects.all().exclude(is_superuser=True)
+    queryset = User.objects.filter(role="general").exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     # filterset_fields = ['is_superuser','is_staff',]
@@ -89,7 +89,7 @@ class UserManagementView(viewsets.GenericViewSet):
 class SuperUserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
     serializer_class = SuperUserManagementSerializer
-    queryset = User.objects.all().exclude(is_superuser=True)
+    queryset = User.objects.filter(role="general").exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_fields = ['profile__role']
@@ -125,7 +125,7 @@ class SuperUserManagementView(viewsets.GenericViewSet):
     
 class DonorListView(viewsets.GenericViewSet):
     serializer_class = DonorListSerializer
-    queryset = User.objects.all().exclude(profile__donor = False)
+    queryset = User.objects.filter(role="general").exclude(profile__donor = False)
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_fields = {
@@ -147,7 +147,7 @@ class DonorListView(viewsets.GenericViewSet):
 
 
 class DonorFilterApi(viewsets.GenericViewSet):
-    queryset = User.objects.all().exclude(profile__donor = False)
+    queryset = User.objects.filter(role="general").exclude(profile__donor = False)
     filter_backends = [SearchFilter, DjangoFilterBackend]
 
     filterset_fields = {
@@ -160,11 +160,11 @@ class DonorFilterApi(viewsets.GenericViewSet):
     search_fields = ['profile__blood_group','profile__address']
 
     def list(self, request):
-        blood_group_data = request.GET.get("profile__blood_group__in").split(",") if "profile__blood_group__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__blood_group', flat=True).distinct())
-        union_data = request.GET.get("profile__location__union_name__in").split(",") if "profile__location__union_name__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__union_name', flat=True).distinct())
-        upazila_data = request.GET.get("profile__location__upazila__id__in").split(",") if "profile__location__upazila__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__id', flat=True).distinct())
-        district_data = request.GET.get("profile__location__upazila__district__id__in").split(",") if "profile__location__upazila__district__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__id', flat=True).distinct())
-        division_data = request.GET.get("profile__location__upazila__district__division__id__in").split(",") if "profile__location__upazila__district__division__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__division__id', flat=True).distinct())
+        blood_group_data = request.GET.get("profile__blood_group__in").split(",") if "profile__blood_group__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__blood_group', flat=True).distinct())
+        union_data = request.GET.get("profile__location__union_name__in").split(",") if "profile__location__union_name__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__union_name', flat=True).distinct())
+        upazila_data = request.GET.get("profile__location__upazila__id__in").split(",") if "profile__location__upazila__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__id', flat=True).distinct())
+        district_data = request.GET.get("profile__location__upazila__district__id__in").split(",") if "profile__location__upazila__district__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__district__id', flat=True).distinct())
+        division_data = request.GET.get("profile__location__upazila__district__division__id__in").split(",") if "profile__location__upazila__district__division__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__district__division__id', flat=True).distinct())
         filter_blood_group = list(
             User.objects.filter(
                 profile__location__upazila__district__id__in = district_data,
