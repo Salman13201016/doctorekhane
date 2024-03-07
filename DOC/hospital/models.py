@@ -46,7 +46,6 @@ class Hospital(models.Model):
     
     def delete(self, *args, **kwargs):
         # You have to prepare what you need before delete the model
-        print(self.img.path)
         storage, path = self.hospital_image.storage, self.hospital_image.path
         # Delete the model before the file
         super(Hospital, self).delete(*args, **kwargs)
