@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Hospital,Ambulance
-from .serializers import HospitalManagementSerializer,AmbulanceListSerializer
+from .serializers import HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
@@ -102,7 +102,11 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
             self.permission_classes = []
         return super().get_permissions()
     
-
+    def get_serializer_class(self):
+        if self.action == "retrieve" or self.action == "create" or self.action == "partial_update":
+            return AmbulanceManagementSerializer
+        return super().get_serializer_class()
+    
     def list(self, request):
         serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
         page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))

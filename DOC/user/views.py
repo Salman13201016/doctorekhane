@@ -52,7 +52,7 @@ class UserManagementView(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     # filterset_fields = ['is_superuser','is_staff',]
-    filterset_fields = ['profile__role']
+    filterset_fields = ['role']
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
 
     def retrieve(self, request, pk=None):
@@ -80,7 +80,7 @@ class UserManagementView(viewsets.GenericViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def destroy(self, request, pk=None):
         requested_user = self.get_object()
-        if requested_user.profile.role=="admin":
+        if requested_user.role=="admin":
             raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         requested_user.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
@@ -92,7 +92,7 @@ class SuperUserManagementView(viewsets.GenericViewSet):
     queryset = User.objects.filter(role="general").exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
-    filterset_fields = ['profile__role']
+    filterset_fields = ['role']
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
 
     def retrieve(self, request, pk=None):

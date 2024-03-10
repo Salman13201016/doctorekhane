@@ -20,7 +20,6 @@ def nearby_hospitals(request):
         except Exception as e:
             error_message = f"Error: Unable to detect your location. {str(e)}"
             # Log the error for debugging
-            print(error_message)
             return JsonResponse({'message': error_message}, status=500)
         
         # Fetch hospitals from the database
@@ -44,5 +43,4 @@ def nearby_hospitals(request):
     except Exception as e:
         error_message = f"Error: Unable to fetch nearby hospitals. {str(e)}"
         # Log the error for debugging
-        print(error_message)
         return JsonResponse({'message': error_message}, status=500)

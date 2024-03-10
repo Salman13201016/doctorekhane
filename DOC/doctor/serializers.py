@@ -32,8 +32,8 @@ class ChamberSerializer(serializers.ModelSerializer):
         return attrs
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data["hospital_name"] = instance.hospital.name
-        data["hospital_address"] = instance.hospital.address
+        data["hospital_name"] = instance.hospital.name if instance.hospital else None
+        data["hospital_address"] = instance.hospital.address if instance.hospital else None
         del data["hospital"]
         return data
 

@@ -145,7 +145,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def destroy(self, request, pk=None):
         requested_user = self.get_object()
-        if requested_user.profile.role=="admin":
+        if requested_user.user.role=="admin":
             raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         requested_user.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)

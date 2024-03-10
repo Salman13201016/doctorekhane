@@ -31,7 +31,6 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             if Hospital.objects.filter(email__iexact=attrs.get('email')).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError({'message': 'Email already exists.'})
         else:
-            print("b")
             if Hospital.objects.filter(email__iexact=attrs.get('email')).exists():
                 raise serializers.ValidationError({'message': 'Email already exists.'})
 
@@ -127,14 +126,85 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        address = instance.address
-        location = instance.location
+        if instance.hospital:
+            hospital = Hospital.objects.get(id = instance.hospital_name.id)
+            data['hospital_name'] = hospital.name
+            address = hospital.address
+            location = hospital.location
 
-        union_name = location.union_name if location else ""
-        upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-        district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-        division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+            union_name = location.union_name if location else ""
+            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
+            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
+            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+            
+            data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+            data.pop("location", None)
+        else:
+            address = instance.address
+            location = instance.location
+
+            union_name = location.union_name if location else ""
+            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
+            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
+            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+        
+            data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+            data.pop("location", None)
+        return data
     
-        data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+class AmbulanceManagementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ambulance
+        fields = "__all__"
+        extra_kwargs = {
+            'hospital_name': {'required': False},
+            'slug':{'read_only':True},
+        }
+
+    def validate(self, data):
+        if data.get('hospital') and not data.get('hospital_name'):
+            raise serializers.ValidationError({"message":"Hospital name cannot be empty if hospital is True."})
+        return data
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.hospital :# Including division, district, and upazila information in the representation
+            hospital = Hospital.objects.get(id = instance.hospital_name.id)
+            data['hospital_name'] = hospital.name
+            address = hospital.address
+            location = hospital.location
+
+            union_name = location.union_name if location else ""
+            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
+            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
+            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+            
+            data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+            data.pop("location", None)
+        else:
+            if 'location' in data and data['location']:
+                union = instance.location
+                upazila = union.upazila
+                district = upazila.district
+                division = district.division
+
+                data['location'] = {
+                    'division': {
+                        'id': division.id,
+                        'name': division.division_name,
+                    },
+                    'district': {
+                        'id': district.id,
+                        'name': district.district_name,
+                    },
+                    'upazila': {
+                        'id': upazila.id,
+                        'name': upazila.upazila_name,
+                    },
+                    'union': {
+                        'id': union.id,
+                        'name': union.union_name,
+                    },
+                }
         
         return data
