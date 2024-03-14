@@ -14,7 +14,7 @@ urlpatterns = [
     path('dj-rest-auth/', include('dj_rest_auth.urls')),
     path('login/', views.UserLoginView.as_view()),
     path('login-doctor/', views.DoctorLoginView.as_view()),
-    path('login-hospital/', views.DoctorLoginView.as_view()),
+    path('login-hospital/', views.HospitalLoginView.as_view()),
     path('password-reset-otp/', views.SendOTPView.as_view()),
     path('verify-reset-otp/', views.VerifyOTPView.as_view()),
     path('change-password/', views.UpdatePasswordView.as_view()),

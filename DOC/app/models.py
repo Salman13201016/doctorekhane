@@ -9,7 +9,7 @@ ROLES = [
     ('general', 'General'),
     ('superadmin', 'Super Admin'),
     ('doctor', 'Doctor'),
-    ('hospital', 'hospital'),
+    ('hospital', 'Hospital'),
 ]
 # Create your models here.
 class Divisions(models.Model):

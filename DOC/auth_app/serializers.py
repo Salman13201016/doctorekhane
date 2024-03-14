@@ -129,7 +129,7 @@ class UserHospitalSerializer(serializers.ModelSerializer):
         fields = ["phone_number", "hospital_image","location","address"]
         extra_kwargs = {
              'location' : { 'required': True }, 
-             'address' : { 'required': True }, 
+             'address' : { 'required': True },
              'phone_number' : { 'required': True }, 
              'slug': {'read_only': True},
         }

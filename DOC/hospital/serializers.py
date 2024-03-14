@@ -73,7 +73,7 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
     hospital = HospitalProfileSerializer()
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_superuser', 'doctor']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_superuser', 'hospital']
         extra_kwargs = {
             'username': {'read_only': True},
             'is_superuser': {'read_only': True},
@@ -102,14 +102,16 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
                 if Hospital.objects.filter(profile=True,phone_number__iexact=attrs.get('phone_number')).exists():
                     raise serializers.ValidationError({'message': 'Phone number already exists.'})
 
-            return attrs
+        return attrs
+    
     def update(self, instance, validated_data):
-        if 'specialists' in validated_data:
-            instance.specialists.set(validated_data.pop('specialists'))
-        if 'services' in validated_data:
-            instance.services.set(validated_data.pop('services'))
+        hospital_data = validated_data.pop('hospital', {})
+        if 'specialists' in hospital_data:
+            instance.hospital.specialists.set(hospital_data.pop('specialists'))
+        if 'services' in hospital_data:
+            instance.hospital.services.set(hospital_data.pop('services'))
 
-        # Update doctor fields
+        # Update hospital fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -161,7 +163,7 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
             if services:
                 service_names.append(services.service_name)  # Replace 'specialist_name' with the correct attribute name
         data['service'] = service_names
-        data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
+        data['doctor_count'] = Chamber.objects.filter(hospital=instance.hospital).count()
         return data
 
 class HospitalManagementSerializer(serializers.ModelSerializer):
@@ -217,7 +219,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         if 'services' in validated_data:
             instance.services.set(validated_data.pop('services'))
 
-        # Update doctor fields
+        # Update hospital fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()

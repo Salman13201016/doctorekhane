@@ -19,7 +19,7 @@ from auth_app.permissions import IsSuperAdmin,IsHospital,IsModerator
 class HospitalProfileView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated,IsHospital]
     serializer_class = HospitalProfileManagementSerializer
-    queryset = User.objects.filter(role='doctor')
+    queryset = User.objects.filter(role='hospital')
     def get_object(self):
         return self.request.user
 

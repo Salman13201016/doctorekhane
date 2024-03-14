@@ -7,8 +7,8 @@ router = DefaultRouter()
 # router.register('experience', views.ExperienceManagementView, basename='experience')
 # router.register('doctor-service', views.DoctorServiceManagementView, basename='doctor_service')
 router.register('management', views.DoctorManagementView, basename='doctor-management')
-router.register('doctor-profile-list', views.DoctorProfileListView, basename='doctor-profile-list')
-router.register('doctor-profile', views.DoctorProfileView, basename='doctor-profile')
+router.register('profile-list', views.DoctorProfileListView, basename='doctor-profile-list')
+router.register('profile', views.DoctorProfileView, basename='doctor-profile')
 router.register('doctor-filter-keys', views.DoctorFilterApi, basename='doctor-filter')
 
 urlpatterns = [

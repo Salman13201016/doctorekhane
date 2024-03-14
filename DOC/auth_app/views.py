@@ -188,7 +188,7 @@ class HospitalLoginView(LoginView):
                     "is_superuser" : hospital.user.is_superuser,
                     "profile" : {
                         "phone_number" : hospital.phone_number,
-                        "profile_image": request.build_absolute_uri(hospital.hospital_image.url) if hospital.profile_image else None,
+                        "profile_image": request.build_absolute_uri(hospital.hospital_image.url) if hospital.hospital_image else None,
                     },
                 }
             }
