@@ -25,6 +25,7 @@ RATING_TYPE_CHOICES=[
 class Doctor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100, null = True, blank = True)
+    email = models.EmailField(max_length=100, null = True, blank = True)
     qualification = models.CharField(max_length=500, null = True, blank = True)
     profile_image = ResizedImageField(upload_to='Doctor_Profile/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     experience_year = models.CharField(max_length=100, null = True, blank = True)
@@ -36,7 +37,7 @@ class Doctor(models.Model):
     address = models.TextField(max_length=500, blank=True, null=False)
     phone_number = models.CharField(max_length=50, null=True)
     gender = models.CharField(max_length=6, blank=True, null=True, choices=GENDER_CHOCIES)
-
+    profile = models.BooleanField(default = False)
     def __str__(self):
         return self.name
     

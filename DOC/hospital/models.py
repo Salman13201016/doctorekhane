@@ -4,6 +4,7 @@ from ckeditor.fields import RichTextField
 from django.utils.text import slugify
 from app.models import ROLES, Unions,Services,Specialist
 from unidecode import unidecode
+from user.models import User
 
 CATEGORY_CHOICES = [
 ('hospital', 'Hospital'),
@@ -12,6 +13,7 @@ CATEGORY_CHOICES = [
 ]
 
 class Hospital(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=255,null=True, blank=True)
     location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
@@ -30,6 +32,7 @@ class Hospital(models.Model):
     # Hospital Profile Fields
     hospital_image = ResizedImageField(upload_to='hospital/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     website = models.URLField(null=True, blank=True)
+    profile = models.BooleanField(default = False)
 
     def __str__(self):
         return self.name

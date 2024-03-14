@@ -86,6 +86,7 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
              'phone_number' : { 'required': True }, 
              'email' : { 'required': True }, 
              'slug': {'read_only': True},
+             'profile': {'read_only': True},
         }
     
     def to_representation(self, instance):
@@ -145,14 +146,14 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
             phone_number = doctorProfile.get('phone_number')
 
             if self.instance:
-                if license_no and Doctor.objects.filter(license_no=license_no).exclude(id=self.instance.doctor.id).exists():
+                if license_no and Doctor.objects.filter(profile=True,license_no=license_no).exclude(id=self.instance.doctor.id).exists():
                     raise serializers.ValidationError({"message": 'License number already exists'})
-                if phone_number and Doctor.objects.filter(phone_number=phone_number).exclude(id=self.instance.doctor.id).exists():
+                if phone_number and Doctor.objects.filter(profile=True,phone_number=phone_number).exclude(id=self.instance.doctor.id).exists():
                     raise serializers.ValidationError({"message": 'Phone number already exists'})
             else:
-                if license_no and Doctor.objects.filter(license_no=license_no).exists():
+                if license_no and Doctor.objects.filter(profile=True,license_no=license_no).exists():
                     raise serializers.ValidationError({"message": 'License number already exists'})
-                if phone_number and Doctor.objects.filter(phone_number=phone_number).exists():
+                if phone_number and Doctor.objects.filter(profile=True,phone_number=phone_number).exists():
                     raise serializers.ValidationError({"message": 'Phone number already exists'})
 
         return super().validate(attrs)
@@ -252,7 +253,6 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class DoctorManagementSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
     chamber = ChamberSerializer(required = False, allow_null = True, many = True)
@@ -271,9 +271,9 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         }
         def validate(self , attrs):
             if self.instance:
-                if  Doctor.objects.filter(license_no__iexact=attrs.get('license_no')).exclude(id=self.instance.id).exists():
+                if  Doctor.objects.filter(profile=False,license_no__iexact=attrs.get('license_no')).exclude(id=self.instance.id).exists():
                             raise serializers.ValidationError({"message": 'License No already exists'})
-            elif Doctor.objects.filter(license_no__iexact=attrs.get('license_no')).exists():
+            elif Doctor.objects.filter(profile=False,license_no__iexact=attrs.get('license_no')).exists():
                 raise serializers.ValidationError({"message": 'License No already exists.'})
             return attrs
         

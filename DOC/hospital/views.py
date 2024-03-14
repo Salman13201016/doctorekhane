@@ -6,17 +6,39 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Hospital,Ambulance
-from .serializers import HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer
+from user.models import User
+from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin,IsHospital,IsModerator
 # Create your views here.
+
+
+class HospitalProfileView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsHospital]
+    serializer_class = HospitalProfileManagementSerializer
+    queryset = User.objects.filter(role='doctor')
+    def get_object(self):
+        return self.request.user
+
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class HospitalManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsHospital]
     serializer_class = HospitalManagementSerializer
-    queryset = Hospital.objects.all()
+    queryset = Hospital.objects.filter(profile=False)
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
 
@@ -85,7 +107,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
 class AmbulanceManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = AmbulanceListSerializer
-    queryset = Ambulance.objects.all().exclude()
+    queryset = Ambulance.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_fields = {
@@ -148,7 +170,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
 
 class AmbulanceFilterApi(viewsets.GenericViewSet):
     serializer_class = AmbulanceListSerializer
-    queryset = Ambulance.objects.all().exclude()
+    queryset = Ambulance.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_fields = {
@@ -167,10 +189,10 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
             ac = [True]
         if "ac" in request.GET and request.GET.get("ac") == "false":
             ac = [False]
-        union_data = request.GET.get("location__union_name__in").split(",") if "location__union_name__in" in request.GET else list(Ambulance.objects.all().exclude().values_list('location__union_name', flat=True).distinct())
-        upazila_data = request.GET.get("location__upazila__id__in").split(",") if "location__upazila__id__in" in request.GET else list(Ambulance.objects.all().exclude().values_list('location__upazila__id', flat=True).distinct())
-        district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Ambulance.objects.all().exclude().values_list('location__upazila__district__id', flat=True).distinct())
-        division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Ambulance.objects.all().exclude().values_list('location__upazila__district__division__id', flat=True).distinct())
+        union_data = request.GET.get("location__union_name__in").split(",") if "location__union_name__in" in request.GET else list(Ambulance.objects.all().values_list('location__union_name', flat=True).distinct())
+        upazila_data = request.GET.get("location__upazila__id__in").split(",") if "location__upazila__id__in" in request.GET else list(Ambulance.objects.all().values_list('location__upazila__id', flat=True).distinct())
+        district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Ambulance.objects.all().values_list('location__upazila__district__id', flat=True).distinct())
+        division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Ambulance.objects.all().values_list('location__upazila__district__division__id', flat=True).distinct())
         filter_district = list(
             Ambulance.objects.filter(
                 ac__in = ac,
@@ -299,7 +321,7 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
         return Response(response_data, status=status.HTTP_200_OK)
 
 class HospitalFilterApi(viewsets.GenericViewSet):
-    queryset = Hospital.objects.all()
+    queryset = Hospital.objects.filter(profile=False)
     filter_backends = [SearchFilter, DjangoFilterBackend]
 
     filterset_fields = {
@@ -315,13 +337,13 @@ class HospitalFilterApi(viewsets.GenericViewSet):
     ordering_fields = ['name']
 
     def list(self, request):
-        specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Hospital.objects.all().values_list('specialists__id', flat=True).distinct())
-        services_data = request.GET.get("services__id__in").split(",") if "services__id__in" in request.GET else list(Hospital.objects.all().values_list('services__id', flat=True).distinct())
-        union_data = request.GET.get("location__union_name__in").split(",") if "location__union_name__in" in request.GET else list(Hospital.objects.all().values_list('location__union_name', flat=True).distinct())
-        upazila_data = request.GET.get("location__upazila__id__in").split(",") if "location__upazila__id__in" in request.GET else list(Hospital.objects.all().values_list('location__upazila__id', flat=True).distinct())
-        district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Hospital.objects.all().values_list('location__upazila__district__id', flat=True).distinct())
-        division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Hospital.objects.all().values_list('location__upazila__district__division__id', flat=True).distinct())
-        category_data = request.GET.get("category__in").split(",") if "category__in" in request.GET else list(Hospital.objects.all().values_list('category', flat=True).distinct())
+        specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('specialists__id', flat=True).distinct())
+        services_data = request.GET.get("services__id__in").split(",") if "services__id__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('services__id', flat=True).distinct())
+        union_data = request.GET.get("location__union_name__in").split(",") if "location__union_name__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('location__union_name', flat=True).distinct())
+        upazila_data = request.GET.get("location__upazila__id__in").split(",") if "location__upazila__id__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('location__upazila__id', flat=True).distinct())
+        district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('location__upazila__district__id', flat=True).distinct())
+        division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('location__upazila__district__division__id', flat=True).distinct())
+        category_data = request.GET.get("category__in").split(",") if "category__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('category', flat=True).distinct())
         filter_specialists = list(
             Hospital.objects.filter(
                 services__id__in = services_data,
@@ -484,3 +506,33 @@ class HospitalFilterApi(viewsets.GenericViewSet):
         response_data = filter_keys
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+class HospitalProfileListView(viewsets.GenericViewSet):
+    permission_classes = [IsHospital,IsAuthenticated]
+    serializer_class = HospitalManagementSerializer
+    queryset = Hospital.objects.filter(profile=True)
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filterset_fields = {
+        'specialists__id': ['in'],
+        'services__id': ['in'],
+        'location__union_name': ['in'],
+        'location__upazila__id': ['in'],
+        'location__upazila__district__id': ['in'],
+        'location__upazila__district__division__id': ['in'],
+        'category': ['in'],
+    }
+    search_fields = ["user__first_name","user__last_name","user__email","address"]
+    ordering_fields = ['user__first_name']
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True, context={"request":request})
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

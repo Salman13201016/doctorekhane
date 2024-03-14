@@ -7,12 +7,14 @@ from dj_rest_auth.views import PasswordResetView, PasswordResetConfirmView, Pass
 router = DefaultRouter()
 router.register('signup', views.UserRegistrationView, basename='signup')
 router.register('signup-doctor', views.DoctorRegistrationView, basename='signup-doctor')
+router.register('signup-hospital', views.HospitalRegistrationView, basename='signup-hospital')
 
 urlpatterns = [
     path('', include(router.urls)),   
     path('dj-rest-auth/', include('dj_rest_auth.urls')),
     path('login/', views.UserLoginView.as_view()),
     path('login-doctor/', views.DoctorLoginView.as_view()),
+    path('login-hospital/', views.DoctorLoginView.as_view()),
     path('password-reset-otp/', views.SendOTPView.as_view()),
     path('verify-reset-otp/', views.VerifyOTPView.as_view()),
     path('change-password/', views.UpdatePasswordView.as_view()),
