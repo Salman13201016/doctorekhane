@@ -1,13 +1,14 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
 # model
-from .models import Doctor, DoctorService, Chamber, Experience
+from .models import Doctor, DoctorService, Chamber, Experience, Review
 from user.models import User
 # serializer
 from rest_framework import serializers
-from .serializers import  DoctorProfileSerializer,DoctorProfileManagementSerializer,DoctorManagementSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
+from .serializers import  DoctorProfileSerializer,DoctorProfileManagementSerializer,DoctorManagementSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer, ReviewSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin, IsModerator, IsDoctor
@@ -344,3 +345,58 @@ class DoctorProfileListView(viewsets.GenericViewSet):
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+class ReviewViewSet(viewsets.GenericViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+    queryset =Review.objects.all()
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    search_fields = ['user__first_name']
+
+    def get_permissions(self):
+        if self.action == "list":
+            self.permission_classes = []
+        if self.action == "delete":
+            self.permission_classes = [IsAuthenticated, IsModerator]
+        return super().get_permissions()
+
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    @action(detail=False, methods=['PATCH'])
+    def update_reviews(self, request):
+        if request.method == 'PATCH':
+            for data in request.data:
+                new_rating = data.get("rating")
+                new_content = data.get("content")
+                order_id = data.get("order")
+                product_id = data.get("product")
+                try:
+                    review = get_object_or_404(Review, order=order_id, product=product_id)
+                    review.rating = new_rating
+                    review.content = new_content
+                    review.save()
+                except Review.DoesNotExist:
+                    pass
+
+            return Response({"message": "Reviews updated successfully"})
+
+        return Response(status=400, data={"message": "Invalid request method"})
+    
+
+    def destroy(self, request, pk=None):
+        self.get_object().delete()
+        return Response({'status':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)

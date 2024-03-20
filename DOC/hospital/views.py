@@ -107,7 +107,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
 class AmbulanceManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = AmbulanceListSerializer
-    queryset = Ambulance.objects.all()
+    queryset = Ambulance.objects.all().order_by('-id')
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_fields = {

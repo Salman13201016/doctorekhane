@@ -105,9 +105,9 @@ class DoctorLoginView(LoginView):
 
             doctor = None
             if "@" in user:
-                doctor = Doctor.objects.get(user__email=user)
+                doctor = Doctor.objects.get(user__email=user,profile=True)
             else:
-                doctor = Doctor.objects.get(phone_number=user)
+                doctor = Doctor.objects.get(phone_number=user,profile=True)
             self.request.data['username'] = doctor.user.username
             self.request = request
             self.serializer = self.get_serializer(data=self.request.data)
@@ -165,9 +165,9 @@ class HospitalLoginView(LoginView):
 
             hospital = None
             if "@" in user:
-                hospital = Hospital.objects.get(user__email=user)
+                hospital = Hospital.objects.get(user__email=user,profile=True)
             else:
-                hospital = Hospital.objects.get(phone_number=user)
+                hospital = Hospital.objects.get(phone_number=user,profile=True)
             self.request.data['username'] = hospital.user.username
             self.request = request
             self.serializer = self.get_serializer(data=self.request.data)

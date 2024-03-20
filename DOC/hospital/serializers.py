@@ -52,20 +52,20 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
                     },
                 }
             specialist_ids = data.pop('specialists', [])
-            specialist_names = []
+            specialists = []
             for specialist_id in specialist_ids:
                 specialist = Specialist.objects.filter(id=specialist_id).first()
                 if specialist:
-                    specialist_names.append(specialist.specialist_name)  # Replace 'specialist_name' with the correct attribute name
-            data['specialist'] = specialist_names
+                    specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+            data['specialist'] = specialists
 
             service_ids = data.pop('services', [])
-            service_names = []
+            services = []
             for service_id in service_ids:
-                services = Services.objects.filter(id=service_id).first()
-                if services:
-                    service_names.append(services.service_name)  # Replace 'specialist_name' with the correct attribute name
-            data['service'] = service_names
+                service = Services.objects.filter(id=service_id).first()
+                if service:
+                    services.append({"id": service.id,"name": service.service_name})  # Replace 'specialist_name' with the correct attribute name
+            data['service'] = services
             data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
             return data
 
@@ -148,22 +148,7 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
                     'name': union.union_name,
                 },
             }
-        specialist_ids = data.pop('specialists', [])
-        specialist_names = []
-        for specialist_id in specialist_ids:
-            specialist = Specialist.objects.filter(id=specialist_id).first()
-            if specialist:
-                specialist_names.append(specialist.specialist_name)  # Replace 'specialist_name' with the correct attribute name
-        data['specialist'] = specialist_names
 
-        service_ids = data.pop('services', [])
-        service_names = []
-        for service_id in service_ids:
-            services = Services.objects.filter(id=service_id).first()
-            if services:
-                service_names.append(services.service_name)  # Replace 'specialist_name' with the correct attribute name
-        data['service'] = service_names
-        data['doctor_count'] = Chamber.objects.filter(hospital=instance.hospital).count()
         return data
 
 class HospitalManagementSerializer(serializers.ModelSerializer):
@@ -257,20 +242,20 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
                 },
             }
         specialist_ids = data.pop('specialists', [])
-        specialist_names = []
+        specialists = []
         for specialist_id in specialist_ids:
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
-                specialist_names.append(specialist.specialist_name)  # Replace 'specialist_name' with the correct attribute name
-        data['specialist'] = specialist_names
+                specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+        data['specialist'] = specialists
 
         service_ids = data.pop('services', [])
-        service_names = []
+        services = []
         for service_id in service_ids:
-            services = Services.objects.filter(id=service_id).first()
-            if services:
-                service_names.append(services.service_name)  # Replace 'specialist_name' with the correct attribute name
-        data['service'] = service_names
+            service = Services.objects.filter(id=service_id).first()
+            if service:
+                services.append({"id": service.id,"name": service.service_name})  # Replace 'specialist_name' with the correct attribute name
+        data['service'] = services
         data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
         return data
 
@@ -288,6 +273,7 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if instance.hospital:
             hospital = Hospital.objects.get(id = instance.hospital_name.id)
+            data['hospital_id'] = hospital.id
             data['hospital_name'] = hospital.name
             address = hospital.address
             location = hospital.location
@@ -331,6 +317,7 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
         if instance.hospital :# Including division, district, and upazila information in the representation
             hospital = Hospital.objects.get(id = instance.hospital_name.id)
             data['hospital_name'] = hospital.name
+            data['hospital_id'] = hospital.id
             address = hospital.address
             location = hospital.location
 

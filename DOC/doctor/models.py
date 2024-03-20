@@ -60,13 +60,16 @@ class Doctor(models.Model):
         storage.delete(path)
     
 class Chamber(models.Model):
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='chamber', null = True, blank = True)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='chambers', null=True, blank=True)
     hospital = models.ForeignKey(Hospital,on_delete=models.CASCADE, max_length=500, null = True, blank = True)
     fee = models.CharField(max_length=500, null = True, blank = True)
     availability = models.CharField(max_length=500, null = True, blank = True)
+    personal = models.BooleanField(default=False)
+    name = models.CharField(max_length=500, null = True, blank = True)
+    address = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
-        return str(self.hospital)
+        return str(self.hospital.name) if self.hospital else self.name
 
 class Experience(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='experiences', null = True, blank = True)
@@ -85,13 +88,13 @@ class DoctorService(models.Model):
     def __str__(self):
         return self.service_name
 
-# class Review(models.Model):
-#     user = models.ForeignKey(User, null=True,on_delete=models.SET_NULL,blank=True)
-#     # order = models.ForeignKey("sale.Order", on_delete=models.CASCADE,null=True,blank=True)
-#     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='review',null=True,blank=True)
-#     rating=models.IntegerField(choices=RATING_TYPE_CHOICES,blank=True,null=True)
-#     content = models.TextField(max_length=1500,blank=True,null=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
+class Review(models.Model):
+    user = models.ForeignKey(User, null=True,on_delete=models.SET_NULL,blank=True)
+    appointment = models.ForeignKey("appointment.DoctorAppointment", on_delete=models.CASCADE,null=True,blank=True)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='review',null=True,blank=True)
+    rating=models.IntegerField(choices=RATING_TYPE_CHOICES,blank=True,null=True)
+    content = models.TextField(max_length=1500,blank=True,null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-#     class Meta:
-#         unique_together = ('user', 'doctor')
+    class Meta:
+        unique_together = ('user', 'doctor',"appointment")

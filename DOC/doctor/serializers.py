@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
-from .models import Doctor, Chamber , DoctorService , Experience
+
+from hospital.models import Hospital
+from .models import Doctor, Chamber , DoctorService , Experience, Review
+from appointment.models import DoctorAppointment
 from app.models import Specialist
 # from django.contrib.auth.models import User
 from user.models import User
@@ -24,17 +27,41 @@ class ChamberSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        if self.instance:
-            if Chamber.objects.filter(hospital__name=attrs.get('hospital'), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError({"message": 'Doctor With Same Chamber already exists'})
-        elif Chamber.objects.filter(hospital__name=attrs.get('hospital'), doctor=attrs.get('doctor')).exists():
-            raise serializers.ValidationError({"message": 'Doctor With Same Chamber already exists'})
-        return attrs
+        hospital_name = attrs.get('hospital') if attrs.get('hospital') else None
+        # Check if the hospital has profile set to False
+        hospital_has_profile = Hospital.objects.filter(name=hospital_name, profile=False).exists()
+        if hospital_name is not None:
+            if hospital_has_profile:
+                if self.instance:
+                    if Chamber.objects.filter(hospital__name=attrs.get('hospital'), availability=attrs.get('availability')).exclude(id=self.instance.id).exists():
+                        raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
+                elif Chamber.objects.filter(hospital__name=attrs.get('hospital'), availability=attrs.get('availability')).exists():
+                    raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
+            else:
+                raise serializers.ValidationError({"message": 'This is not a valid chamber'})
+        else:
+            if self.instance:
+                if Chamber.objects.filter(name=attrs.get('name'), availability=attrs.get('availability')).exclude(id=self.instance.id).exists():
+                    raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
+            elif Chamber.objects.filter(name=attrs.get('name'), availability=attrs.get('availability')).exists():
+                raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
+        return super().validate(attrs)
+    
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data["hospital_name"] = instance.hospital.name if instance.hospital else None
-        data["hospital_address"] = instance.hospital.address if instance.hospital else None
-        del data["hospital"]
+        if not instance.personal:
+            data["chamber_name"] = instance.hospital.name if instance.hospital else None
+            data["chamber_address"] = instance.hospital.address if instance.hospital else None
+            del data["hospital"]
+            del data["name"]
+            del data["address"]
+        else:
+            data["chamber_name"] = instance.name
+            data["chamber_address"] = instance.address
+            del data["hospital"]
+            del data["name"]
+            del data["address"]
+
         return data
 
 class ExperienceSerializer(serializers.ModelSerializer):
@@ -121,12 +148,14 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
                 },
             }
         specialist_ids = data.pop('specialists', [])
-        specialist_names = []
+        specialists = []
         for specialist_id in specialist_ids:
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
-                specialist_names.append(specialist.specialist_name)  # Replace 'specialist_name' with the correct attribute name
-        data['specialist'] = specialist_names
+                specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+        data['specialist'] = specialists
+        data['reviews'] = list(Review.objects.filter(doctor=instance).values("user__first_name","user__last_name","created_at","content","rating"))
+
         return data
 
 class DoctorProfileManagementSerializer(serializers.ModelSerializer):
@@ -250,8 +279,8 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                     'name': union.union_name,
                 },
             }
+        data['reviews'] = list(Review.objects.filter(doctor=instance).values("user__first_name","user__last_name","created_at","content","rating"))
         return data
-
 
 class DoctorManagementSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
@@ -269,13 +298,18 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
              'email' : { 'required': True }, 
              'slug': {'read_only': True},
         }
-        def validate(self , attrs):
-            if self.instance:
-                if  Doctor.objects.filter(profile=False,license_no__iexact=attrs.get('license_no')).exclude(id=self.instance.id).exists():
-                            raise serializers.ValidationError({"message": 'License No already exists'})
-            elif Doctor.objects.filter(profile=False,license_no__iexact=attrs.get('license_no')).exists():
-                raise serializers.ValidationError({"message": 'License No already exists.'})
-            return attrs
+    def validate(self , attrs):
+        if self.instance:
+            if  Doctor.objects.filter(profile=False,license_no__iexact=attrs.get('license_no')).exclude(id=self.instance.id).exists():
+                        raise serializers.ValidationError({"message": 'License No already exists'})
+        elif Doctor.objects.filter(profile=False,license_no__iexact=attrs.get('license_no')).exists():
+            raise serializers.ValidationError({"message": 'License No already exists.'})
+        if self.instance:
+            if  Doctor.objects.filter(profile=False,phone_number__iexact=attrs.get('phone_number')).exclude(id=self.instance.id).exists():
+                        raise serializers.ValidationError({"message": 'Phone Number already exists'})
+        elif Doctor.objects.filter(profile=False,phone_number__iexact=attrs.get('phone_number')).exists():
+            raise serializers.ValidationError({"message": 'Phone Number already exists.'})
+        return attrs
         
     def create(self, validated_data):
         getchamberInfo = validated_data.pop('chamber', [])
@@ -390,10 +424,54 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
                 },
             }
         specialist_ids = data.pop('specialists', [])
-        specialist_names = []
+        specialists = []
         for specialist_id in specialist_ids:
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
-                specialist_names.append(specialist.specialist_name)  # Replace 'specialist_name' with the correct attribute name
-        data['specialist'] = specialist_names
+                specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+        data['specialist'] = specialists
+        data['reviews'] = list(Review.objects.filter(doctor=instance).values("user__first_name","user__last_name","created_at","content","rating"))
         return data
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = '__all__'
+        # read_only_fields = ('user',)
+        lookup_fields = ['product']
+
+    def validate(self, attrs):
+        appointment = attrs.get('appointment')
+        doctor = attrs.get('doctor')
+
+        
+        if self.instance:
+            return attrs
+
+        if not DoctorAppointment.objects.filter(id=appointment.id, doctor=doctor).exists():
+            raise serializers.ValidationError({"message":"You haven't appointment this doctor yet."})
+        
+        if Review.objects.filter(appointment=appointment, doctor=doctor).exists():
+            raise serializers.ValidationError({"message":"You have already written a review for this doctor."})
+    
+        return super().validate(attrs)
+    
+    def update(self, instance, validated_data):
+        # Prevent updating the user and order fields
+        validated_data.pop('user', None)
+        validated_data.pop('appointment', None)
+
+        # Update the remaining fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
+        representation['appointment'] = instance.appointment.appointment_id 
+        representation['doctor'] = instance.doctor.name   
+        return representation

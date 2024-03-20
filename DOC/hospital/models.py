@@ -76,3 +76,11 @@ class Ambulance(models.Model):
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
         super().save(*args, **kwargs)
+
+# class TestCatagory(models.Model):
+#     name = models.CharField(max_length=100,null = True, blank= True)
+
+# class Test(models.Model):
+#     catagory = models.ForeignKey(TestCatagory,null = True, blank = True)
+#     test_name = models.CharField(max_length=200,null=True,blank= True)
+#     price

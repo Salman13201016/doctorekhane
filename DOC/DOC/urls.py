@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/blog/', include('blog.urls')),
     path('api/doctor/', include('doctor.urls')),
     path('api/hospital/', include('hospital.urls')),
+    path('api/appointment/', include('appointment.urls')),
     
     path('create-password/password-reset-confirm/<uidb64>/<token>/',
          PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
