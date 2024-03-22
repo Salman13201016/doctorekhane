@@ -60,17 +60,13 @@ class HospitalManagementView(viewsets.GenericViewSet):
         return super().get_permissions()
     
     def list(self, request):
-        # Apply filters
-        queryset = self.filter_queryset(self.get_queryset()).order_by('-id')
-
-        # Apply pagination
+        queryset = self.filter_queryset(self.get_queryset()).order_by("-id")
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def create(self,requst):
         serializer =self.get_serializer(data=requst.data)

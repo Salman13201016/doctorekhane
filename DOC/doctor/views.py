@@ -124,12 +124,14 @@ class DoctorManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def list(self, request):
-        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True, context={"request":request})
-        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        queryset = self.filter_queryset(self.get_queryset()).order_by("-id")
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
     
     def create(self, request):
         serializer = self.get_serializer(data=request.data, context={"request":request})

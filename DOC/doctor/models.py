@@ -60,7 +60,7 @@ class Doctor(models.Model):
         storage.delete(path)
     
 class Chamber(models.Model):
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='chambers', null=True, blank=True)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='chamber', null=True, blank=True)
     hospital = models.ForeignKey(Hospital,on_delete=models.CASCADE, max_length=500, null = True, blank = True)
     fee = models.CharField(max_length=500, null = True, blank = True)
     availability = models.CharField(max_length=500, null = True, blank = True)
