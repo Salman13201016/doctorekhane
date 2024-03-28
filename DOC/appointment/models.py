@@ -1,6 +1,7 @@
 from django.db import models
 from user.models import User
 from doctor.models import Chamber, Doctor
+from hospital.models import Hospital,Test
 # Create your models here.
 class DoctorAppointment(models.Model):
     appointment_id = models.CharField(max_length=100,null = True, blank= True)
@@ -18,3 +19,19 @@ class DoctorAppointment(models.Model):
     class Meta:
         unique_together = ('user', 'doctor', "chamber", "date","time") 
 
+# Create your models here.
+class TestAppointment(models.Model):
+    appointment_id = models.CharField(max_length=100,null = True, blank= True)
+    user = models.ForeignKey(User,on_delete=models.SET_NULL,null = True, blank= True)
+    test = models.ForeignKey(Test,on_delete=models.SET_NULL,null= True, blank= True)
+    hospital = models.ForeignKey(Hospital,on_delete=models.SET_NULL, null= True, blank= True)
+    date = models.DateField(null = True, blank= True)
+    time = models.TimeField(null = True, blank= True)
+    fee = models.IntegerField(null = True, blank = True)
+    comment = models.TextField(null=True, blank= True)
+    private = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return str(self.user)
+    class Meta:
+        unique_together = ('user', 'test', "hospital", "date","time") 

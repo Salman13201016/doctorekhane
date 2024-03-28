@@ -5,6 +5,7 @@ from . import views
 # /hospital/
 router = DefaultRouter()
 router.register('management', views.HospitalManagementView, basename='hospital')
+router.register('test-management', views.TestManagementView, basename='test')
 router.register('profile-list', views.HospitalProfileListView, basename='hospital-profile-list')
 router.register('profile', views.HospitalProfileView, basename='hospital-profile')
 router.register('ambulance', views.AmbulanceManagementView, basename='ambulance')

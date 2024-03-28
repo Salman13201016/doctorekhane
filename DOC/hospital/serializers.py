@@ -3,9 +3,80 @@ from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from user.models import User
 
-from .models import Hospital,Ambulance
+from .models import Hospital,Ambulance,Test,TestCatagory
 from app.models import Services,Specialist
 from doctor.models import Chamber
+
+class TestCatagorySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    class Meta:
+        model = TestCatagory
+        fields = "__all__"
+        extra_kwargs = {
+            'id' : {'read_only': False},
+        }
+
+class TestSerializer(serializers.ModelSerializer):
+    catagory = TestCatagorySerializer(required=True)
+
+    class Meta:
+        model = Test
+        fields = "__all__"
+
+    def validate(self, attrs):
+        catagory_data = attrs.get('catagory')
+        catagory_name = catagory_data.get('name')
+        catagory_instance = TestCatagory.objects.filter(name=catagory_name).first()
+        if self.instance:
+            if Test.objects.filter(test_name__iexact=attrs.get('test_name'), catagory=catagory_instance).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({'message': 'Test with this catagory already exists.'})
+        else:
+            if Test.objects.filter(test_name__iexact=attrs.get('test_name'), catagory=catagory_instance).exists():
+                raise serializers.ValidationError({'message': 'Test with this catagory already exists.'})
+        return attrs
+
+    
+    def create(self, validated_data):
+        catagory_data = validated_data.pop('catagory')
+        catagory_name = catagory_data.get('name')
+        catagory_instance, _ = TestCatagory.objects.get_or_create(name=catagory_name)
+        
+        validated_data['catagory'] = catagory_instance
+        return Test.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        catagory_data = validated_data.pop('catagory', None)  # Get catagory data or None if not present
+        if catagory_data:
+            catagory_id = catagory_data.get('id')
+            print(catagory_id)
+            if catagory_id:
+                catagory_instance = TestCatagory.objects.filter(id=catagory_id).first()
+                if catagory_instance:
+                    # Update catagory instance attributes
+                    for attr, value in catagory_data.items():
+                        setattr(catagory_instance, attr, value)
+                    catagory_instance.save()
+        # Update Test instance attributes
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        
+        # Retrieve catagory instance
+        catagory_instance = instance.catagory
+        
+        # Add catagory name and ID to the representation
+        data['catagory'] = {
+            'id': catagory_instance.id,
+            'name': catagory_instance.name
+        }
+        
+        return data
+
 
 class HospitalProfileSerializer(serializers.ModelSerializer):
     hospital_image = Base64ImageField(required=False,allow_null=True)
@@ -66,6 +137,13 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
                 if service:
                     services.append({"id": service.id,"name": service.service_name})  # Replace 'specialist_name' with the correct attribute name
             data['service'] = services
+            test_ids = data.pop('tests', [])
+            tests = []
+            for test_id in test_ids:
+                test = Test.objects.filter(id=test_id).first()
+                if service:
+                    tests.append({"id": test.id,"name": test.test_name})  # Replace 'specialist_name' with the correct attribute name
+            data['test'] = tests
             data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
             return data
 
@@ -110,6 +188,9 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
             instance.hospital.specialists.set(hospital_data.pop('specialists'))
         if 'services' in hospital_data:
             instance.hospital.services.set(hospital_data.pop('services'))
+        if 'tests' in hospital_data:
+            instance.hospital.tests.set(hospital_data.pop('tests'))
+
 
         # Update hospital fields
         for attr, value in validated_data.items():
@@ -191,10 +272,12 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         specialists_data = validated_data.pop('specialists', [])
         services_data = validated_data.pop('services', [])
+        tests_data = validated_data.pop('tests', [])
 
         hospital = Hospital.objects.create(**validated_data)
         hospital.specialists.set(specialists_data)
         hospital.services.set(services_data)
+        hospital.tests.set(tests_data)
 
         return hospital
 
@@ -203,6 +286,8 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             instance.specialists.set(validated_data.pop('specialists'))
         if 'services' in validated_data:
             instance.services.set(validated_data.pop('services'))
+        if 'tests' in validated_data:
+            instance.tests.set(validated_data.pop('tests'))
 
         # Update hospital fields
         for attr, value in validated_data.items():
@@ -256,6 +341,13 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             if service:
                 services.append({"id": service.id,"name": service.service_name})  # Replace 'specialist_name' with the correct attribute name
         data['service'] = services
+        test_ids = data.pop('tests', [])
+        tests = []
+        for test_id in test_ids:
+            test = Test.objects.filter(id=test_id).first()
+            if test:
+                tests.append({"id": test.id,"name": test.test_name})  # Replace 'specialist_name' with the correct attribute name
+        data['test'] = tests
         data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
         return data
 
@@ -355,3 +447,4 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
                 }
         
         return data
+

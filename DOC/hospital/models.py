@@ -12,6 +12,32 @@ CATEGORY_CHOICES = [
 ('diagnostic_center', 'Diagnostic Center'),
 ]
 
+class TestCatagory(models.Model):
+    name = models.CharField(max_length=100,null = True, blank= True)
+
+    def __str__(self):
+        return str(self.name)
+
+class Test(models.Model):
+    catagory = models.ForeignKey(TestCatagory,on_delete=models.CASCADE,null = True, blank = True)
+    test_name = models.CharField(max_length=200,null=True,blank= True)
+    fee = models.CharField(max_length=200,null=True,blank= True)
+    delivery_time = models.CharField(max_length=200,null=True,blank= True)
+    slug = models.CharField(max_length=200,null=True,blank=True)
+
+    def __str__(self): 
+        return str(self.test_name)
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(unidecode(self.test_name), allow_unicode=False)
+            self.slug = base_slug
+            n = 1
+            while Test.objects.filter(slug=self.slug).exists():
+                self.slug = '{}-{}'.format(base_slug, n)
+                n += 1
+        super().save(*args, **kwargs)
+
 class Hospital(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=255,null=True, blank=True)
@@ -25,8 +51,9 @@ class Hospital(models.Model):
     category = models.CharField(max_length=20, null = True, blank = True, choices=CATEGORY_CHOICES)
     longitude = models.CharField(max_length=100,null=True, blank=True)
     latitude = models.CharField(max_length=100,null=True, blank=True)
-    specialists = models.ManyToManyField(Specialist, blank = True,)
-    services = models.ManyToManyField(Services, blank = True,)
+    specialists = models.ManyToManyField(Specialist, blank = True)
+    services = models.ManyToManyField(Services, blank = True)
+    tests = models.ManyToManyField(Test,blank=True)
     role = models.CharField(max_length=50, null=False, default="hospital", choices=ROLES)
     slug = models.SlugField(unique=True)
     # Hospital Profile Fields
@@ -76,11 +103,3 @@ class Ambulance(models.Model):
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
         super().save(*args, **kwargs)
-
-# class TestCatagory(models.Model):
-#     name = models.CharField(max_length=100,null = True, blank= True)
-
-# class Test(models.Model):
-#     catagory = models.ForeignKey(TestCatagory,null = True, blank = True)
-#     test_name = models.CharField(max_length=200,null=True,blank= True)
-#     price

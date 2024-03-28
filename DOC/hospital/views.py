@@ -5,9 +5,9 @@ from rest_framework.decorators import action
 # filter search sort
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Hospital,Ambulance
+from .models import Hospital,Ambulance,Test
 from user.models import User
-from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer
+from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer,TestSerializer
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
@@ -15,6 +15,66 @@ from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin,IsHospital,IsModerator
 # Create your views here.
 
+
+class TestManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated, IsModerator]
+    serializer_class = TestSerializer
+    queryset = Test.objects.filter()
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+
+    filterset_fields = {
+        'catagory__id': ['in'],
+    }
+    
+    search_fields = ['test_name']
+    ordering_fields = ['test_name']
+
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve" or self.action=="get_test_by_slug":
+            self.permission_classes = []
+        return super().get_permissions()
+    
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset()).order_by("-id")
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self,requst):
+        serializer =self.get_serializer(data=requst.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, pk=None):
+        self.get_object().delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
+    
+    @action(detail=False, methods=['GET'], url_path='get-test-by-slug/(?P<slug>[-\w]+)')
+    def get_test_by_slug(self, request, slug=None):
+        try:
+            test = Test.objects.get(slug=slug)
+            serializer = self.get_serializer(test)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Test.DoesNotExist:
+            return Response({'message': 'Test not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 class HospitalProfileView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated,IsHospital]
@@ -45,12 +105,14 @@ class HospitalManagementView(viewsets.GenericViewSet):
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],
+        'tests__id': ['in'],
         'location__union_name': ['in'],
         'location__upazila__id': ['in'],
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
         'category': ['in'],
     }
+
     search_fields = ['name',"address"]
     ordering_fields = ['name']
 
@@ -323,6 +385,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],
+        'tests__id': ['in'],
         'location__union_name': ['in'],
         'location__upazila__id': ['in'],
         'location__upazila__district__id': ['in'],
