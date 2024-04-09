@@ -183,7 +183,6 @@ class HospitalLoginView(LoginView):
                     "username": hospital.user.username,
                     "email": hospital.user.email,
                     "first_name": hospital.user.first_name,
-                    "last_name": hospital.user.last_name,
                     "role" : hospital.user.role,
                     "is_superuser" : hospital.user.is_superuser,
                     "profile" : {

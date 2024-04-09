@@ -21,16 +21,25 @@ RATING_TYPE_CHOICES=[
     (4,'4'),
     (5,'5'),
 ]
-            
+DOCTOR_TITLES = [
+        ('Dr.', 'Dr.'),
+        ('Prof. Dr.', 'Prof. Dr.'),
+        ('Assoc. Prof. Dr.', 'Assoc. Prof. Dr.'),
+        ('Asst. Prof. Dr.', 'Asst. Prof. Dr.'),
+        ('Consultant', 'Consultant'),
+    ]
+       
 class Doctor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100, null = True, blank = True)
     email = models.EmailField(max_length=100, null = True, blank = True)
+    title = models.CharField(max_length=20, choices=DOCTOR_TITLES, default='Dr.')
     qualification = models.CharField(max_length=500, null = True, blank = True)
     profile_image = ResizedImageField(upload_to='Doctor_Profile/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     experience_year = models.CharField(max_length=100, null = True, blank = True)
     specialists = models.ManyToManyField(Specialist, blank = True,)
     license_no = models.CharField(max_length=100, null = True, blank = True)
+    nid = models.CharField(max_length=100, null = True, blank = True)
     slug = models.CharField(max_length=100, null = True, blank = True)
     role = models.CharField(max_length=50, null=False, default="doctor", choices=ROLES)
     location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
@@ -52,13 +61,13 @@ class Doctor(models.Model):
         super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
-        # You have to prepare what you need before delete the model
-        storage, path = self.profile_image.storage, self.profile_image.path
-        # Delete the model before the file
-        super(Doctor, self).delete(*args, **kwargs)
-        # Delete the file after the model
-        storage.delete(path)
-    
+        if self.profile_image:# You have to prepare what you need before delete the model
+            storage, path = self.profile_image.storage, self.profile_image.path
+            # Delete the model before the file
+            super(Doctor, self).delete(*args, **kwargs)
+            # Delete the file after the model
+            storage.delete(path)
+        
 class Chamber(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='chamber', null=True, blank=True)
     hospital = models.ForeignKey(Hospital,on_delete=models.CASCADE, max_length=500, null = True, blank = True)

@@ -29,9 +29,10 @@ class Blog(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        # You have to prepare what you need before delete the model
-        storage, path = self.img.storage, self.img.path
-        # Delete the model before the file
-        super(Blog, self).delete(*args, **kwargs)
-        # Delete the file after the model
-        storage.delete(path)
+        if self.img:
+            # You have to prepare what you need before delete the model
+            storage, path = self.img.storage, self.img.path
+            # Delete the model before the file
+            super(Blog, self).delete(*args, **kwargs)
+            # Delete the file after the model
+            storage.delete(path)

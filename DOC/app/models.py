@@ -53,12 +53,13 @@ class Specialist(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        # You have to prepare what you need before delete the model
-        storage, path = self.specialist_logo.storage, self.specialist_logo.path
-        # Delete the model before the file
-        super(Specialist, self).delete(*args, **kwargs)
-        # Delete the file after the model
-        storage.delete(path)
+        if self.specialist_logo:
+            # You have to prepare what you need before delete the model
+            storage, path = self.specialist_logo.storage, self.specialist_logo.path
+            # Delete the model before the file
+            super(Specialist, self).delete(*args, **kwargs)
+            # Delete the file after the model
+            storage.delete(path)
 
 class Services(models.Model):
     service_name = models.CharField(max_length=100,blank=True,null=True)
@@ -77,9 +78,10 @@ class Services(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        # You have to prepare what you need before delete the model
-        storage, path = self.service_logo.storage, self.service_logo.path
-        # Delete the model before the file
-        super(Services, self).delete(*args, **kwargs)
-        # Delete the file after the model
-        storage.delete(path)
+        if self.service_logo:
+            # You have to prepare what you need before delete the model
+            storage, path = self.service_logo.storage, self.service_logo.path
+            # Delete the model before the file
+            super(Services, self).delete(*args, **kwargs)
+            # Delete the file after the model
+            storage.delete(path)

@@ -75,12 +75,13 @@ class Hospital(models.Model):
         super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
-        # You have to prepare what you need before delete the model
-        storage, path = self.hospital_image.storage, self.hospital_image.path
-        # Delete the model before the file
-        super(Hospital, self).delete(*args, **kwargs)
-        # Delete the file after the model
-        storage.delete(path)
+        if self.hospital_image:
+            # You have to prepare what you need before delete the model
+            storage, path = self.hospital_image.storage, self.hospital_image.path
+            # Delete the model before the file
+            super(Hospital, self).delete(*args, **kwargs)
+            # Delete the file after the model
+            storage.delete(path)
     
 class Ambulance(models.Model):
     name = models.CharField(max_length=100,null=True, blank=True)

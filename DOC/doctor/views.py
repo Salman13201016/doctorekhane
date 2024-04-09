@@ -144,12 +144,9 @@ class DoctorManagementView(viewsets.GenericViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
     def destroy(self, request, pk=None):
-        requested_user = self.get_object()
-        if requested_user.user.role=="admin":
-            raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
-        requested_user.delete()
+        self.get_object().delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['GET'], url_path='get-doctor-by-slug/(?P<slug>[-\w]+)')

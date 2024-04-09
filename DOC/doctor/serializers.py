@@ -107,7 +107,9 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
         model = Doctor
         fields = "__all__"
         extra_kwargs = {
-             'license_no' : { 'required': True }, 
+             'license_no' : { 'required': True },
+             'title' : { 'required': True },
+             'nid' : { 'required': True },
              'specialists' : { 'required': True }, 
              'qualification' : { 'required': True }, 
              'phone_number' : { 'required': True }, 

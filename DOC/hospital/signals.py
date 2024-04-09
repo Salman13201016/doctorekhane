@@ -7,6 +7,6 @@ from user.models import User
 @receiver(post_save, sender=User)
 def create_hospital(sender, instance, created, **kwargs):
     if created and instance.role == 'hospital':
-        name = f"{instance.first_name} {instance.last_name}"
+        name = f"{instance.first_name}"
         Hospital.objects.create(user=instance,name=name,profile=True)
 

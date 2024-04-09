@@ -72,7 +72,9 @@ class UserDoctorSerializer(serializers.ModelSerializer):
         model = Doctor
         fields = ["phone_number", "profile_image",'gender',"license_no","specialists","qualification"]
         extra_kwargs = {
-             'license_no' : { 'required': True }, 
+             'license_no' : { 'required': True },
+             'title' : { 'required': True },
+             'nid' : { 'required': True },
              'specialists' : { 'required': True }, 
              'qualification' : { 'required': True }, 
              'phone_number' : { 'required': True }, 
@@ -139,7 +141,7 @@ class HospitalRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'role', 'password', 'hospital']
+        fields = ['email', 'first_name', 'role', 'password', 'hospital']
         
     
     def validate(self, attrs):
@@ -156,15 +158,14 @@ class HospitalRegistrationSerializer(serializers.ModelSerializer):
         email = validated_data.pop('email')
         password = validated_data.pop('password')
         first_name = validated_data.pop('first_name')
-        last_name = validated_data.pop('last_name')
         random_number = random.randint(100000, 999999)
         doctor_data = validated_data.pop('hospital', {})
         specialists_data = doctor_data.pop('specialists', [])
         
 
-        username = first_name+last_name+str(random_number)
+        username = first_name+str(random_number)
 
-        user = User.objects.create(username=username, email=email, first_name=first_name, last_name=last_name,role='hospital')
+        user = User.objects.create(username=username, email=email, first_name=first_name,role='hospital')
         user.set_password(password)
         user.save()
         for item, value in doctor_data.items():
