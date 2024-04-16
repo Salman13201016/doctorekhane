@@ -20,6 +20,7 @@ from .models import OTP
 # serializer
 from .serializers import UserRegistrationSerializer,DoctorRegistrationSerializer,HospitalRegistrationSerializer
 from DOC.settings import DEFAULT_FROM_EMAIL
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 class UserRegistrationView(viewsets.GenericViewSet):
@@ -319,6 +320,37 @@ class VerifyOTPViewReg(APIView):
         otp_obj.delete()
 
         return Response({"message":"OTP Verified"}, status=status.HTTP_200_OK)
+
+from dj_rest_auth.serializers import PasswordChangeSerializer
+from rest_framework.generics import GenericAPIView
+from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
+
+sensitive_post_parameters_m = method_decorator(sensitive_post_parameters('password', 'old_password', 'new_password1', 'new_password2',),) 
+
+class PasswordChangeView(GenericAPIView):
+
+    serializer_class = PasswordChangeSerializer
+    permission_classes = (IsAuthenticated,)
+    throttle_scope = 'dj_rest_auth'
+
+    @sensitive_post_parameters_m
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'New password has been saved.'}, status=status.HTTP_200_OK)
+        default_errors = serializer.errors
+        err_message = ''
+        for field_name, field_errors in default_errors.items():
+            if err_message != '':
+                err_message += ' '
+            err_message += field_errors[0]
+            
+        return Response({"message" : err_message}, status=status.HTTP_400_BAD_REQUEST)
 
 # auth
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
