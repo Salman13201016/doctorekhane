@@ -3,6 +3,11 @@ from user.models import User
 from doctor.models import Chamber, Doctor
 from hospital.models import Hospital,Test
 # Create your models here.
+STATUS_CHOICES = (
+    ('pending', 'Pending'),
+    ('cancel', 'Cancelled'),
+    ('done', 'Done'),
+)
 class DoctorAppointment(models.Model):
     appointment_id = models.CharField(max_length=100,null = True, blank= True)
     user = models.ForeignKey(User,on_delete=models.SET_NULL,null = True, blank= True)
@@ -13,7 +18,7 @@ class DoctorAppointment(models.Model):
     fee = models.IntegerField(null = True, blank = True)
     comment = models.TextField(null=True, blank= True)
     patientstatus = models.CharField(max_length=50, choices=(('new', 'New Patient'), ('old', 'Old Patient')))
-    
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
     def __str__(self):
         return str(self.user)
     class Meta:
@@ -30,7 +35,7 @@ class TestAppointment(models.Model):
     fee = models.IntegerField(null = True, blank = True)
     comment = models.TextField(null=True, blank= True)
     private = models.BooleanField(default=False)
-    
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
     def __str__(self):
         return str(self.user)
     class Meta:

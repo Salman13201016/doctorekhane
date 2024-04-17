@@ -29,6 +29,7 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
         'patientstatus': ['exact'],
         'date': ['range'],
         'time': ['range'],
+        'status': ['exact'],
     }
     search_fields = ['appointment_id',"user__first_name","user__last_name","doctor__name"]
     ordering_fields = ['id']
@@ -71,18 +72,17 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def partial_update(self, request, pk=None):
+        instance = self.get_object()
+
+        # Check if the user is admin or superuser
         if request.user.role == "admin" or request.user.is_superuser:
-            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
         else:
-            queryset = self.get_queryset().filter(user=request.user)
-            if not queryset.exists():
-                return Response({"message": "You are not authorized."},
+            return Response({"message": "You are not authorized to perform this action."},
                             status=status.HTTP_403_FORBIDDEN)
-            instance = get_object_or_404(queryset)
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
     def destroy(self, request, pk=None):
         if request.user.role == "admin" or request.user.is_superuser:
@@ -94,7 +94,24 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
                             status=status.HTTP_403_FORBIDDEN)
             instance = get_object_or_404(queryset)
         instance.delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)    
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['PATCH'], url_path='cancel-appointment/(?P<id>[^/.]+)')
+    def cancel_appointment(self, request, id, slug=None):
+        try:
+            appointment = self.get_queryset().get(id=id)
+        except DoctorAppointment.DoesNotExist:
+            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the appointment belongs to the logged-in user
+        if appointment.user != request.user:
+            return Response({'error': 'You are not authorized to cancel this appointment'}, status=status.HTTP_403_FORBIDDEN)
+
+        appointment.status = 'cancel'
+        appointment.save()
+        serializer = self.get_serializer(appointment)
+        return Response(serializer.data)
+
 
 class TestAppointmentManagementView(viewsets.GenericViewSet):
     # permission_classes = [IsAuthenticated,IsModerator]
@@ -106,6 +123,7 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
         'private': ['exact'],
         'date': ['range'],
         'time': ['range'],
+        'status': ['exact'],
     }
     search_fields = ['appointment_id',"user__first_name","user__last_name","test__test_name"]
     ordering_fields = ['id']
@@ -172,3 +190,19 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
             instance = get_object_or_404(queryset)
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)    
+    
+    @action(detail=False, methods=['PATCH'], url_path='cancel-appointment/(?P<id>[^/.]+)')
+    def cancel_test_appointment(self, request, id, slug=None):
+        try:
+            test_appointment = self.get_queryset().get(id=id)
+        except TestAppointment.DoesNotExist:
+            return Response({'error': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the appointment belongs to the logged-in user
+        if test_appointment.user != request.user:
+            return Response({'error': 'You are not authorized to cancel this appointment'}, status=status.HTTP_403_FORBIDDEN)
+
+        test_appointment.status = 'cancel'
+        test_appointment.save()
+        serializer = self.get_serializer(test_appointment)
+        return Response(serializer.data)
