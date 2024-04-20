@@ -8,5 +8,5 @@ from user.models import User
 def create_hospital(sender, instance, created, **kwargs):
     if created and instance.role == 'hospital':
         name = f"{instance.first_name}"
-        Hospital.objects.create(user=instance,name=name,profile=True)
+        Hospital.objects.create(user=instance,email=instance.email,name=name,profile=True)
 

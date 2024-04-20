@@ -156,7 +156,7 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
             if specialist:
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name})
         data['specialist'] = specialists
-        data['reviews'] = list(Review.objects.filter(doctor=instance).values("user__first_name","user__last_name","created_at","content","rating"))
+        data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
 
         return data
 
@@ -252,6 +252,7 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         request = self.context.get("request")
+        print(instance)
         data = super().to_representation(instance)
         if 'profile_image' in data and data['profile_image']:
             data['profile_image'] = request.build_absolute_uri(instance.profile_image.url)
@@ -281,7 +282,7 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                     'name': union.union_name,
                 },
             }
-        data['reviews'] = list(Review.objects.filter(doctor=instance).values("user__first_name","user__last_name","created_at","content","rating"))
+        data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
         return data
 
 class DoctorManagementSerializer(serializers.ModelSerializer):
@@ -432,7 +433,7 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
             if specialist:
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name})
         data['specialist'] = specialists
-        data['reviews'] = list(Review.objects.filter(doctor=instance).values("user__first_name","user__last_name","created_at","content","rating"))
+        data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
         return data
 
 

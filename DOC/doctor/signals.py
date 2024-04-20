@@ -8,5 +8,5 @@ from user.models import User
 def create_doctor(sender, instance, created, **kwargs):
     if created and instance.role == 'doctor':
         name = f"{instance.first_name} {instance.last_name}"
-        Doctor.objects.create(user=instance,name=name,profile=True)
+        Doctor.objects.create(user=instance,email=instance.email,name=name,profile=True)
 

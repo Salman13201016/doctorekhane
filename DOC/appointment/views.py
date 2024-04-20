@@ -57,7 +57,7 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
 
     def list(self, request):
         if request.user.role == 'doctor':
-            queryset = DoctorAppointment.objects.filter(doctor__user=request.user)
+            queryset = DoctorAppointment.objects.filter(doctor__email=request.user.email)
         elif request.user.role == 'general':
             queryset = DoctorAppointment.objects.filter(user=request.user)
         else:
