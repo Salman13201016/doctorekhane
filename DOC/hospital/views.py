@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 # filter search sort
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Hospital,Ambulance,Test
+from .models import Hospital,Ambulance, HospitalService,Test
 from user.models import User
 from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer,TestSerializer
 # pagination
@@ -93,7 +93,7 @@ class HospitalProfileView(viewsets.GenericViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
 
 class HospitalManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsHospital]
@@ -147,7 +147,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        
     def destroy(self, request, pk=None):
         self.get_object().delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)

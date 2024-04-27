@@ -95,6 +95,23 @@ class DoctorProfileView(viewsets.GenericViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=False, methods=['DELETE'], url_path='delete-own-chamber/(?P<id>[^/.]+)')
+    def delete_chamber(self, request, id=None):
+        try:
+            chamber = Chamber.objects.get(id=id,doctor=request.user.doctor)
+            chamber.delete()  # Delete the chamber
+            return Response({'message': 'Chamber deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Chamber.DoesNotExist:
+            return Response({'message': 'Chamber not found.'}, status=status.HTTP_404_NOT_FOUND)
+    @action(detail=False, methods=['DELETE'], url_path='delete-own-experience/(?P<id>[^/.]+)')
+    def delete_experience(self, request, id=None):
+        try:
+            experience = Experience.objects.get(id=id,doctor=request.user.doctor)
+            experience.delete()  # Delete the chamber
+            return Response({'message': 'Experience deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Experience.DoesNotExist:
+            return Response({'message': 'Experience not found.'}, status=status.HTTP_404_NOT_FOUND)    @action(detail=False, methods=['DELETE'], url_path='cancel-appointment/(?P<id>[^/.]+)')
+           
 
 
 class DoctorManagementView(viewsets.GenericViewSet):
@@ -157,7 +174,23 @@ class DoctorManagementView(viewsets.GenericViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Doctor.DoesNotExist:
             return Response({'message': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+    @action(detail=False, methods=['DELETE'], url_path='delete-chamber/(?P<id>[^/.]+)')
+    def delete_chamber(self, request, id=None):
+        try:
+            chamber = Chamber.objects.get(id=id)
+            chamber.delete()  # Delete the chamber
+            return Response({'message': 'Chamber deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Chamber.DoesNotExist:
+            return Response({'message': 'Chamber not found.'}, status=status.HTTP_404_NOT_FOUND)
+    @action(detail=False, methods=['DELETE'], url_path='delete-experience/(?P<id>[^/.]+)')
+    def delete_experience(self, request, id=None):
+        try:
+            experience = Experience.objects.get(id=id)
+            experience.delete()  # Delete the chamber
+            return Response({'message': 'Experience deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Experience.DoesNotExist:
+            return Response({'message': 'Experience not found.'}, status=status.HTTP_404_NOT_FOUND)    @action(detail=False, methods=['DELETE'], url_path='cancel-appointment/(?P<id>[^/.]+)')
+            
 class DoctorFilterApi(viewsets.GenericViewSet):
     queryset = Doctor.objects.filter(profile=False)
     filter_backends = [SearchFilter, DjangoFilterBackend]

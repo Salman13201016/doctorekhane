@@ -57,7 +57,7 @@ class ReviewModelAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(DoctorService,list_display=('id','doctor','service_name'))
+admin.site.register(DoctorService,list_display=('id','service_name'))
 admin.site.register(Doctor,DoctorModelAdmin)
 admin.site.register(Chamber,ChamberModelAdmin)
 admin.site.register(Experience,ExperienceModelAdmin)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Hospital,Ambulance,Test,TestCatagory
+from .models import Hospital,Ambulance,Test,TestCatagory,HospitalService
 # Register your models here.
 class HospitalModelAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug" : ('name',)}
@@ -56,3 +56,4 @@ admin.site.register(TestCatagory)
 admin.site.register(Test,TestAdmin)
 admin.site.register(Hospital,HospitalModelAdmin)
 admin.site.register(Ambulance,AmbulanceModelAdmin)
+admin.site.register(HospitalService,list_display=('id','service_name'))

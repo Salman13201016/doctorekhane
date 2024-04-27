@@ -85,3 +85,21 @@ class Services(models.Model):
             super(Services, self).delete(*args, **kwargs)
             # Delete the file after the model
             storage.delete(path)
+
+class Team(models.Model):
+    name = models.CharField(max_length=100,blank=True,null=True)
+    image =  ResizedImageField(upload_to = 'team_image/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
+    designation = models.CharField(max_length=100,blank=True,null=True)
+    short_text = models.TextField(blank=True,null=True)
+
+    def __str__(self):
+        return self.name
+    
+    def delete(self, *args, **kwargs):
+        if self.image:
+            # You have to prepare what you need before delete the model
+            storage, path = self.image.storage, self.image.path
+            # Delete the model before the file
+            super(Team, self).delete(*args, **kwargs)
+            # Delete the file after the model
+            storage.delete(path)

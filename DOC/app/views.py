@@ -1,12 +1,16 @@
 from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from doctor.models import Doctor
+
+from hospital.models import Ambulance, Hospital
+from user.models import User
 
 # model
-from .models import Districts, Divisions, Upazilas,Unions,Services,Specialist
+from .models import Districts, Divisions, Team, Upazilas,Unions,Services,Specialist
 # serializer
 from rest_framework import serializers
-from .serializers import  SpecialistSerializer, DivisionSerializer, DistrictSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
+from .serializers import  SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsModerator
@@ -155,3 +159,60 @@ class ServicesManagementView(viewsets.GenericViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Services.DoesNotExist:
             return Response({'message': 'Service not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+class LandingPageReportView(viewsets.GenericViewSet):
+    
+    def list(self, request, *args, **kwargs):
+        data = {}
+
+        data["hospital_count"] = Hospital.objects.filter(profile=False).count()
+        data["doctor_count"] = Doctor.objects.filter(profile=False).count()
+        data["user_count"] = User.objects.all().count()
+        data["donor_count"] = User.objects.filter(profile__donor=True).count()
+        data["ambulance_count"] = Ambulance.objects.all().count()
+
+        return Response(data)
+
+
+class TeamManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsModerator]
+    serializer_class = TeamSerializer
+    queryset = Team.objects.all()
+    pagination_class = LimitOffsetPagination
+
+    def get_permissions(self):
+        if self.action == "list" :
+            self.permission_classes = []
+        return super().get_permissions()
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        self.get_object().delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)

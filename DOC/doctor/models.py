@@ -38,6 +38,7 @@ class Doctor(models.Model):
     profile_image = ResizedImageField(upload_to='Doctor_Profile/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     experience_year = models.CharField(max_length=100, null = True, blank = True)
     specialists = models.ManyToManyField(Specialist, blank = True,)
+    services = models.ManyToManyField("DoctorService", blank = True,)
     license_no = models.CharField(max_length=100, null = True, blank = True)
     nid = models.CharField(max_length=100, null = True, blank = True)
     slug = models.CharField(max_length=100, null = True, blank = True)
@@ -91,11 +92,10 @@ class Experience(models.Model):
         return self.working_place
     
 class DoctorService(models.Model):
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='services', null = True, blank = True)
     service_name = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
-        return self.service_name
+        return self.service_name or ""
 
 class Review(models.Model):
     user = models.ForeignKey(User, null=True,on_delete=models.SET_NULL,blank=True)

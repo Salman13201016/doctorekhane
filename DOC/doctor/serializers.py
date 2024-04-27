@@ -50,6 +50,7 @@ class ChamberSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not instance.personal:
+            data["hospital_id"] = instance.hospital.id if instance.hospital else None
             data["chamber_name"] = instance.hospital.name if instance.hospital else None
             data["chamber_address"] = instance.hospital.address if instance.hospital else None
             del data["hospital"]
@@ -85,18 +86,18 @@ class DoctorServiceSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     class Meta:
         model = DoctorService
-        exclude = ["doctor"]
+        fields = "__all__"
         extra_kwargs = {
             'id' : {'read_only': False},
         }
 
-    def validate(self, attrs):
-        if self.instance:
-            if DoctorService.objects.filter(service_name__iexact=attrs.get('service_name'), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
-        elif DoctorService.objects.filter(service_name__iexact=attrs.get('service_name'), doctor=attrs.get('doctor')).exists():
-            raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
-        return attrs
+    # def validate(self, attrs):
+    #     if self.instance:
+    #         if DoctorService.objects.filter(service_name__iexact=attrs.get('service_name')).exclude(id=self.instance.id).exists():
+    #             raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
+    #     elif DoctorService.objects.filter(service_name__iexact=attrs.get('service_name')).exists():
+    #         raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
+    #     return attrs
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
@@ -198,18 +199,21 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
             instance.doctor.specialists.set(doctor_data.pop('specialists'))
 
         # Update doctor fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        for attr, value in doctor_data.items():
+            setattr(instance.doctor, attr, value)
+        
+        # Set location ID to the Doctor instance's location field
+        # instance.doctor.location = doctor_data.get('location')
 
         # Save doctor instance
-        instance.save()
+        instance.doctor.save()
         # Update related chamber
         if chambers_data is not None:
             for chamber_data in chambers_data:
                 chamber_id = chamber_data.get('id')
                 if chamber_id:
                     # Update existing experience
-                    chamber_instance = instance.chamber.filter(doctor=instance.doctor,id=chamber_id).first()
+                    chamber_instance = instance.doctor.chamber.filter(doctor=instance.doctor,id=chamber_id).first()
                     if chamber_instance:
                         for attr, value in chamber_data.items():
                             setattr(chamber_instance, attr, value)
@@ -224,7 +228,7 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                 experience_id = experience_data.get('id')
                 if experience_id:
                     # Update existing experience
-                    experience_instance = instance.experiences.filter(doctor=instance.doctor,id=experience_id).first()
+                    experience_instance = instance.doctor.experiences.filter(doctor=instance.doctor,id=experience_id).first()
                     if experience_instance:
                         for attr, value in experience_data.items():
                             setattr(experience_instance, attr, value)
@@ -234,25 +238,24 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                     Experience.objects.create(doctor=instance.doctor, **experience_data)
 
         # Update related services
-        if services_data is not None:
+        if services_data:
             for service_data in services_data:
                 service_id = service_data.get('id')
                 if service_id:
-                    # Update existing service
-                    service_instance = instance.services.filter(doctor=instance.doctor,id=service_id).first()
+                    service_instance = DoctorService.objects.filter(id=service_id).first()
                     if service_instance:
+                        # Update service instance attributes
                         for attr, value in service_data.items():
                             setattr(service_instance, attr, value)
                         service_instance.save()
                 else:
-                    # Create new service
-                    DoctorService.objects.create(doctor=instance.doctor, **service_data)
+                    service_instance, _ = DoctorService.objects.get_or_create(service_name=service_data.get("service_name"))
+                    instance.services.add(service_instance)
 
         return instance
     
     def to_representation(self, instance):
         request = self.context.get("request")
-        print(instance)
         data = super().to_representation(instance)
         if 'profile_image' in data and data['profile_image']:
             data['profile_image'] = request.build_absolute_uri(instance.profile_image.url)
@@ -330,7 +333,8 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
             Experience.objects.create(doctor=doctor, **experience_data)
 
         for service_data in getdoctor_serviceInfo:
-            DoctorService.objects.create(doctor=doctor, **service_data)
+            service_instance, _ = DoctorService.objects.get_or_create(service_name=service_data.get("service_name"))
+            doctor.services.add(service_instance)
 
         return doctor
 
@@ -340,6 +344,7 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         services_data = validated_data.pop('services', None)
         if 'specialists' in validated_data:
             instance.specialists.set(validated_data.pop('specialists'))
+            
 
         # Update doctor fields
         for attr, value in validated_data.items():
@@ -377,20 +382,20 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
                     # Create new experience
                     Experience.objects.create(doctor=instance, **experience_data)
 
-        # Update related services
-        if services_data is not None:
+        if services_data:
             for service_data in services_data:
                 service_id = service_data.get('id')
                 if service_id:
-                    # Update existing service
-                    service_instance = instance.services.filter(doctor=instance,id=service_id).first()
+                    service_instance = DoctorService.objects.filter(id=service_id).first()
                     if service_instance:
+                        # Update service instance attributes
                         for attr, value in service_data.items():
                             setattr(service_instance, attr, value)
                         service_instance.save()
                 else:
-                    # Create new service
-                    DoctorService.objects.create(doctor=instance, **service_data)
+                    service_instance, _ = DoctorService.objects.get_or_create(service_name=service_data.get("service_name"))
+                    instance.services.add(service_instance)
+
 
         return instance
 

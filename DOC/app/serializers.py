@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 #model
-from .models import Divisions, Districts, Upazilas,Unions,Services,Specialist
+from .models import Divisions, Districts, Team, Upazilas,Unions,Services,Specialist
 
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,3 +58,9 @@ class ServicesSerializer(serializers.ModelSerializer):
         elif Services.objects.filter(service_name__iexact=attrs.get('service_name')).exists():
             raise serializers.ValidationError({"message": 'Service Name already exists.'})
         return attrs
+
+class TeamSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=False, allow_null=True)
+    class Meta:
+        model = Team
+        fields = "__all__"

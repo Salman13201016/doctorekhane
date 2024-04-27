@@ -52,7 +52,7 @@ class Hospital(models.Model):
     longitude = models.CharField(max_length=100,null=True, blank=True)
     latitude = models.CharField(max_length=100,null=True, blank=True)
     specialists = models.ManyToManyField(Specialist, blank = True)
-    services = models.ManyToManyField(Services, blank = True)
+    services = models.ManyToManyField("HospitalService", blank = True,)
     tests = models.ManyToManyField(Test,blank=True)
     role = models.CharField(max_length=50, null=False, default="hospital", choices=ROLES)
     slug = models.SlugField(unique=True)
@@ -82,7 +82,13 @@ class Hospital(models.Model):
             super(Hospital, self).delete(*args, **kwargs)
             # Delete the file after the model
             storage.delete(path)
-    
+
+class HospitalService(models.Model):
+    service_name = models.CharField(max_length=500, null = True, blank = True)
+
+    def __str__(self):
+        return self.service_name
+
 class Ambulance(models.Model):
     name = models.CharField(max_length=100,null=True, blank=True)
     hospital = models.BooleanField(default = True)

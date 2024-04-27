@@ -6,6 +6,8 @@ from . import views
 router = DefaultRouter()
 router.register('specialist', views.SpecialistManagementView, basename='specialist')
 router.register('services', views.ServicesManagementView, basename='services')
+router.register('team-member', views.TeamManagementView, basename='team-member')
+router.register('landing-page-report', views.LandingPageReportView, basename='landing_page_report')
 urlpatterns = [
     path('', include(router.urls)),
     path('division/', views.DivisionListAPIView.as_view(), name='division-list'),

@@ -3,8 +3,8 @@ from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from user.models import User
 
-from .models import Hospital,Ambulance,Test,TestCatagory
-from app.models import Services,Specialist
+from .models import Hospital,Ambulance,Test,TestCatagory,HospitalService
+from app.models import Specialist
 from doctor.models import Chamber
 
 class TestCatagorySerializer(serializers.ModelSerializer):
@@ -48,7 +48,6 @@ class TestSerializer(serializers.ModelSerializer):
         catagory_data = validated_data.pop('catagory', None)  # Get catagory data or None if not present
         if catagory_data:
             catagory_id = catagory_data.get('id')
-            print(catagory_id)
             if catagory_id:
                 catagory_instance = TestCatagory.objects.filter(id=catagory_id).first()
                 if catagory_instance:
@@ -78,8 +77,27 @@ class TestSerializer(serializers.ModelSerializer):
         return data
 
 
+class HospitalServiceSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    class Meta:
+        model = HospitalService
+        fields = "__all__"
+        extra_kwargs = {
+            'id' : {'read_only': False},
+        }
+
+    # def validate(self, attrs):
+    #     if self.instance:
+    #         if HospitalService.objects.filter(service_name__iexact=attrs.get('service_name'), hospital=attrs.get('hospital')).exclude(id=self.instance.id).exists():
+    #             raise serializers.ValidationError({"message": 'Hospital With Same Service already exists'})
+    #     elif HospitalService.objects.filter(service_name__iexact=attrs.get('service_name'), hospital=attrs.get('hospital')).exists():
+    #         raise serializers.ValidationError({"message": 'Hospital With Same Service already exists'})
+    #     return attrs
+
 class HospitalProfileSerializer(serializers.ModelSerializer):
     hospital_image = Base64ImageField(required=False,allow_null=True)
+    services = HospitalServiceSerializer(required = False, allow_null = True, many = True)
+
     class Meta:
         model = Hospital
         fields = "__all__"
@@ -130,18 +148,12 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
                     specialists.append({"id": specialist.id,"name": specialist.specialist_name})
             data['specialist'] = specialists
 
-            service_ids = data.pop('services', [])
-            services = []
-            for service_id in service_ids:
-                service = Services.objects.filter(id=service_id).first()
-                if service:
-                    services.append({"id": service.id,"name": service.service_name})  # Replace 'specialist_name' with the correct attribute name
-            data['service'] = services
+
             test_ids = data.pop('tests', [])
             tests = []
             for test_id in test_ids:
                 test = Test.objects.filter(id=test_id).first()
-                if service:
+                if test:
                     tests.append({"id": test.id,"name": test.test_name})  # Replace 'specialist_name' with the correct attribute name
             data['test'] = tests
             data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
@@ -184,18 +196,33 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         hospital_data = validated_data.pop('hospital', {})
+        services_data = hospital_data.pop('services', None)
+
         if 'specialists' in hospital_data:
             instance.hospital.specialists.set(hospital_data.pop('specialists'))
-        if 'services' in hospital_data:
-            instance.hospital.services.set(hospital_data.pop('services'))
+
         if 'tests' in hospital_data:
             instance.hospital.tests.set(hospital_data.pop('tests'))
 
 
         # Update hospital fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        for attr, value in hospital_data.items():
+            setattr(instance.hospital, attr, value)
+        instance.hospital.save()
+
+        if services_data:
+            for service_data in services_data:
+                service_id = service_data.get('id')
+                if service_id:
+                    service_instance = HospitalService.objects.filter(id=service_id).first()
+                    if service_instance:
+                        # Update service instance attributes
+                        for attr, value in service_data.items():
+                            setattr(service_instance, attr, value)
+                        service_instance.save()
+                else:
+                    service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"))
+                    instance.services.add(service_instance)
         return instance
     
     def to_representation(self, instance):
@@ -234,6 +261,8 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
 
 class HospitalManagementSerializer(serializers.ModelSerializer):
     hospital_image = Base64ImageField(required=False,allow_null=True)
+    services = HospitalServiceSerializer(required = False, allow_null = True, many = True)
+
     class Meta:
         model = Hospital
         fields = "__all__"
@@ -271,12 +300,15 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         specialists_data = validated_data.pop('specialists', [])
-        services_data = validated_data.pop('services', [])
+        gethospital_serviceInfo = validated_data.pop('services', [])
+
         tests_data = validated_data.pop('tests', [])
 
         hospital = Hospital.objects.create(**validated_data)
         hospital.specialists.set(specialists_data)
-        hospital.services.set(services_data)
+        for service_data in gethospital_serviceInfo:
+            service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"))
+            hospital.services.add(service_instance)
         hospital.tests.set(tests_data)
 
         return hospital
@@ -284,8 +316,8 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if 'specialists' in validated_data:
             instance.specialists.set(validated_data.pop('specialists'))
-        if 'services' in validated_data:
-            instance.services.set(validated_data.pop('services'))
+        services_data = validated_data.pop('services', None)
+
         if 'tests' in validated_data:
             instance.tests.set(validated_data.pop('tests'))
 
@@ -293,6 +325,20 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        # Update related services
+        if services_data:
+            for service_data in services_data:
+                service_id = service_data.get('id')
+                if service_id:
+                    service_instance = HospitalService.objects.filter(id=service_id).first()
+                    if service_instance:
+                        # Update service instance attributes
+                        for attr, value in service_data.items():
+                            setattr(service_instance, attr, value)
+                        service_instance.save()
+                else:
+                    service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"))
+                    instance.services.add(service_instance)
         return instance
     
     def to_representation(self, instance):
@@ -334,13 +380,6 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name})
         data['specialist'] = specialists
 
-        service_ids = data.pop('services', [])
-        services = []
-        for service_id in service_ids:
-            service = Services.objects.filter(id=service_id).first()
-            if service:
-                services.append({"id": service.id,"name": service.service_name})  # Replace 'specialist_name' with the correct attribute name
-        data['service'] = services
         test_ids = data.pop('tests', [])
         tests = []
         for test_id in test_ids:
