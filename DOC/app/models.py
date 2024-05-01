@@ -38,9 +38,12 @@ class Unions(models.Model):
 
 class Specialist(models.Model):
     specialist_name = models.CharField(max_length=100,blank=True,null=True)
+    specialist_name_bn = models.CharField(max_length=100,blank=True,null=True)
     specialist_description = models.TextField(blank=True,null=True)
+    specialist_description_bn = models.TextField(blank=True,null=True)
     specialist_logo = ResizedImageField(upload_to = 'specialist_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
     slug = models.SlugField(unique=True,blank=True, null = True)
+    slug_bn = models.SlugField(unique=True,blank=True, null = True)
     
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -50,6 +53,13 @@ class Specialist(models.Model):
             while Specialist.objects.filter(slug=self.slug).exists():
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
+        if not self.slug_bn:
+            base_slug = slugify(unidecode(self.specialist_name_bn), allow_unicode=False)
+            self.slug_bn = base_slug
+            m = 1
+            while Specialist.objects.filter(slug_bn=self.slug_bn).exists():
+                self.slug_bn = '{}-{}'.format(base_slug, n)
+                m += 1
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -64,8 +74,11 @@ class Specialist(models.Model):
 class Services(models.Model):
     service_name = models.CharField(max_length=100,blank=True,null=True)
     service_description = models.TextField(blank=True,null=True)
+    service_name_bn = models.CharField(max_length=100,blank=True,null=True)
+    service_description_bn = models.TextField(blank=True,null=True)
     service_logo = ResizedImageField(upload_to = 'services_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
     slug = models.SlugField(unique=True,blank=True, null = True)
+    slug_bn = models.SlugField(unique=True,blank=True, null = True)
     
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -75,6 +88,13 @@ class Services(models.Model):
             while Services.objects.filter(slug=self.slug).exists():
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
+        if not self.slug_bn:
+            base_slug = slugify(unidecode(self.service_name_bn), allow_unicode=False)
+            self.slug_bn = base_slug
+            m = 1
+            while Services.objects.filter(slug_bn=self.slug_bn).exists():
+                self.slug_bn = '{}-{}'.format(base_slug, n)
+                m += 1
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):

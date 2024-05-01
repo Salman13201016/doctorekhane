@@ -18,6 +18,8 @@ from rest_framework.pagination import  LimitOffsetPagination
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from DOC.settings import DEFAULT_FROM_EMAIL
+from django.core.mail import send_mail
 # Create your views here.
 class DoctorAppointmentManagementView(viewsets.GenericViewSet):
     # permission_classes = [IsAuthenticated,IsModerator]
@@ -51,7 +53,15 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
     def create(self, request):
         serializer = self.get_serializer(data=request.data, context={"request":request})
         if serializer.is_valid():
-            serializer.save()
+            appointment = serializer.save()
+            # Send email to the user
+            subject = 'Appointment Confirmation'
+            message = f'Your appointment with {appointment.doctor} on {appointment.date} at {appointment.time} has been successfully booked.'
+            from_email = DEFAULT_FROM_EMAIL
+            to_email = appointment.user.email
+
+            send_mail(subject, message, from_email, [to_email])
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -108,6 +118,13 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
             return Response({'error': 'You are not authorized to cancel this appointment'}, status=status.HTTP_403_FORBIDDEN)
 
         appointment.status = 'cancel'
+        # Send email to the user
+        subject = 'Appointment Cancelation'
+        message = f'Your appointment with {appointment.doctor} on {appointment.date} at {appointment.time} has been successfully canceled.'
+        from_email = DEFAULT_FROM_EMAIL
+        to_email = appointment.user.email
+
+        send_mail(subject, message, from_email, [to_email])
         appointment.save()
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
@@ -145,7 +162,14 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
     def create(self, request):
         serializer = self.get_serializer(data=request.data, context={"request":request})
         if serializer.is_valid():
-            serializer.save()
+            appointment = serializer.save()
+            # Send email to the user
+            subject = 'Test Appointment Confirmation'
+            message = f'Your test appointment for {appointment.test} at {appointment.hospital} on {appointment.date} at {appointment.time} has been successfully booked.'
+            from_email = DEFAULT_FROM_EMAIL
+            to_email = appointment.user.email
+
+            send_mail(subject, message, from_email, [to_email])
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -203,6 +227,13 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
             return Response({'error': 'You are not authorized to cancel this appointment'}, status=status.HTTP_403_FORBIDDEN)
 
         test_appointment.status = 'cancel'
+        # Send email to the user
+        subject = 'Test Appointment Canceled'
+        message = f'Your test appointment for {test_appointment.test} at {test_appointment.hospital} on {test_appointment.date} at {test_appointment.time} has been successfully canceled.'
+        from_email = DEFAULT_FROM_EMAIL
+        to_email = test_appointment.user.email
+
+        send_mail(subject, message, from_email, [to_email])
         test_appointment.save()
         serializer = self.get_serializer(test_appointment)
         return Response(serializer.data)

@@ -155,7 +155,7 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
         for specialist_id in specialist_ids:
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
-                specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+                specialists.append({"id": specialist.id,"name": specialist.specialist_name ,"name_bn": specialist.specialist_name_bn})
         data['specialist'] = specialists
         data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
 
@@ -436,7 +436,7 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         for specialist_id in specialist_ids:
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
-                specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+                specialists.append({"id": specialist.id,"name": specialist.specialist_name,"name_bn": specialist.specialist_name_bn})
         data['specialist'] = specialists
         data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
         return data

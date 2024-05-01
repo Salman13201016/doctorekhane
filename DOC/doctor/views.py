@@ -221,7 +221,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__upazila__district__division__id__in = division_data,
                 location__upazila__id__in = upazila_data,
                 location__union_name__in = union_data,
-            ).values_list('specialists__id', 'specialists__specialist_name').distinct()
+            ).values_list('specialists__id', 'specialists__specialist_name','specialists__specialist_name_bn').distinct()
         )
         filter_doctorservices = list(
             Doctor.objects.filter(
@@ -274,6 +274,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 {
                     "id": item[0],
                     "specialist_name": item[1],
+                    "specialist_name_bn": item[2],
                     "count": len(Doctor.objects.filter(specialists__id=item[0]).distinct())
                 } for item in filter_specialists
             ],

@@ -5,7 +5,7 @@ from doctor.models import Doctor
 
 from hospital.models import Ambulance, Hospital
 from user.models import User
-
+from django.db.models import Q
 # model
 from .models import Districts, Divisions, Team, Upazilas,Unions,Services,Specialist
 # serializer
@@ -52,8 +52,8 @@ class SpecialistManagementView(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
 
-    search_fields = ['specialist_name']
-    ordering_fields = ['specialist_name']
+    search_fields = ['specialist_name','specialist_name_bn']
+    ordering_fields = ['specialist_name','specialist_name_bn']
 
     def get_permissions(self):
         if self.action == "list" or self.action=="get_speicilist_by_slug":
@@ -110,8 +110,8 @@ class ServicesManagementView(viewsets.GenericViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
 
 
-    search_fields = ['service_name']
-    ordering_fields = ['service_name']
+    search_fields = ['service_name','service_name_bn']
+    ordering_fields = ['service_name','service_name_bn']
 
     def get_permissions(self):
         if self.action == "list" or self.action=="get_service_by_slug":
@@ -154,7 +154,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
     @action(detail=False, methods=['GET'], url_path='get-service-by-slug/(?P<slug>[-\w]+)')
     def get_service_by_slug(self, request, slug=None):
         try:
-            blog = Services.objects.get(slug=slug)
+            blog = Services.objects.get(Q(slug=slug)|Q(slug_bn=slug))
             serializer = self.get_serializer(blog)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Services.DoesNotExist:

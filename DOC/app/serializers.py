@@ -27,35 +27,35 @@ class SpecialistSerializer(serializers.ModelSerializer):
     specialist_logo = Base64ImageField(required=False,allow_null=True)
     class Meta:
         model = Specialist
-        fields = ['id','specialist_name',"specialist_description","specialist_logo"]
+        fields = "__all__"
         extra_kwargs = {
             'slug':{'required':False},
         }
         def validate(self , attrs):
             if self.instance:
-                if  Specialist.objects.filter(specialist_name__iexact=attrs.get('specialist_name')).exclude(id=self.instance.id).exists():
+                if  Specialist.objects.filter(Q(specialist_name__iexact=attrs.get('specialist_name')) | Q(specialist_name_bn__iexact=attrs.get('specialist_name_bn'))).exclude(id=self.instance.id).exists():
                             raise serializers.ValidationError({"message": 'Specialist Name already exists'})
-            elif Specialist.objects.filter(specialist_name__iexact=attrs.get('specialist_name')).exists():
+            elif Specialist.objects.filter(Q(specialist_name__iexact=attrs.get('specialist_name')) | Q(specialist_name_bn__iexact=attrs.get('specialist_name_bn'))).exists():
                 raise serializers.ValidationError({"message": 'Specialist Name already exists.'})
             return attrs
 
-
+from django.db.models import Q
 class ServicesSerializer(serializers.ModelSerializer):
     service_logo = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Services
-        fields = ['id', 'service_name','service_description', 'service_logo']
+        fields ="__all__"
         extra_kwargs = {
             'slug':{'required':False},
         }
 
     def validate(self, attrs):
         if self.instance:
-            if Services.objects.filter(service_name__iexact=attrs.get('service_name')).exclude(id=self.instance.id).exists():
+            if Services.objects.filter(Q(service_name__iexact=attrs.get('service_name')) | Q(service_name_bn__iexact=attrs.get('service_name_bn'))).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError({"message": 'Category already exists.'})
             
-        elif Services.objects.filter(service_name__iexact=attrs.get('service_name')).exists():
+        elif Services.objects.filter(Q(service_name__iexact=attrs.get('service_name')) | Q(service_name_bn__iexact=attrs.get('service_name_bn'))).exists():
             raise serializers.ValidationError({"message": 'Service Name already exists.'})
         return attrs
 

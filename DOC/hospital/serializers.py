@@ -145,7 +145,7 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
             for specialist_id in specialist_ids:
                 specialist = Specialist.objects.filter(id=specialist_id).first()
                 if specialist:
-                    specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+                    specialists.append({"id": specialist.id,"name": specialist.specialist_name,"name_bn": specialist.specialist_name_bn})
             data['specialist'] = specialists
 
 
@@ -377,7 +377,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         for specialist_id in specialist_ids:
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
-                specialists.append({"id": specialist.id,"name": specialist.specialist_name})
+                specialists.append({"id": specialist.id,"name": specialist.specialist_name,"name_bn": specialist.specialist_name_bn})
         data['specialist'] = specialists
 
         test_ids = data.pop('tests', [])

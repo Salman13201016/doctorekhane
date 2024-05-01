@@ -31,6 +31,7 @@ class DoctorAppointmentManagementSerializer(serializers.ModelSerializer):
         representation['doctor'] = instance.doctor.name
         representation['doctor_image'] = instance.doctor.name
         representation['doctor_specialists'] = [specialist.specialist_name for specialist in instance.doctor.specialists.all()]
+        representation['doctor_specialists_bn'] = [specialist.specialist_name_bn for specialist in instance.doctor.specialists.all()]
 
         if not instance.chamber.personal:
             representation['chamber'] = instance.chamber.name 
