@@ -13,6 +13,8 @@ from rest_framework.pagination import  LimitOffsetPagination
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin,IsHospital,IsModerator
+from django.db.models import Q
+
 # Create your views here.
 
 
@@ -27,8 +29,8 @@ class TestManagementView(viewsets.GenericViewSet):
         'catagory__id': ['in'],
     }
     
-    search_fields = ['test_name']
-    ordering_fields = ['test_name']
+    search_fields = ['test_name','test_name_bn']
+    ordering_fields = ['test_name','test_name_bn']
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or self.action=="get_test_by_slug":
@@ -70,7 +72,7 @@ class TestManagementView(viewsets.GenericViewSet):
     @action(detail=False, methods=['GET'], url_path='get-test-by-slug/(?P<slug>[-\w]+)')
     def get_test_by_slug(self, request, slug=None):
         try:
-            test = Test.objects.get(slug=slug)
+            test = Test.objects.get(Q(slug=slug)|Q(slug_bn=slug))
             serializer = self.get_serializer(test)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Test.DoesNotExist:
@@ -113,8 +115,8 @@ class HospitalManagementView(viewsets.GenericViewSet):
         'category': ['in'],
     }
 
-    search_fields = ['name',"address"]
-    ordering_fields = ['name']
+    search_fields = ['name',"address",'name_bn',"address_bn"]
+    ordering_fields = ['name','name_bn']
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or self.action=="get_hospital_by_slug":
@@ -156,7 +158,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
     @action(detail=False, methods=['GET'], url_path='get-hospital-by-slug/(?P<slug>[-\w]+)')
     def get_hospital_by_slug(self, request, slug=None):
         try:
-            hospital = Hospital.objects.get(slug=slug)
+            hospital = Hospital.objects.get(Q(slug=slug)|Q(slug_bn=slug))
             serializer = self.get_serializer(hospital)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Hospital.DoesNotExist:
@@ -175,7 +177,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
         }
-    search_fields = ['name','address']
+    search_fields = ['name','address','name_bn','address_bn']
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or self.action=="get_ambulance_by_slug":
@@ -220,7 +222,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
     @action(detail=False, methods=['GET'], url_path='get-ambulance-by-slug/(?P<slug>[-\w]+)')
     def get_ambulance_by_slug(self, request, slug=None):
         try:
-            ambulance = Ambulance.objects.get(slug=slug)
+            ambulance = Ambulance.objects.get(Q(slug=slug)|Q(slug_bn=slug))
             serializer = self.get_serializer(ambulance)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Hospital.DoesNotExist:
@@ -238,8 +240,8 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
         }
-    search_fields = ['name','address']
-    ordering_fields = ['name']
+    search_fields = ['name','address','name_bn','address_bn']
+    ordering_fields = ['name','name_bn']
 
     def list(self, request):
         ac = [False, True]
@@ -392,8 +394,8 @@ class HospitalFilterApi(viewsets.GenericViewSet):
         'location__upazila__district__division__id': ['in'],
         'category': ['in'],
     }
-    search_fields = ['name',"address"]
-    ordering_fields = ['name']
+    search_fields = ['name',"address",'name_bn',"address_bn"]
+    ordering_fields = ['name','name_bn']
 
     def list(self, request):
         specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Hospital.objects.filter(profile=False).values_list('specialists__id', flat=True).distinct())
@@ -421,7 +423,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__upazila__id__in = upazila_data,
                 location__union_name__in = union_data,
                 category__in = category_data
-            ).values_list('services__id', 'services__service_name').distinct()
+            ).values_list('services__id', 'services__service_name','services__service_name_bn').distinct()
         )
         filter_district = list(
             Hospital.objects.filter(
@@ -495,6 +497,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 {
                     "id": item[0],
                     "services_name": item[1],
+                    "services_name_bn": item[2],
                     "count": len(Hospital.objects.filter(services__id=item[0]).distinct())
                 } for item in filter_services
             ],

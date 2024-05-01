@@ -96,7 +96,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
     @action(detail=False, methods=['GET'], url_path='get-specialist-by-slug/(?P<slug>[-\w]+)')
     def get_speicilist_by_slug(self, request, slug=None):
         try:
-            blog = Specialist.objects.get(slug=slug)
+            blog = Specialist.objects.get(Q(slug=slug)|Q(slug_bn=slug))
             serializer = self.get_serializer(blog)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Specialist.DoesNotExist:

@@ -6,6 +6,7 @@ from user.models import User
 from .models import Hospital,Ambulance,Test,TestCatagory,HospitalService
 from app.models import Specialist
 from doctor.models import Chamber
+from django.db.models import Q
 
 class TestCatagorySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
@@ -26,12 +27,13 @@ class TestSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         catagory_data = attrs.get('catagory')
         catagory_name = catagory_data.get('name')
-        catagory_instance = TestCatagory.objects.filter(name=catagory_name).first()
+        catagory_name_bn = catagory_data.get('name_bn')
+        catagory_instance = TestCatagory.objects.filter(Q(name=catagory_name)|Q(name_bn = catagory_name_bn)).first()
         if self.instance:
-            if Test.objects.filter(test_name__iexact=attrs.get('test_name'), catagory=catagory_instance).exclude(id=self.instance.id).exists():
+            if Test.objects.filter(Q(test_name__iexact=attrs.get('test_name'))|Q(test_name_bn__iexact=attrs.get('test_name_bn')), catagory=catagory_instance).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError({'message': 'Test with this catagory already exists.'})
         else:
-            if Test.objects.filter(test_name__iexact=attrs.get('test_name'), catagory=catagory_instance).exists():
+            if Test.objects.filter(Q(test_name__iexact=attrs.get('test_name'))|Q(test_name_bn__iexact=attrs.get('test_name_bn')), catagory=catagory_instance).exists():
                 raise serializers.ValidationError({'message': 'Test with this catagory already exists.'})
         return attrs
 
@@ -39,7 +41,8 @@ class TestSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         catagory_data = validated_data.pop('catagory')
         catagory_name = catagory_data.get('name')
-        catagory_instance, _ = TestCatagory.objects.get_or_create(name=catagory_name)
+        catagory_name_bn = catagory_data.get('name_bn')
+        catagory_instance, _ = TestCatagory.objects.get_or_create(name=catagory_name,name_bn=catagory_name_bn)
         
         validated_data['catagory'] = catagory_instance
         return Test.objects.create(**validated_data)
@@ -71,7 +74,8 @@ class TestSerializer(serializers.ModelSerializer):
         # Add catagory name and ID to the representation
         data['catagory'] = {
             'id': catagory_instance.id,
-            'name': catagory_instance.name
+            'name': catagory_instance.name,
+            'name_bn': catagory_instance.name_bn
         }
         
         return data
@@ -103,6 +107,7 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
         fields = "__all__"
         extra_kwargs = {
             'name': {'required': True},
+            'name_bn': {'required': True},
             'hospital_image': {'required': False},
             'longitude': {'required': False},
             'latitude': {'required': False},
@@ -154,7 +159,7 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
             for test_id in test_ids:
                 test = Test.objects.filter(id=test_id).first()
                 if test:
-                    tests.append({"id": test.id,"name": test.test_name})  # Replace 'specialist_name' with the correct attribute name
+                    tests.append({"id": test.id,"name": test.test_name, "name_bn": test.test_name_bn})  # Replace 'specialist_name' with the correct attribute name
             data['test'] = tests
             data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
             return data
@@ -163,7 +168,7 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
     hospital = HospitalProfileSerializer()
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_superuser', 'hospital']
+        fields = ['id', 'username', 'email', 'first_name', 'is_superuser', 'hospital']
         extra_kwargs = {
             'username': {'read_only': True},
             'is_superuser': {'read_only': True},
@@ -268,18 +273,20 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         fields = "__all__"
         extra_kwargs = {
             'name': {'required': True},
+            'name_bn': {'required': True},
             'hospital_image': {'required': False},
             'longitude': {'required': False},
             'latitude': {'required': False},
             'slug':{'read_only':True},
+            'slug_bn':{'read_only':True},
             'website': {'required': False},
         }
     def validate(self, attrs):
         if self.instance:
-            if Hospital.objects.filter(profile=False, name__iexact=attrs.get('name'), address=attrs.get('address')).exclude(id=self.instance.id).exists():
+            if Hospital.objects.filter(Q(name__iexact=attrs.get('name'))|Q(name_bn__iexact=attrs.get('name_bn')),Q(address=attrs.get('address'))|Q(address_bn=attrs.get('address_bn')),profile=False).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError({'message': 'Hospital at this address already exists.'})
         else:
-            if Hospital.objects.filter(profile=False, name__iexact=attrs.get('name'), address=attrs.get('address')).exists():
+            if Hospital.objects.filter(Q(name__iexact=attrs.get('name'))|Q(name_bn__iexact=attrs.get('name_bn')),Q(address=attrs.get('address'))|Q(address_bn=attrs.get('address_bn')),profile=False).exists():
                 raise serializers.ValidationError({'message': 'Hospital at this address already exists.'})
 
         if self.instance:
@@ -307,7 +314,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         hospital = Hospital.objects.create(**validated_data)
         hospital.specialists.set(specialists_data)
         for service_data in gethospital_serviceInfo:
-            service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"))
+            service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"),service_name_bn=service_data.get("service_name_bn"))
             hospital.services.add(service_instance)
         hospital.tests.set(tests_data)
 
@@ -337,7 +344,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
                             setattr(service_instance, attr, value)
                         service_instance.save()
                 else:
-                    service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"))
+                    service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"),service_name_bn=service_data.get("service_name_bn"))
                     instance.services.add(service_instance)
         return instance
     
@@ -385,7 +392,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         for test_id in test_ids:
             test = Test.objects.filter(id=test_id).first()
             if test:
-                tests.append({"id": test.id,"name": test.test_name})  # Replace 'specialist_name' with the correct attribute name
+                tests.append({"id": test.id,"name": test.test_name,"name_bn": test.test_name_bn})  # Replace 'specialist_name' with the correct attribute name
         data['test'] = tests
         data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
         return data
@@ -398,6 +405,7 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'hospital_name': {'required': False},
             'slug':{'read_only':True},
+            'slug_bn':{'read_only':True},
         }
 
     def to_representation(self, instance):
@@ -406,7 +414,9 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
             hospital = Hospital.objects.get(id = instance.hospital_name.id)
             data['hospital_id'] = hospital.id
             data['hospital_name'] = hospital.name
+            data['hospital_name_bn'] = hospital.name_bn
             address = hospital.address
+            address_bn = hospital.address_bn
             location = hospital.location
 
             union_name = location.union_name if location else ""
@@ -415,9 +425,11 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
             division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
             
             data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+            data["Address_BN"] = ", ".join(filter(None, [address_bn, union_name, upazila_name, district_name, division_name]))
             data.pop("location", None)
         else:
             address = instance.address
+            address_bn = instance.address_bn
             location = instance.location
 
             union_name = location.union_name if location else ""
@@ -426,6 +438,7 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
             division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
         
             data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+            data["Address_BN"] = ", ".join(filter(None, [address_bn, union_name, upazila_name, district_name, division_name]))
             data.pop("location", None)
         return data
     
@@ -435,11 +448,13 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
         fields = "__all__"
         extra_kwargs = {
             'hospital_name': {'required': False},
+            'hospital_name_bn': {'required': False},
             'slug':{'read_only':True},
+            'slug_bn':{'read_only':True},
         }
 
     def validate(self, data):
-        if data.get('hospital') and not data.get('hospital_name'):
+        if data.get('hospital') and not data.get('hospital_name') and not data.get('hospital_name_bn'):
             raise serializers.ValidationError({"message":"Hospital name cannot be empty if hospital is True."})
         return data
     
@@ -448,8 +463,10 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
         if instance.hospital :# Including division, district, and upazila information in the representation
             hospital = Hospital.objects.get(id = instance.hospital_name.id)
             data['hospital_name'] = hospital.name
+            data['hospital_name_bn'] = hospital.name_bn
             data['hospital_id'] = hospital.id
             address = hospital.address
+            address_bn = hospital.address_bn
             location = hospital.location
 
             union_name = location.union_name if location else ""
@@ -458,6 +475,7 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
             division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
             
             data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+            data["Address_BN"] = ", ".join(filter(None, [address_bn, union_name, upazila_name, district_name, division_name]))
             data.pop("location", None)
         else:
             if 'location' in data and data['location']:

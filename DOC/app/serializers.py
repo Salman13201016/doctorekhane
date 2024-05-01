@@ -30,6 +30,7 @@ class SpecialistSerializer(serializers.ModelSerializer):
         fields = "__all__"
         extra_kwargs = {
             'slug':{'required':False},
+            'slug_bn':{'required':False},
         }
         def validate(self , attrs):
             if self.instance:
@@ -48,6 +49,7 @@ class ServicesSerializer(serializers.ModelSerializer):
         fields ="__all__"
         extra_kwargs = {
             'slug':{'required':False},
+            'slug_bn':{'required':False},
         }
 
     def validate(self, attrs):

@@ -14,6 +14,7 @@ CATEGORY_CHOICES = [
 
 class TestCatagory(models.Model):
     name = models.CharField(max_length=100,null = True, blank= True)
+    name_bn = models.CharField(max_length=100,null = True, blank= True)
 
     def __str__(self):
         return str(self.name)
@@ -21,9 +22,11 @@ class TestCatagory(models.Model):
 class Test(models.Model):
     catagory = models.ForeignKey(TestCatagory,on_delete=models.CASCADE,null = True, blank = True)
     test_name = models.CharField(max_length=200,null=True,blank= True)
+    test_name_bn = models.CharField(max_length=200,null=True,blank= True)
     fee = models.CharField(max_length=200,null=True,blank= True)
     delivery_time = models.CharField(max_length=200,null=True,blank= True)
     slug = models.CharField(max_length=200,null=True,blank=True)
+    slug_bn = models.CharField(max_length=200,null=True,blank=True)
 
     def __str__(self): 
         return str(self.test_name)
@@ -36,18 +39,29 @@ class Test(models.Model):
             while Test.objects.filter(slug=self.slug).exists():
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
+        if not self.slug_bn:
+            base_slug = slugify(unidecode(self.test_name_bn), allow_unicode=False)
+            self.slug_bn = base_slug
+            m = 1
+            while Test.objects.filter(slug_bn=self.slug_bn).exists():
+                self.slug_bn = '{}-{}'.format(base_slug, n)
+                m += 1
         super().save(*args, **kwargs)
 
 class Hospital(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=255,null=True, blank=True)
+    name_bn = models.CharField(max_length=255,null=True, blank=True)
     location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
+    address_bn = models.TextField(max_length=500, blank=True, null=False)
     email = models.EmailField(null=True, blank=True)
     phone_number = models.CharField(max_length=100,null=True, blank=True)
     emergency_contact = models.CharField(max_length=100,null=True, blank=True)
     description = models.TextField(null=True, blank=True)
+    description_bn = models.TextField(null=True, blank=True)
     availability = models.CharField(max_length=500, null = True, blank = True)
+    availability_bn = models.CharField(max_length=500, null = True, blank = True)
     category = models.CharField(max_length=20, null = True, blank = True, choices=CATEGORY_CHOICES)
     longitude = models.CharField(max_length=100,null=True, blank=True)
     latitude = models.CharField(max_length=100,null=True, blank=True)
@@ -56,6 +70,7 @@ class Hospital(models.Model):
     tests = models.ManyToManyField(Test,blank=True)
     role = models.CharField(max_length=50, null=False, default="hospital", choices=ROLES)
     slug = models.SlugField(unique=True)
+    slug_bn = models.SlugField(unique=True,blank = True,null = True)
     # Hospital Profile Fields
     hospital_image = ResizedImageField(upload_to='hospital/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     website = models.URLField(null=True, blank=True)
@@ -72,6 +87,13 @@ class Hospital(models.Model):
             while Hospital.objects.filter(slug=self.slug).exists():
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
+        if not self.slug_bn:
+            base_slug = slugify(unidecode(self.name_bn), allow_unicode=False)
+            self.slug_bn = base_slug
+            m = 1
+            while Hospital.objects.filter(slug_bn=self.slug_bn).exists():
+                self.slug_bn = '{}-{}'.format(base_slug, n)
+                m += 1
         super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
@@ -85,19 +107,23 @@ class Hospital(models.Model):
 
 class HospitalService(models.Model):
     service_name = models.CharField(max_length=500, null = True, blank = True)
+    service_name_bn = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
         return self.service_name
 
 class Ambulance(models.Model):
     name = models.CharField(max_length=100,null=True, blank=True)
+    name_bn = models.CharField(max_length=100,null=True, blank=True)
     hospital = models.BooleanField(default = True)
     hospital_name = models.ForeignKey(Hospital,on_delete=models.CASCADE,blank = True, null = True)
     ac = models.BooleanField(default = False)
     phone_number = models.CharField(max_length=100,null=True, blank=True)
     location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
+    address_bn = models.TextField(max_length=500, blank=True, null=False)
     slug = models.SlugField(unique=True)
+    slug_bn = models.SlugField(unique=True,blank = True, null =True)
     def __str__(self):
         return self.name
     
@@ -109,4 +135,11 @@ class Ambulance(models.Model):
             while Ambulance.objects.filter(slug=self.slug).exists():
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
+        if not self.slug_bn:
+            base_slug = slugify(unidecode(self.name_bn), allow_unicode=False)
+            self.slug_bn = base_slug
+            m = 1
+            while Ambulance.objects.filter(slug_bn=self.slug_bn).exists():
+                self.slug_bn = '{}-{}'.format(base_slug, n)
+                m += 1
         super().save(*args, **kwargs)
