@@ -190,6 +190,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
         'location__upazila__district__division__id': ['in'],
         }
     search_fields = ['name','address','name_bn','address_bn']
+    ordering_fields = ['name','name_bn']
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or self.action=="get_ambulance_by_slug":
