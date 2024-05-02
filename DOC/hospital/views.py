@@ -5,9 +5,9 @@ from rest_framework.decorators import action
 # filter search sort
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Hospital,Ambulance, HospitalService,Test
+from .models import Hospital,Ambulance, HospitalService,Test, TestCatagory
 from user.models import User
-from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer,TestSerializer
+from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer, TestCatagorySerializer,TestSerializer
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
@@ -17,7 +17,19 @@ from django.db.models import Q
 
 # Create your views here.
 
+class CategoryListAPIView(viewsets.GenericViewSet):
+    queryset = TestCatagory.objects.all()
+    serializer_class = TestCatagorySerializer
 
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset()).order_by("-id")
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 class TestManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = TestSerializer
@@ -30,7 +42,7 @@ class TestManagementView(viewsets.GenericViewSet):
     }
     
     search_fields = ['test_name','test_name_bn']
-    ordering_fields = ['test_name','test_name_bn']
+    ordering_fields = ['test_name','test_name_bn',"fee","fee_bn"]
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or self.action=="get_test_by_slug":

@@ -24,7 +24,9 @@ class Test(models.Model):
     test_name = models.CharField(max_length=200,null=True,blank= True)
     test_name_bn = models.CharField(max_length=200,null=True,blank= True)
     fee = models.CharField(max_length=200,null=True,blank= True)
+    fee_bn = models.CharField(max_length=200,null=True,blank= True)
     delivery_time = models.CharField(max_length=200,null=True,blank= True)
+    delivery_time_bn = models.CharField(max_length=200,null=True,blank= True)
     slug = models.CharField(max_length=200,null=True,blank=True)
     slug_bn = models.CharField(max_length=200,null=True,blank=True)
 
