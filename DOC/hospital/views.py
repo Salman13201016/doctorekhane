@@ -189,7 +189,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
         }
-    search_fields = ['name','address','name_bn','address_bn']
+    search_fields = ['name','address','name_bn','address_bn','phone_number']
     ordering_fields = ['name','name_bn']
 
     def get_permissions(self):

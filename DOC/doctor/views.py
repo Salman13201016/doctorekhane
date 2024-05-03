@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
-
+from django.db.models import Q
 # model
 from .models import Doctor, DoctorService, Chamber, Experience, Review
 from user.models import User
@@ -128,8 +128,8 @@ class DoctorManagementView(viewsets.GenericViewSet):
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
     }
-    search_fields = ['name',"address"]
-    ordering_fields = ['name']
+    search_fields = ['name',"address",'name_bn',"address_bn"]
+    ordering_fields = ['name','name_bn']
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or  self.action=="get_doctor_by_slug":
@@ -169,7 +169,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
     @action(detail=False, methods=['GET'], url_path='get-doctor-by-slug/(?P<slug>[-\w]+)')
     def get_doctor_by_slug(self, request, slug=None):
         try:
-            doctor = Doctor.objects.get(slug=slug)
+            doctor = Doctor.objects.get(Q(slug=slug)|Q(slug_bn=slug))
             serializer = self.get_serializer(doctor)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Doctor.DoesNotExist:
@@ -204,8 +204,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
         'location__upazila__district__division__id': ['in'],
     }
 
-    search_fields = ['name',"address",'chamber__hospital__name']
-    ordering_fields = ['name']
+    search_fields = ['name',"address",'name_bn',"address_bn",'chamber__hospital__name']
+    ordering_fields = ['name','name_bn']
 
     def list(self, request):
         specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.filter(profile=False).values_list('specialists__id', flat=True).distinct())
@@ -230,7 +230,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__upazila__district__division__id__in = division_data,
                 location__upazila__id__in = upazila_data,
                 location__union_name__in = union_data,
-            ).values_list('services__id', 'services__service_name').distinct()
+            ).values_list('services__id', 'services__service_name','services__service_name_bn').distinct()
         )
         filter_district = list(
             Doctor.objects.filter(
@@ -282,6 +282,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 {
                     "id": item[0],
                     "services_name": item[1],
+                    "services_name_bn": item[1],
                     "count": len(Doctor.objects.filter(services__id=item[0]).distinct())
                 } for item in filter_doctorservices
             ],

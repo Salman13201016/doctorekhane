@@ -23,9 +23,9 @@ class BlogManagementView(viewsets.GenericViewSet):
 
     filterset_fields = {
         'title': ["in"],
-        'time': ["exact"],
+        'time': ["range"],
     }
-    search_fields = ['title','time']
+    search_fields = ['title']
     ordering_fields = ['time']
     
     def get_permissions(self):

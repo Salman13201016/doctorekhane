@@ -108,9 +108,12 @@ class Services(models.Model):
 
 class Team(models.Model):
     name = models.CharField(max_length=100,blank=True,null=True)
+    name_bn = models.CharField(max_length=100,blank=True,null=True)
     image =  ResizedImageField(upload_to = 'team_image/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
     designation = models.CharField(max_length=100,blank=True,null=True)
+    designation_bn = models.CharField(max_length=100,blank=True,null=True)
     short_text = models.TextField(blank=True,null=True)
+    short_text_bn = models.TextField(blank=True,null=True)
 
     def __str__(self):
         return self.name
