@@ -24,6 +24,7 @@ class BlogManagementView(viewsets.GenericViewSet):
     filterset_fields = {
         'title': ["in"],
         'time': ["range"],
+        'published': ["exact"],
     }
     search_fields = ['title']
     ordering_fields = ['time']
