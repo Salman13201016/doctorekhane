@@ -36,7 +36,7 @@ class BlogManagementView(viewsets.GenericViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff:
+        if user.is_authenticated and user.role == "admin" or user.is_staff:
             # Admin user, show all blog posts
             return Blog.objects.all().order_by('-id')
         else:

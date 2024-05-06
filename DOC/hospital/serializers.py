@@ -111,6 +111,7 @@ class HospitalProfileSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'name': {'required': True},
             'name_bn': {'required': True},
+            'hospital_no' : { 'required': True },
             'hospital_image': {'required': False},
             'longitude': {'required': False},
             'latitude': {'required': False},
@@ -179,6 +180,20 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         hospitalProfile = attrs.get('hospital', None)
         if hospitalProfile:
+            hospital_no = hospitalProfile.get('hospital_no')
+            phone_number = hospitalProfile.get('phone_number')
+
+            if self.instance:
+                if hospital_no and Hospital.objects.filter(profile=True,hospital_no=hospital_no).exclude(id=self.instance.doctor.id).exists():
+                    raise serializers.ValidationError({"message": 'License number already exists'})
+                if phone_number and Hospital.objects.filter(profile=True,phone_number=phone_number).exclude(id=self.instance.doctor.id).exists():
+                    raise serializers.ValidationError({"message": 'Phone number already exists'})
+            else:
+                if hospital_no and Hospital.objects.filter(profile=True,hospital_no=hospital_no).exists():
+                    raise serializers.ValidationError({"message": 'License number already exists'})
+                if phone_number and Hospital.objects.filter(profile=True,phone_number=phone_number).exists():
+                    raise serializers.ValidationError({"message": 'Phone number already exists'})
+
             if self.instance:
                 if Hospital.objects.filter(profile=True,name__iexact=attrs.get('name'), address=attrs.get('address')).exclude(id=self.instance.id).exists():
                     raise serializers.ValidationError({'message': 'Hospital at this address already exists.'})
@@ -275,6 +290,8 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         model = Hospital
         fields = "__all__"
         extra_kwargs = {
+            'hospital_no' : { 'required': True }, 
+            'hospital_no_bn' : { 'required': True }, 
             'name': {'required': True},
             'name_bn': {'required': True},
             'hospital_image': {'required': False},
@@ -305,7 +322,11 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         else:
             if Hospital.objects.filter(profile=False, phone_number__iexact=attrs.get('phone_number')).exists():
                 raise serializers.ValidationError({'message': 'Phone number already exists.'})
-
+        if self.instance:
+            if  Hospital.objects.filter(Q(hospital_no__iexact=attrs.get('hospital_no'))|Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn')),profile=False).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'License No already exists'})
+        elif Hospital.objects.filter(Q(hospital_no__iexact=attrs.get('hospital_no'))|Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn')),profile=False).exists():
+            raise serializers.ValidationError({"message": 'License No already exists.'})
         return attrs
     
     def create(self, validated_data):

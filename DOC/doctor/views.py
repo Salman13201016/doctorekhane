@@ -128,7 +128,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
     }
-    search_fields = ['name',"address",'name_bn',"address_bn"]
+    search_fields = ['name',"address",'name_bn',"address_bn",'license_no','license_no_bn']
     ordering_fields = ['name','name_bn']
 
     def get_permissions(self):
@@ -364,7 +364,7 @@ class DoctorProfileListView(viewsets.GenericViewSet):
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
     }
-    search_fields = ["user__first_name","user__last_name","user__email","address"]
+    search_fields = ["user__first_name","user__last_name","user__email","address","license_no"]
     ordering_fields = ['user__first_name']
     
     def retrieve(self, request, pk=None):

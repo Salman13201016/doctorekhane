@@ -54,6 +54,8 @@ class Hospital(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=255,null=True, blank=True)
     name_bn = models.CharField(max_length=255,null=True, blank=True)
+    hospital_no = models.CharField(max_length=255,null=True, blank=True)
+    hospital_no_bn = models.CharField(max_length=255,null=True, blank=True)
     location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
     address_bn = models.TextField(max_length=500, blank=True, null=False)

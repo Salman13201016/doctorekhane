@@ -127,7 +127,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
         'category': ['in'],
     }
 
-    search_fields = ['name',"address",'name_bn',"address_bn"]
+    search_fields = ['name',"address",'name_bn',"address_bn",'hospital_no','hospital_no_bn']
     ordering_fields = ['name','name_bn']
 
     def get_permissions(self):
@@ -598,7 +598,7 @@ class HospitalProfileListView(viewsets.GenericViewSet):
         'location__upazila__district__division__id': ['in'],
         'category': ['in'],
     }
-    search_fields = ["user__first_name","user__last_name","user__email","address"]
+    search_fields = ["user__first_name","user__last_name","user__email","address","hospital_no"]
     ordering_fields = ['user__first_name']
     
     def retrieve(self, request, pk=None):
