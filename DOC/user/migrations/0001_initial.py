@@ -13,7 +13,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("auth", "0014_remove_user_role"),
         ("app", "0001_initial"),
     ]
 

@@ -7,18 +7,18 @@ from hospital.models import Ambulance, Hospital
 from user.models import User
 from django.db.models import Q
 # model
-from .models import Districts, Divisions, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Districts, Divisions, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 # serializer
-from rest_framework import serializers
-from .serializers import  SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
+from .serializers import  ActionLogSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
-from auth_app.permissions import IsModerator
+from auth_app.permissions import IsModerator,IsSuperAdmin
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # filter search sort
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from datetime import datetime
 
 class DivisionListAPIView(generics.ListAPIView):
     serializer_class = DivisionSerializer
@@ -74,6 +74,11 @@ class SpecialistManagementView(viewsets.GenericViewSet):
 
         if serializer.is_valid():
             serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created specialist",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -84,12 +89,23 @@ class SpecialistManagementView(viewsets.GenericViewSet):
     def partial_update(self, request, pk=None):
         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} updated specialist {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
-        self.get_object().delete()
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted specialist {instance.name}",
+                timestamp=datetime.now()
+            )
+        instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
 
@@ -131,7 +147,12 @@ class ServicesManagementView(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created services {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -142,12 +163,23 @@ class ServicesManagementView(viewsets.GenericViewSet):
     def partial_update(self, request, pk=None):
         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update services {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None):
-        self.get_object().delete()
+        instance = self.get_object()
+        ActionLog.objects.create(
+            user=request.user,
+            action=f"{request.user.username} created services {instance.name}",
+            timestamp=datetime.now()
+        )
+        instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
     
@@ -198,9 +230,55 @@ class TeamManagementView(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} add team member info {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update team member info {instance.name}",
+                timestamp=datetime.now()
+            )
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        instance = self.get_object()
+        ActionLog.objects.create(
+            user=request.user,
+            action=f"{request.user.username} delete team member info {instance.name}",
+            timestamp=datetime.now()
+        )
+        instance.delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+    
+class SiteSettingsManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsModerator]
+    serializer_class = SiteSettingsSerializer
+    queryset = SiteSettings.objects.all()
+    pagination_class = LimitOffsetPagination
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def retrieve(self, request, pk=None):
         serializer = self.get_serializer(self.get_object())
@@ -212,7 +290,19 @@ class TeamManagementView(viewsets.GenericViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ActionLogList(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+    queryset = ActionLog.objects.all().order_by('-timestamp')
+    serializer_class = ActionLogSerializer
+    pagination_class = LimitOffsetPagination
 
-    def destroy(self, request, pk=None):
-        self.get_object().delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

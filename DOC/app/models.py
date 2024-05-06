@@ -126,3 +126,15 @@ class Team(models.Model):
             super(Team, self).delete(*args, **kwargs)
             # Delete the file after the model
             storage.delete(path)
+
+class SiteSettings(models.Model):
+    logo = ResizedImageField(upload_to='logo/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
+    banner = ResizedImageField(upload_to='banner/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
+
+class ActionLog(models.Model):
+    user = models.ForeignKey("user.User", on_delete=models.CASCADE)
+    action = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.action} at {self.timestamp}"

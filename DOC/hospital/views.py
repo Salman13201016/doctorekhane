@@ -3,7 +3,7 @@ from rest_framework import  status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 # filter search sort
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter,OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Hospital,Ambulance, HospitalService,Test, TestCatagory
 from user.models import User
@@ -35,7 +35,7 @@ class TestManagementView(viewsets.GenericViewSet):
     serializer_class = TestSerializer
     queryset = Test.objects.filter()
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
     filterset_fields = {
         'catagory__id': ['in'],
@@ -114,7 +114,8 @@ class HospitalManagementView(viewsets.GenericViewSet):
     serializer_class = HospitalManagementSerializer
     queryset = Hospital.objects.filter(profile=False)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'specialists__id': ['in'],
@@ -181,7 +182,8 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
     serializer_class = AmbulanceListSerializer
     queryset = Ambulance.objects.all().order_by('-id')
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'ac': ['exact'],
         'location__union_name': ['in'],
@@ -245,7 +247,8 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
     serializer_class = AmbulanceListSerializer
     queryset = Ambulance.objects.all()
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'ac': ['exact'],
         'location__union_name': ['in'],
@@ -395,7 +398,8 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
 
 class HospitalFilterApi(viewsets.GenericViewSet):
     queryset = Hospital.objects.filter(profile=False)
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'specialists__id': ['in'],
@@ -588,7 +592,8 @@ class HospitalProfileListView(viewsets.GenericViewSet):
     serializer_class = HospitalManagementSerializer
     queryset = Hospital.objects.filter(profile=True)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],

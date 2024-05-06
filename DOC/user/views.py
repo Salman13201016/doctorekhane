@@ -50,7 +50,8 @@ class UserManagementView(viewsets.GenericViewSet):
     serializer_class = UserManagementSerializer
     queryset = User.objects.filter(role="general").exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     # filterset_fields = ['is_superuser','is_staff',]
     filterset_fields = ['role']
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
@@ -91,7 +92,8 @@ class SuperUserManagementView(viewsets.GenericViewSet):
     serializer_class = SuperUserManagementSerializer
     queryset = User.objects.filter(role="general").exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = ['role']
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
 
@@ -127,7 +129,8 @@ class DonorListView(viewsets.GenericViewSet):
     serializer_class = DonorListSerializer
     queryset = User.objects.filter(role="general").exclude(profile__donor = False)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'profile__blood_group': ['in'],
         'profile__location__union_name': ['in'],
@@ -148,7 +151,8 @@ class DonorListView(viewsets.GenericViewSet):
 
 class DonorFilterApi(viewsets.GenericViewSet):
     queryset = User.objects.filter(role="general").exclude(profile__donor = False)
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'profile__blood_group': ['in'],

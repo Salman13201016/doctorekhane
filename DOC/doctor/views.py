@@ -119,7 +119,8 @@ class DoctorManagementView(viewsets.GenericViewSet):
     serializer_class = DoctorManagementSerializer
     queryset = Doctor.objects.filter(profile=False)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],
@@ -193,7 +194,8 @@ class DoctorManagementView(viewsets.GenericViewSet):
             
 class DoctorFilterApi(viewsets.GenericViewSet):
     queryset = Doctor.objects.filter(profile=False)
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'specialists__id': ['in'],
@@ -355,7 +357,8 @@ class DoctorProfileListView(viewsets.GenericViewSet):
     serializer_class = DoctorManagementSerializer
     queryset = Doctor.objects.filter(profile=True)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],

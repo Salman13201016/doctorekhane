@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DoctorAppointment,TestAppointment
+from .models import DoctorAppointment,TestAppointment,AppointmentInfo
 # Register your models here.
 class DoctorAppointmentAdmin(admin.ModelAdmin):
     list_display=(
@@ -37,4 +37,4 @@ class TestAppointmentAdmin(admin.ModelAdmin):
 
 admin.site.register(DoctorAppointment,DoctorAppointmentAdmin)
 admin.site.register(TestAppointment,TestAppointmentAdmin)
-
+admin.site.register(AppointmentInfo)

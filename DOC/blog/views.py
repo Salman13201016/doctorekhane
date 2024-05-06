@@ -3,7 +3,7 @@ from rest_framework import  status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 # filter search sort
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter,OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Blog
 from .serializers import BlogManagementSerializer
@@ -19,7 +19,8 @@ class BlogManagementView(viewsets.GenericViewSet):
     serializer_class = BlogManagementSerializer
     queryset = Blog.objects.all()
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'title': ["in"],
@@ -93,7 +94,8 @@ class PersonalBlogManagementView(viewsets.ModelViewSet):
     serializer_class = BlogManagementSerializer
     queryset = Blog.objects.all()
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'title': ["in"],

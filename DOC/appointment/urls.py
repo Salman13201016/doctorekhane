@@ -5,6 +5,7 @@ from . import views
 router = DefaultRouter()
 router.register('doctor', views.DoctorAppointmentManagementView, basename='doctor-appointment')
 router.register('test', views.TestAppointmentManagementView, basename='test-appointment')
+router.register('info-management', views.AppointmentInfoManagementView, basename='AppointmentInfoManagementView')
 
 
 urlpatterns = [

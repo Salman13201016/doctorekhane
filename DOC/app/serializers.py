@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 #model
-from .models import Divisions, Districts, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Divisions, Districts, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,3 +66,30 @@ class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = "__all__"
+
+
+class SiteSettingsSerializer(serializers.ModelSerializer):
+    logo = Base64ImageField(required=False, allow_null=True)
+    banner = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = SiteSettings
+        fields ="__all__"
+        extra_kwargs = {
+            'logo':{'required':False},
+            'banner':{'required':False},
+        }
+
+
+class ActionLogSerializer(serializers.ModelSerializer):
+    timestamp = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = ActionLog
+        fields = '__all__'
+
+    def to_representation(self, instance):
+
+        data = super().to_representation(instance) 
+        return data
+
+
