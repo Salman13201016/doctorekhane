@@ -21,7 +21,10 @@ class DoctorAppointmentManagementSerializer(serializers.ModelSerializer):
         validated_data['appointment_id'] = f"{doctor_id}{chamber_id}{date}{time}{user_id}"
         
         # Set fee from chamber.fee
-        validated_data['fee'] = validated_data['chamber'].fee
+        if validated_data['patientstatus'] == 'new':
+            validated_data['fee'] = int(validated_data['chamber'].fee.split('|')[1])
+        else:
+            validated_data['fee'] = int(validated_data['chamber'].fee.split('|')[0])
         
         return super().create(validated_data)
     

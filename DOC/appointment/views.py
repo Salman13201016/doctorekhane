@@ -2,6 +2,8 @@ from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
+from app.models import Notifications
+
 # model
 from .models import AppointmentInfo, DoctorAppointment, TestAppointment
 from user.models import User
@@ -62,7 +64,13 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
             to_email = appointment.user.email
 
             send_mail(subject, message, from_email, [to_email])
-
+            # Create a notification for the user
+            notification = Notifications.objects.create(
+                user=appointment.user,
+                title="Appointment Booked",
+                content=f"A new appointment with {appointment.doctor} on {appointment.date} at {appointment.time} has been booked."
+            )
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -127,6 +135,13 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
 
         send_mail(subject, message, from_email, [to_email])
         appointment.save()
+                    # Create a notification for the user
+        notification = Notifications.objects.create(
+            user=appointment.user,
+            title="Appointment Booked",
+            content=f"A appointment with {appointment.doctor} on {appointment.date} at {appointment.time} has been canceled."
+        )
+        
         serializer = self.get_serializer(appointment)
         return Response(serializer.data)
 
@@ -172,6 +187,13 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
             to_email = appointment.user.email
 
             send_mail(subject, message, from_email, [to_email])
+                        # Create a notification for the user
+            notification = Notifications.objects.create(
+                user=appointment.user,
+                title="Appointment Booked",
+                content=f"A new {appointment.test.test_name} test appointment in {appointment.hospital} on {appointment.date} at {appointment.time} has been booked."
+            )
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -237,6 +259,11 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
 
         send_mail(subject, message, from_email, [to_email])
         test_appointment.save()
+        notification = Notifications.objects.create(
+            user=test_appointment.user,
+            title="Appointment Booked",
+            content=f"A new {test_appointment.test.test_name} test appointment in {test_appointment.hospital} on {test_appointment.date} at {test_appointment.time} has been canceled."
+        )
         serializer = self.get_serializer(test_appointment)
         return Response(serializer.data)
 
