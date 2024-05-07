@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 #model
-from .models import ActionLog, Divisions, Districts, SiteSettings, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Divisions, Districts, Notifications, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -91,5 +91,10 @@ class ActionLogSerializer(serializers.ModelSerializer):
 
         data = super().to_representation(instance) 
         return data
+    
+class NotificationSerializer(serializers.ModelSerializer):
 
-
+    class Meta:
+        model = Notifications
+        fields = "__all__"
+    

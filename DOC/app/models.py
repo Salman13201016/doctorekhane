@@ -138,3 +138,14 @@ class ActionLog(models.Model):
 
     def __str__(self):
         return f"{self.action} at {self.timestamp}"
+    
+
+class Notifications(models.Model):
+    user = models.ForeignKey("user.User",on_delete=models.CASCADE,blank = True, null = True)
+    title = models.CharField(max_length=100, blank=True, null=True)
+    content = models.TextField( blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_seen = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title

@@ -7,9 +7,9 @@ from hospital.models import Ambulance, Hospital
 from user.models import User
 from django.db.models import Q
 # model
-from .models import ActionLog, Districts, Divisions, SiteSettings, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Districts, Divisions, Notifications, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 # serializer
-from .serializers import  ActionLogSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
+from .serializers import  ActionLogSerializer, NotificationSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsModerator,IsSuperAdmin
@@ -73,10 +73,10 @@ class SpecialistManagementView(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
             ActionLog.objects.create(
                 user=request.user,
-                action=f"{request.user.username} created specialist",
+                action=f"{request.user.username} created specialist {instance.name}",
                 timestamp=datetime.now()
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -306,3 +306,42 @@ class ActionLogList(generics.ListAPIView):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+class NotificationList(generics.ListAPIView):
+    queryset = Notifications.objects.all()
+    serializer_class = NotificationSerializer
+
+
+class NotificationDetail(generics.RetrieveUpdateAPIView):
+    queryset = Notifications.objects.all()
+    serializer_class = NotificationSerializer
+
+    def update(self, request, *args, **kwargs):
+        # Extract the list of primary keys from the URL
+        pk_list = [int(pk) for pk in kwargs['pk_list'].split(',')]
+        
+        # Get the instances with the given primary keys
+        instances = self.get_queryset().filter(pk__in=pk_list)
+
+        # Check if it's a bulk update request
+        data = request.data
+        if isinstance(data, list):
+            serializer = self.get_serializer(instances, data=data, partial=True, many=True)
+        else:
+            serializer = self.get_serializer(instances, data=data, partial=True)
+
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+    # Add the following method to handle bulk updates
+    def perform_update(self, serializer):
+        for obj, validated_data in zip(serializer.instance, serializer.validated_data):
+            self.update_instance(obj, validated_data)
+
+    def update_instance(self, instance, validated_data):
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+
+        instance.save()

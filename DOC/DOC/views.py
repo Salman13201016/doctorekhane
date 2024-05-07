@@ -23,7 +23,7 @@ def nearby_hospitals(request):
             return JsonResponse({'message': error_message}, status=500)
         
         # Fetch hospitals from the database
-        hospitals = Hospital.objects.all()
+        hospitals = Hospital.objects.filter(profile = False)
         hospital_data = []
         for hospital in hospitals:
             # Calculate distance between user and hospital

@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import render
 from rest_framework import  status, viewsets
 from rest_framework.response import Response
@@ -5,6 +6,8 @@ from rest_framework.decorators import action
 # filter search sort
 from rest_framework.filters import SearchFilter,OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+
+from app.models import ActionLog
 from .models import Hospital,Ambulance, HospitalService,Test, TestCatagory
 from user.models import User
 from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer, TestCatagorySerializer,TestSerializer
@@ -58,10 +61,15 @@ class TestManagementView(viewsets.GenericViewSet):
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def create(self,requst):
-        serializer =self.get_serializer(data=requst.data)
+    def create(self,request):
+        serializer =self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created test {instance.test_name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -72,12 +80,23 @@ class TestManagementView(viewsets.GenericViewSet):
     def partial_update(self, request, pk=None):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update test {instance.test_name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def destroy(self, request, pk=None):
-        self.get_object().delete()
+        instance = self.get_object()
+        ActionLog.objects.create(
+            user=request.user,
+            action=f"{request.user.username} deleted test {instance.test_name}",
+            timestamp=datetime.now()
+        )
+        instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
     
@@ -145,10 +164,15 @@ class HospitalManagementView(viewsets.GenericViewSet):
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def create(self,requst):
-        serializer =self.get_serializer(data=requst.data)
+    def create(self,request):
+        serializer =self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created hospital {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -159,12 +183,23 @@ class HospitalManagementView(viewsets.GenericViewSet):
     def partial_update(self, request, pk=None):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update hospital {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     def destroy(self, request, pk=None):
-        self.get_object().delete()
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted hospital {instance.name}",
+                timestamp=datetime.now()
+            )
+        instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
     
@@ -212,10 +247,15 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def create(self,requst):
-        serializer =self.get_serializer(data=requst.data)
+    def create(self,request):
+        serializer =self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created ambulance {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -226,12 +266,23 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
     def partial_update(self, request, pk=None):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update ambulance {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def destroy(self, request, pk=None):
-        self.get_object().delete()
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted ambulance {instance.name}",
+                timestamp=datetime.now()
+            )
+        instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['GET'], url_path='get-ambulance-by-slug/(?P<slug>[-\w]+)')

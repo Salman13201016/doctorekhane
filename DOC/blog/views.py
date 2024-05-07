@@ -1,10 +1,14 @@
+from datetime import datetime
 from django.shortcuts import render
+import requests
 from rest_framework import  status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 # filter search sort
 from rest_framework.filters import SearchFilter,OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+
+from app.models import ActionLog
 from .models import Blog
 from .serializers import BlogManagementSerializer
 # pagination
@@ -56,10 +60,15 @@ class BlogManagementView(viewsets.GenericViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
-    def create(self,requst):
-        serializer =self.get_serializer(data=requst.data)
+    def create(self,request):
+        serializer =self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.request.user,
+                action=f"{request.user.username} write a blog {instance.title}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -68,14 +77,43 @@ class BlogManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def partial_update(self, request, pk=None):
-        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        instance = self.get_object()
+        old_publish_status = instance.publish
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+
+            # Check if 'publish' field has been updated
+            if instance.publish != old_publish_status:
+                # Log action for change in publish status
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} {'published' if instance.published else 'unpublished'} a blog '{instance.title}'",
+                    timestamp=datetime.now()
+                )
+
+            # Log action for other field changes
+            other_changes = [key for key, value in serializer.validated_data.items() if key != 'published']
+            if other_changes:
+                action_description = ', '.join(other_changes)
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} updated a blog {action_description}",
+                    timestamp=datetime.now()
+                )
+
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def destroy(self, request, pk=None):
-        self.get_object().delete()
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted a blog {instance.name}",
+                timestamp=datetime.now()
+            )
+        instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
     

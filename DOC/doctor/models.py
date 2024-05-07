@@ -55,6 +55,7 @@ class Doctor(models.Model):
     phone_number = models.CharField(max_length=50, null=True)
     gender = models.CharField(max_length=6, blank=True, null=True, choices=GENDER_CHOCIES)
     profile = models.BooleanField(default = False)
+    position = models.IntegerField()
     def __str__(self):
         return self.name
     

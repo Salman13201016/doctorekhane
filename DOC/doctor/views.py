@@ -1,8 +1,11 @@
+from datetime import datetime
 from django.shortcuts import get_object_or_404
 from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.db.models import Q
+
+from app.models import ActionLog
 # model
 from .models import Doctor, DoctorService, Chamber, Experience, Review
 from user.models import User
@@ -130,7 +133,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
         'location__upazila__district__division__id': ['in'],
     }
     search_fields = ['name',"address",'name_bn',"address_bn",'license_no','license_no_bn']
-    ordering_fields = ['name','name_bn']
+    ordering_fields = ['name','name_bn',"position"]
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or  self.action=="get_doctor_by_slug":
@@ -142,29 +145,44 @@ class DoctorManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset()).order_by("-id")
+        queryset = self.filter_queryset(self.get_queryset()).order_by("position")
         serializer = self.get_serializer(queryset, many=True, context={"request": request})
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
     
     def create(self, request):
         serializer = self.get_serializer(data=request.data, context={"request":request})
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created doctor {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def partial_update(self, request, pk=None):
         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True, context={"request":request})
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update doctor doctor {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
     def destroy(self, request, pk=None):
-        self.get_object().delete()
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted doctor {instance.name}",
+                timestamp=datetime.now()
+            )
+        instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['GET'], url_path='get-doctor-by-slug/(?P<slug>[-\w]+)')
@@ -179,6 +197,18 @@ class DoctorManagementView(viewsets.GenericViewSet):
     def delete_chamber(self, request, id=None):
         try:
             chamber = Chamber.objects.get(id=id)
+            if chamber.name:
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} deleted {chamber.doctor.name} chamber {chamber.name}",
+                    timestamp=datetime.now()
+                )
+            else:
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} deleted doctor {chamber.hospital.name}",
+                    timestamp=datetime.now()
+                )
             chamber.delete()  # Delete the chamber
             return Response({'message': 'Chamber deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
         except Chamber.DoesNotExist:
@@ -187,6 +217,11 @@ class DoctorManagementView(viewsets.GenericViewSet):
     def delete_experience(self, request, id=None):
         try:
             experience = Experience.objects.get(id=id)
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted {experience.doctor.name} experience",
+                timestamp=datetime.now()
+            )
             experience.delete()  # Delete the chamber
             return Response({'message': 'Experience deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
         except Experience.DoesNotExist:
