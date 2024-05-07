@@ -10,7 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from app.models import ActionLog
 from .models import Hospital,Ambulance, HospitalService,Test, TestCatagory
 from user.models import User
-from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer, TestCatagorySerializer,TestSerializer
+from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer, HospitalServiceSerializer, TestCatagorySerializer,TestSerializer
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
@@ -19,6 +19,20 @@ from auth_app.permissions import IsSuperAdmin,IsHospital,IsModerator
 from django.db.models import Q
 
 # Create your views here.
+
+class HospitalServiceManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsHospital,IsModerator,IsSuperAdmin]
+    serializer_class = HospitalServiceSerializer
+    queryset = HospitalService.objects.all()
+
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CategoryListAPIView(viewsets.GenericViewSet):
     queryset = TestCatagory.objects.all()
@@ -131,7 +145,7 @@ class HospitalProfileView(viewsets.GenericViewSet):
 class HospitalManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsHospital]
     serializer_class = HospitalManagementSerializer
-    queryset = Hospital.objects.filter(profile=False)
+    queryset = Hospital.objects.filter(profile=False).order_by("-id")
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -156,7 +170,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
         return super().get_permissions()
     
     def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset()).order_by("-id")
+        queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True, context={"request": request})
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -553,13 +567,6 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                     "specialist_name_bn": item[2],
                     "count": len(Hospital.objects.filter(specialists__id=item[0]).distinct())
                 } for item in filter_specialists
-            ],
-            "division_filters": [
-                {
-                    "id": item[0],
-                    "division_name": item[1],
-                    "count": len(Hospital.objects.filter(location__upazila__district__division__id=item[0]).distinct())
-                } for item in filter_division
             ],
             "services_filter": [
                 {

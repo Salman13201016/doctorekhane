@@ -62,24 +62,20 @@ from django_filters.rest_framework import DjangoFilterBackend
 #             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# class DoctorServiceManagementView(viewsets.GenericViewSet):
-#     permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
-#     serializer_class = DoctorServiceSerializer
-#     queryset = DoctorService.objects.all()
+class DoctorServiceManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
+    serializer_class = DoctorServiceSerializer
+    queryset = DoctorService.objects.all()
 
-#     def get_object(self):
-#         return self.request.user
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-#     def retrieve(self, request, pk=None):
-#         serializer = self.get_serializer(self.get_object())
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-#     def partial_update(self, request, pk=None):
-#         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True,)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DoctorProfileView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated,IsDoctor]
@@ -120,7 +116,7 @@ class DoctorProfileView(viewsets.GenericViewSet):
 class DoctorManagementView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
     serializer_class = DoctorManagementSerializer
-    queryset = Doctor.objects.filter(profile=False)
+    queryset = Doctor.objects.filter(profile=False).order_by("position")
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -145,7 +141,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset()).order_by("position")
+        queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True, context={"request": request})
         page = self.paginate_queryset(queryset)
         if page is not None:

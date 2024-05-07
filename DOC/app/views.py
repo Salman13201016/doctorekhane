@@ -212,6 +212,11 @@ class TeamManagementView(viewsets.GenericViewSet):
     queryset = Team.objects.all()
     pagination_class = LimitOffsetPagination
 
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+
+    search_fields = ['name','name_bn',"designation","designation_bn"]
+    ordering_fields = ['name','name_bn']
+
     def get_permissions(self):
         if self.action == "list" :
             self.permission_classes = []

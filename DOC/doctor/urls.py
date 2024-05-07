@@ -5,7 +5,7 @@ from . import views
 router = DefaultRouter()
 # router.register('chamber', views.ChamberManagementView, basename='chamber')
 # router.register('experience', views.ExperienceManagementView, basename='experience')
-# router.register('doctor-service', views.DoctorServiceManagementView, basename='doctor_service')
+router.register('doctor-services', views.DoctorServiceManagementView, basename='doctor_service')
 router.register('management', views.DoctorManagementView, basename='doctor-management')
 router.register('profile-list', views.DoctorProfileListView, basename='doctor-profile-list')
 router.register('profile', views.DoctorProfileView, basename='doctor-profile')
