@@ -26,7 +26,7 @@ from django.core.mail import send_mail
 class DoctorAppointmentManagementView(viewsets.GenericViewSet):
     # permission_classes = [IsAuthenticated,IsModerator]
     serializer_class = DoctorAppointmentManagementSerializer
-    queryset = DoctorAppointment.objects.all()
+    queryset = DoctorAppointment.objects.all().distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -149,7 +149,7 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
 class TestAppointmentManagementView(viewsets.GenericViewSet):
     # permission_classes = [IsAuthenticated,IsModerator]
     serializer_class = TestAppointmentManagementSerializer
-    queryset = TestAppointment.objects.all()
+    queryset = TestAppointment.objects.all().distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -272,7 +272,7 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
 class AppointmentInfoManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated,IsSuperAdmin]
     serializer_class = AppointmentInfoSerializer
-    queryset = AppointmentInfo.objects.all()
+    queryset = AppointmentInfo.objects.all().distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     filterset_fields = {

@@ -50,7 +50,7 @@ class CategoryListAPIView(viewsets.GenericViewSet):
 class TestManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = TestSerializer
-    queryset = Test.objects.filter()
+    queryset = Test.objects.filter().distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -145,7 +145,7 @@ class HospitalProfileView(viewsets.GenericViewSet):
 class HospitalManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsHospital]
     serializer_class = HospitalManagementSerializer
-    queryset = Hospital.objects.filter(profile=False).order_by("-id")
+    queryset = Hospital.objects.filter(profile=False).order_by("-id").distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -229,7 +229,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
 class AmbulanceManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = AmbulanceListSerializer
-    queryset = Ambulance.objects.all().order_by('-id')
+    queryset = Ambulance.objects.all().order_by('-id').distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 

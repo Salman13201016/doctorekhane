@@ -1,6 +1,8 @@
+import datetime
 from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from appointment.models import DoctorAppointment
 from doctor.models import Doctor
 
 from hospital.models import Ambulance, Hospital
@@ -18,7 +20,8 @@ from rest_framework.pagination import  LimitOffsetPagination
 # filter search sort
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from datetime import datetime
+from django.utils import timezone
+
 
 class DivisionListAPIView(generics.ListAPIView):
     serializer_class = DivisionSerializer
@@ -48,7 +51,7 @@ class UnionListAPIView(generics.ListAPIView):
 class SpecialistManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = SpecialistSerializer
-    queryset = Specialist.objects.all()
+    queryset = Specialist.objects.all().distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
 
@@ -121,7 +124,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
 class ServicesManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = ServicesSerializer
-    queryset = Services.objects.all()
+    queryset = Services.objects.all().distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
 
@@ -209,7 +212,7 @@ class LandingPageReportView(viewsets.GenericViewSet):
 class TeamManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated,IsModerator]
     serializer_class = TeamSerializer
-    queryset = Team.objects.all()
+    queryset = Team.objects.all().distinct()
     pagination_class = LimitOffsetPagination
 
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
@@ -350,3 +353,69 @@ class NotificationDetail(generics.RetrieveUpdateAPIView):
             setattr(instance, key, value)
 
         instance.save()
+
+from django.db.models import Count, Q,Sum
+class StatisticsViewSet(viewsets.GenericViewSet):
+    def list(self, request):
+        # Get today's date
+        today = timezone.now()
+
+        # Get start and end of the week
+        start_of_week = today - datetime.timedelta(days=today.weekday())
+        end_of_week = start_of_week + datetime.timedelta(days=6)
+
+        # Get start and end of the month
+        start_of_month = today.replace(day=1)
+        end_of_month = start_of_month.replace(day=1, month=start_of_month.month % 12 + 1) - datetime.timedelta(days=1)
+
+        # Daily Appointments
+        daily_appointments = DoctorAppointment.objects.filter(date=today)
+        daily_appointments_count = daily_appointments.count()
+        daily_fee_total = daily_appointments.aggregate(total_fee=Sum('fee'))['total_fee'] or 0
+
+        # Weekly Appointments
+        weekly_appointments = DoctorAppointment.objects.filter(date__range=[start_of_week, end_of_week])
+        weekly_appointments_count = weekly_appointments.count()
+        weekly_fee_total = weekly_appointments.aggregate(total_fee=Sum('fee'))['total_fee'] or 0
+
+        # Monthly Appointments
+        monthly_appointments = DoctorAppointment.objects.filter(date__range=[start_of_month, end_of_month])
+        monthly_appointments_count = monthly_appointments.count()
+        monthly_fee_total = monthly_appointments.aggregate(total_fee=Sum('fee'))['total_fee'] or 0
+
+        # Overall Appointments
+        total_appointments = DoctorAppointment.objects.all()
+        total_appointments_count = total_appointments.count()
+        total_fee_total = total_appointments.aggregate(total_fee=Sum('fee'))['total_fee'] or 0
+
+        # Doctor with most appointments
+        most_appointment_doctor = DoctorAppointment.objects.values('doctor__name').annotate(num_appointments=Count('doctor')).order_by('-num_appointments').first()
+
+        # Ratio of new to old patients
+        new_patients = DoctorAppointment.objects.filter(patientstatus='new').count()
+        old_patients = DoctorAppointment.objects.filter(patientstatus='old').count()
+        ratio_new_old_patients = new_patients / old_patients if old_patients != 0 else 0
+
+        # Number of canceled appointments
+        canceled_appointments = DoctorAppointment.objects.filter(status='canceled').count()
+
+        # Number of done appointments
+        done_appointments = DoctorAppointment.objects.filter(status='done').count()
+
+        # Return statistics as response
+        statistics_data = {
+            "daily_appointments_count": daily_appointments_count,
+            "daily_fee_total": daily_fee_total,
+            "weekly_appointments_count": weekly_appointments_count,
+            "weekly_fee_total": weekly_fee_total,
+            "monthly_appointments_count": monthly_appointments_count,
+            "monthly_fee_total": monthly_fee_total,
+            "total_appointments_count": total_appointments_count,
+            "total_fee_total": total_fee_total,
+            "most_appointment_doctor": most_appointment_doctor,
+            "ratio_new_old_patients": ratio_new_old_patients,
+            "canceled_appointments": canceled_appointments,
+            "done_appointments": done_appointments
+        }
+
+        return Response(statistics_data)

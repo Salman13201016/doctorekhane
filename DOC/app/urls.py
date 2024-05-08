@@ -9,6 +9,7 @@ router.register('services', views.ServicesManagementView, basename='services')
 router.register('team-member', views.TeamManagementView, basename='team-member')
 router.register('site-settings', views.SiteSettingsManagementView, basename='site-settings')
 router.register('landing-page-report', views.LandingPageReportView, basename='landing_page_report')
+router.register('statistic-report', views.StatisticsViewSet, basename='statistic_report')
 
 urlpatterns = [
     path('', include(router.urls)),

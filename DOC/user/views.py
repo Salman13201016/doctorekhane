@@ -48,7 +48,7 @@ class ProfileView(viewsets.GenericViewSet):
 class UserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = UserManagementSerializer
-    queryset = User.objects.filter(role="general").exclude(is_superuser=True)
+    queryset = User.objects.filter(role="general").exclude(is_superuser=True).distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -127,7 +127,7 @@ class SuperUserManagementView(viewsets.GenericViewSet):
     
 class DonorListView(viewsets.GenericViewSet):
     serializer_class = DonorListSerializer
-    queryset = User.objects.filter(role="general").exclude(profile__donor = False)
+    queryset = User.objects.filter(role="general").exclude(profile__donor = False).distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 

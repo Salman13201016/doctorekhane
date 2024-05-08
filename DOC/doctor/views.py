@@ -116,7 +116,7 @@ class DoctorProfileView(viewsets.GenericViewSet):
 class DoctorManagementView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
     serializer_class = DoctorManagementSerializer
-    queryset = Doctor.objects.filter(profile=False).order_by("position")
+    queryset = Doctor.objects.filter(profile=False).order_by("position").distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -386,7 +386,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
 class DoctorProfileListView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
     serializer_class = DoctorManagementSerializer
-    queryset = Doctor.objects.filter(profile=True)
+    queryset = Doctor.objects.filter(profile=True).distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
