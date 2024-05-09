@@ -2,7 +2,8 @@ from rest_framework import  status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 # model
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
+from user.models import User
 # serializer
 from rest_framework import serializers
 from .serializers import  DonorListSerializer, SuperUserManagementSerializer, UserManagementSerializer, UserProfileSerializer
@@ -22,7 +23,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 class ProfileView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.filter(role='general')
 
     def get_object(self):
         return self.request.user
@@ -47,11 +48,12 @@ class ProfileView(viewsets.GenericViewSet):
 class UserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = UserManagementSerializer
-    queryset = User.objects.all().exclude(is_superuser=True)
+    queryset = User.objects.filter(role="general").exclude(is_superuser=True).distinct()
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     # filterset_fields = ['is_superuser','is_staff',]
-    filterset_fields = ['profile__role']
+    filterset_fields = ['role']
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
 
     def retrieve(self, request, pk=None):
@@ -79,18 +81,20 @@ class UserManagementView(viewsets.GenericViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def destroy(self, request, pk=None):
         requested_user = self.get_object()
-        if requested_user.profile.role=="admin":
+        if requested_user.role=="admin":
             raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
         requested_user.delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
 
 class SuperUserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
     serializer_class = SuperUserManagementSerializer
-    queryset = User.objects.all().exclude(is_superuser=True)
+    queryset = User.objects.filter(role="general").exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
-    filterset_fields = ['profile__role']
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
+    filterset_fields = ['role']
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
 
     def retrieve(self, request, pk=None):
@@ -118,13 +122,15 @@ class SuperUserManagementView(viewsets.GenericViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
     
 class DonorListView(viewsets.GenericViewSet):
     serializer_class = DonorListSerializer
-    queryset = User.objects.all().exclude(profile__donor = False)
+    queryset = User.objects.filter(role="general").exclude(profile__donor = False).distinct()
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'profile__blood_group': ['in'],
         'profile__location__union_name': ['in'],
@@ -144,8 +150,9 @@ class DonorListView(viewsets.GenericViewSet):
 
 
 class DonorFilterApi(viewsets.GenericViewSet):
-    queryset = User.objects.all().exclude(profile__donor = False)
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    queryset = User.objects.filter(role="general").exclude(profile__donor = False)
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'profile__blood_group': ['in'],
@@ -157,11 +164,11 @@ class DonorFilterApi(viewsets.GenericViewSet):
     search_fields = ['profile__blood_group','profile__address']
 
     def list(self, request):
-        blood_group_data = request.GET.get("profile__blood_group__in").split(",") if "profile__blood_group__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__blood_group', flat=True).distinct())
-        union_data = request.GET.get("profile__location__union_name__in").split(",") if "profile__location__union_name__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__union_name', flat=True).distinct())
-        upazila_data = request.GET.get("profile__location__upazila__id__in").split(",") if "profile__location__upazila__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__id', flat=True).distinct())
-        district_data = request.GET.get("profile__location__upazila__district__id__in").split(",") if "profile__location__upazila__district__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__id', flat=True).distinct())
-        division_data = request.GET.get("profile__location__upazila__district__division__id__in").split(",") if "profile__location__upazila__district__division__id__in" in request.GET else list(User.objects.all().exclude(profile__donor = False).values_list('profile__location__upazila__district__division__id', flat=True).distinct())
+        blood_group_data = request.GET.get("profile__blood_group__in").split(",") if "profile__blood_group__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__blood_group', flat=True).distinct())
+        union_data = request.GET.get("profile__location__union_name__in").split(",") if "profile__location__union_name__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__union_name', flat=True).distinct())
+        upazila_data = request.GET.get("profile__location__upazila__id__in").split(",") if "profile__location__upazila__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__id', flat=True).distinct())
+        district_data = request.GET.get("profile__location__upazila__district__id__in").split(",") if "profile__location__upazila__district__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__district__id', flat=True).distinct())
+        division_data = request.GET.get("profile__location__upazila__district__division__id__in").split(",") if "profile__location__upazila__district__division__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__district__division__id', flat=True).distinct())
         filter_blood_group = list(
             User.objects.filter(
                 profile__location__upazila__district__id__in = district_data,

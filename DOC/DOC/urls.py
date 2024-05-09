@@ -23,7 +23,7 @@ from .views import index,nearby_hospitals
 
 urlpatterns = [
     path('', index, name="index"),
-    path('nearby-hospitals/', nearby_hospitals, name="nearby_hospitals"),
+    path('api/nearby-hospitals/', nearby_hospitals, name="nearby_hospitals"),
     path('admin/', admin.site.urls),
     path('api/app/', include('app.urls')),
     path('api/auth-app/', include('auth_app.urls')),
@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/blog/', include('blog.urls')),
     path('api/doctor/', include('doctor.urls')),
     path('api/hospital/', include('hospital.urls')),
+    path('api/appointment/', include('appointment.urls')),
     
     path('create-password/password-reset-confirm/<uidb64>/<token>/',
          PasswordResetConfirmView.as_view(), name='password_reset_confirm'),

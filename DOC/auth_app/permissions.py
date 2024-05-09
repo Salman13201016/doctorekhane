@@ -9,21 +9,21 @@ class IsSuperAdmin(BasePermission):
 
 class IsModerator(BasePermission):
     def has_permission(self, request, view):
-        if request.user.profile.role == "admin" or request.user.is_superuser:
+        if request.user.role == "admin" or request.user.is_superuser:
             return True
         else:
             return False
      
 class IsDoctor(BasePermission):
     def has_permission(self, request, view):
-        if request.user.profile.role == "doctor" or request.user.profile.role == "admin" or request.user.is_superuser:
+        if request.user.role == "doctor" or request.user.role == "admin" or request.user.is_superuser:
             return True
         else:
             return False
         
 class IsHospital(BasePermission):
     def has_permission(self, request, view):
-        if request.user.profile.role == "hospital" or request.user.profile.role == "admin" or request.user.is_superuser:
+        if request.user.role == "hospital" or request.user.role == "admin" or request.user.is_superuser:
             return True
         else:
             return False

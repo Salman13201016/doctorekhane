@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 #model
-from .models import Divisions, Districts, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Divisions, Districts, Notifications, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,34 +27,74 @@ class SpecialistSerializer(serializers.ModelSerializer):
     specialist_logo = Base64ImageField(required=False,allow_null=True)
     class Meta:
         model = Specialist
-        fields = ['id','specialist_name',"specialist_description","specialist_logo"]
+        fields = "__all__"
         extra_kwargs = {
             'slug':{'required':False},
+            'slug_bn':{'required':False},
         }
         def validate(self , attrs):
             if self.instance:
-                if  Specialist.objects.filter(specialist_name__iexact=attrs.get('specialist_name')).exclude(id=self.instance.id).exists():
+                if  Specialist.objects.filter(Q(specialist_name__iexact=attrs.get('specialist_name')) | Q(specialist_name_bn__iexact=attrs.get('specialist_name_bn'))).exclude(id=self.instance.id).exists():
                             raise serializers.ValidationError({"message": 'Specialist Name already exists'})
-            elif Specialist.objects.filter(specialist_name__iexact=attrs.get('specialist_name')).exists():
+            elif Specialist.objects.filter(Q(specialist_name__iexact=attrs.get('specialist_name')) | Q(specialist_name_bn__iexact=attrs.get('specialist_name_bn'))).exists():
                 raise serializers.ValidationError({"message": 'Specialist Name already exists.'})
             return attrs
 
-
+from django.db.models import Q
 class ServicesSerializer(serializers.ModelSerializer):
     service_logo = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Services
-        fields = ['id', 'service_name','service_description', 'service_logo']
+        fields ="__all__"
         extra_kwargs = {
             'slug':{'required':False},
+            'slug_bn':{'required':False},
         }
 
     def validate(self, attrs):
         if self.instance:
-            if Services.objects.filter(service_name__iexact=attrs.get('service_name')).exclude(id=self.instance.id).exists():
+            if Services.objects.filter(Q(service_name__iexact=attrs.get('service_name')) | Q(service_name_bn__iexact=attrs.get('service_name_bn'))).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError({"message": 'Category already exists.'})
             
-        elif Services.objects.filter(service_name__iexact=attrs.get('service_name')).exists():
+        elif Services.objects.filter(Q(service_name__iexact=attrs.get('service_name')) | Q(service_name_bn__iexact=attrs.get('service_name_bn'))).exists():
             raise serializers.ValidationError({"message": 'Service Name already exists.'})
         return attrs
+
+class TeamSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(required=False, allow_null=True)
+    class Meta:
+        model = Team
+        fields = "__all__"
+
+
+class SiteSettingsSerializer(serializers.ModelSerializer):
+    logo = Base64ImageField(required=False, allow_null=True)
+    banner = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = SiteSettings
+        fields ="__all__"
+        extra_kwargs = {
+            'logo':{'required':False},
+            'banner':{'required':False},
+        }
+
+
+class ActionLogSerializer(serializers.ModelSerializer):
+    timestamp = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    class Meta:
+        model = ActionLog
+        fields = '__all__'
+
+    def to_representation(self, instance):
+
+        data = super().to_representation(instance) 
+        return data
+    
+class NotificationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notifications
+        fields = "__all__"
+    

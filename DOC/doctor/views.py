@@ -1,12 +1,17 @@
+from datetime import datetime
+from django.shortcuts import get_object_or_404
 from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django.db.models import Q
 
+from app.models import ActionLog
 # model
-from .models import Doctor, DoctorService, Chamber, Experience
+from .models import Doctor, DoctorService, Chamber, Experience, Review
+from user.models import User
 # serializer
 from rest_framework import serializers
-from .serializers import  DoctorManagementSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer
+from .serializers import  DoctorProfileSerializer,DoctorProfileManagementSerializer,DoctorManagementSerializer, DoctorServiceSerializer, ChamberSerializer, ExperienceSerializer, ReviewSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin, IsModerator, IsDoctor
@@ -57,31 +62,64 @@ from django_filters.rest_framework import DjangoFilterBackend
 #             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# class DoctorServiceManagementView(viewsets.GenericViewSet):
-#     permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
-#     serializer_class = DoctorServiceSerializer
-#     queryset = DoctorService.objects.all()
+class DoctorServiceManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
+    serializer_class = DoctorServiceSerializer
+    queryset = DoctorService.objects.all()
 
-#     def get_object(self):
-#         return self.request.user
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-#     def retrieve(self, request, pk=None):
-#         serializer = self.get_serializer(self.get_object())
-#         return Response(serializer.data, status=status.HTTP_200_OK)
 
-#     def partial_update(self, request, pk=None):
-#         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True,)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+class DoctorProfileView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsDoctor]
+    serializer_class = DoctorProfileManagementSerializer
+    queryset = User.objects.filter(role='doctor')
+    def get_object(self):
+        return self.request.user
+
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=False, methods=['DELETE'], url_path='delete-own-chamber/(?P<id>[^/.]+)')
+    def delete_chamber(self, request, id=None):
+        try:
+            chamber = Chamber.objects.get(id=id,doctor=request.user.doctor)
+            chamber.delete()  # Delete the chamber
+            return Response({'message': 'Chamber deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Chamber.DoesNotExist:
+            return Response({'message': 'Chamber not found.'}, status=status.HTTP_404_NOT_FOUND)
+    @action(detail=False, methods=['DELETE'], url_path='delete-own-experience/(?P<id>[^/.]+)')
+    def delete_experience(self, request, id=None):
+        try:
+            experience = Experience.objects.get(id=id,doctor=request.user.doctor)
+            experience.delete()  # Delete the chamber
+            return Response({'message': 'Experience deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Experience.DoesNotExist:
+            return Response({'message': 'Experience not found.'}, status=status.HTTP_404_NOT_FOUND)    @action(detail=False, methods=['DELETE'], url_path='cancel-appointment/(?P<id>[^/.]+)')
+           
+
+
 class DoctorManagementView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
     serializer_class = DoctorManagementSerializer
-    queryset = Doctor.objects.all()
+    queryset = Doctor.objects.filter(profile=False).order_by("position").distinct()
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
     filterset_fields = {
         'specialists__id': ['in'],
         'services__id': ['in'],
@@ -90,9 +128,8 @@ class DoctorManagementView(viewsets.GenericViewSet):
         'location__upazila__district__id': ['in'],
         'location__upazila__district__division__id': ['in'],
     }
-    search_fields = ['name',"address"]
-    ordering_fields = ['name']
-
+    search_fields = ['name',"address",'name_bn',"address_bn",'license_no','license_no_bn']
+    ordering_fields = ['name','name_bn',"position"]
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or  self.action=="get_doctor_by_slug":
@@ -104,8 +141,9 @@ class DoctorManagementView(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def list(self, request):
-        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True, context={"request":request})
-        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
@@ -114,33 +152,81 @@ class DoctorManagementView(viewsets.GenericViewSet):
     def create(self, request):
         serializer = self.get_serializer(data=request.data, context={"request":request})
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created doctor {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     def partial_update(self, request, pk=None):
         serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True, context={"request":request})
         if serializer.is_valid():
-            serializer.save()
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update doctor doctor {instance.name}",
+                timestamp=datetime.now()
+            )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
     def destroy(self, request, pk=None):
-        requested_user = self.get_object()
-        if requested_user.profile.role=="admin":
-            raise serializers.ValidationError({"message": 'You are not authorised to do this action'})
-        requested_user.delete()
-        return Response({'message':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted doctor {instance.name}",
+                timestamp=datetime.now()
+            )
+        instance.delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['GET'], url_path='get-doctor-by-slug/(?P<slug>[-\w]+)')
     def get_doctor_by_slug(self, request, slug=None):
         try:
-            doctor = Doctor.objects.get(slug=slug)
+            doctor = Doctor.objects.get(Q(slug=slug)|Q(slug_bn=slug))
             serializer = self.get_serializer(doctor)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Doctor.DoesNotExist:
             return Response({'message': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+    @action(detail=False, methods=['DELETE'], url_path='delete-chamber/(?P<id>[^/.]+)')
+    def delete_chamber(self, request, id=None):
+        try:
+            chamber = Chamber.objects.get(id=id)
+            if chamber.name:
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} deleted {chamber.doctor.name} chamber {chamber.name}",
+                    timestamp=datetime.now()
+                )
+            else:
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} deleted doctor {chamber.hospital.name}",
+                    timestamp=datetime.now()
+                )
+            chamber.delete()  # Delete the chamber
+            return Response({'message': 'Chamber deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Chamber.DoesNotExist:
+            return Response({'message': 'Chamber not found.'}, status=status.HTTP_404_NOT_FOUND)
+    @action(detail=False, methods=['DELETE'], url_path='delete-experience/(?P<id>[^/.]+)')
+    def delete_experience(self, request, id=None):
+        try:
+            experience = Experience.objects.get(id=id)
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted {experience.doctor.name} experience",
+                timestamp=datetime.now()
+            )
+            experience.delete()  # Delete the chamber
+            return Response({'message': 'Experience deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Experience.DoesNotExist:
+            return Response({'message': 'Experience not found.'}, status=status.HTTP_404_NOT_FOUND)    @action(detail=False, methods=['DELETE'], url_path='cancel-appointment/(?P<id>[^/.]+)')
+            
 class DoctorFilterApi(viewsets.GenericViewSet):
-    queryset = Doctor.objects.all()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    queryset = Doctor.objects.filter(profile=False)
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
 
     filterset_fields = {
         'specialists__id': ['in'],
@@ -151,16 +237,16 @@ class DoctorFilterApi(viewsets.GenericViewSet):
         'location__upazila__district__division__id': ['in'],
     }
 
-    search_fields = ['name',"address",'chamber__hospital__name']
-    ordering_fields = ['name']
+    search_fields = ['name',"address",'name_bn',"address_bn",'chamber__hospital__name']
+    ordering_fields = ['name','name_bn']
 
     def list(self, request):
-        specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.all().values_list('specialists__id', flat=True).distinct())
-        doctorservices_data = request.GET.get("services__id__in").split(",") if "services__id__in" in request.GET else list(Doctor.objects.all().values_list('services__id', flat=True).distinct())
-        union_data = request.GET.get("location__union_name__in").split(",") if "location__union_name__in" in request.GET else list(Doctor.objects.all().values_list('location__union_name', flat=True).distinct())
-        upazila_data = request.GET.get("location__upazila__id__in").split(",") if "location__upazila__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__id', flat=True).distinct())
-        district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__district__id', flat=True).distinct())
-        division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Doctor.objects.all().values_list('location__upazila__district__division__id', flat=True).distinct())
+        specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.filter(profile=False).values_list('specialists__id', flat=True).distinct())
+        doctorservices_data = request.GET.get("services__id__in").split(",") if "services__id__in" in request.GET else list(Doctor.objects.filter(profile=False).values_list('services__id', flat=True).distinct())
+        union_data = request.GET.get("location__union_name__in").split(",") if "location__union_name__in" in request.GET else list(Doctor.objects.filter(profile=False).values_list('location__union_name', flat=True).distinct())
+        upazila_data = request.GET.get("location__upazila__id__in").split(",") if "location__upazila__id__in" in request.GET else list(Doctor.objects.filter(profile=False).values_list('location__upazila__id', flat=True).distinct())
+        district_data = request.GET.get("location__upazila__district__id__in").split(",") if "location__upazila__district__id__in" in request.GET else list(Doctor.objects.filter(profile=False).values_list('location__upazila__district__id', flat=True).distinct())
+        division_data = request.GET.get("location__upazila__district__division__id__in").split(",") if "location__upazila__district__division__id__in" in request.GET else list(Doctor.objects.filter(profile=False).values_list('location__upazila__district__division__id', flat=True).distinct())
         filter_specialists = list(
             Doctor.objects.filter(
                 services__id__in = doctorservices_data,
@@ -168,7 +254,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__upazila__district__division__id__in = division_data,
                 location__upazila__id__in = upazila_data,
                 location__union_name__in = union_data,
-            ).values_list('specialists__id', 'specialists__specialist_name').distinct()
+            ).values_list('specialists__id', 'specialists__specialist_name','specialists__specialist_name_bn').distinct()
         )
         filter_doctorservices = list(
             Doctor.objects.filter(
@@ -177,7 +263,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__upazila__district__division__id__in = division_data,
                 location__upazila__id__in = upazila_data,
                 location__union_name__in = union_data,
-            ).values_list('services__id', 'services__service_name').distinct()
+            ).values_list('services__id', 'services__service_name','services__service_name_bn').distinct()
         )
         filter_district = list(
             Doctor.objects.filter(
@@ -221,6 +307,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 {
                     "id": item[0],
                     "specialist_name": item[1],
+                    "specialist_name_bn": item[2],
                     "count": len(Doctor.objects.filter(specialists__id=item[0]).distinct())
                 } for item in filter_specialists
             ],
@@ -228,6 +315,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 {
                     "id": item[0],
                     "services_name": item[1],
+                    "services_name_bn": item[1],
                     "count": len(Doctor.objects.filter(services__id=item[0]).distinct())
                 } for item in filter_doctorservices
             ],
@@ -293,3 +381,90 @@ class DoctorFilterApi(viewsets.GenericViewSet):
         response_data = filter_keys
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+
+class DoctorProfileListView(viewsets.GenericViewSet):
+    permission_classes = [IsDoctor,IsAuthenticated]
+    serializer_class = DoctorManagementSerializer
+    queryset = Doctor.objects.filter(profile=True).distinct()
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
+    filterset_fields = {
+        'specialists__id': ['in'],
+        'services__id': ['in'],
+        'location__union_name': ['in'],
+        'location__upazila__id': ['in'],
+        'location__upazila__district__id': ['in'],
+        'location__upazila__district__division__id': ['in'],
+    }
+    search_fields = ["user__first_name","user__last_name","user__email","address","license_no"]
+    ordering_fields = ['user__first_name']
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True, context={"request":request})
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class ReviewViewSet(viewsets.GenericViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+    queryset =Review.objects.all()
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    search_fields = ['user__first_name']
+
+    def get_permissions(self):
+        if self.action == "list":
+            self.permission_classes = []
+        if self.action == "delete":
+            self.permission_classes = [IsAuthenticated, IsModerator]
+        return super().get_permissions()
+
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    @action(detail=False, methods=['PATCH'])
+    def update_reviews(self, request):
+        if request.method == 'PATCH':
+            for data in request.data:
+                new_rating = data.get("rating")
+                new_content = data.get("content")
+                order_id = data.get("order")
+                product_id = data.get("product")
+                try:
+                    review = get_object_or_404(Review, order=order_id, product=product_id)
+                    review.rating = new_rating
+                    review.content = new_content
+                    review.save()
+                except Review.DoesNotExist:
+                    pass
+
+            return Response({"message": "Reviews updated successfully"})
+
+        return Response(status=400, data={"message": "Invalid request method"})
+    
+
+    def destroy(self, request, pk=None):
+        self.get_object().delete()
+        return Response({'status':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)

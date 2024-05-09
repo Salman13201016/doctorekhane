@@ -59,13 +59,13 @@ INSTALLED_APPS = [
     'blog',
     'doctor',
     'hospital',
+    'appointment',
+
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'dj_rest_auth.registration',
-    
-    
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
 ]
@@ -183,6 +183,7 @@ if 'MYSQL' in os.environ and os.environ['MYSQL']==1:
         'sql_mode':'traditional'
     }
 
+AUTH_USER_MODEL = 'user.User'
 
 
 # Password validation

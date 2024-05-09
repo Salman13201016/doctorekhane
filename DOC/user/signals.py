@@ -1,15 +1,13 @@
+# signals.py
 import base64
 from django.db.models.signals import post_save
-from django.contrib.auth.models import User
 from django.dispatch import receiver
 
+from user.models import User
 from .models import Profile
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
-    if created:
-        profile = Profile.objects.create(user=instance)
-        if instance.is_superuser:
-            profile.role = "admin"
-            profile.save()
+    if created and instance.role == 'general':
+        Profile.objects.create(user=instance)
 

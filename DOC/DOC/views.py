@@ -16,15 +16,14 @@ def nearby_hospitals(request):
             if location:
                 user_latitude, user_longitude = map(float, location.split(','))
             else:
-                return JsonResponse({'error': 'Location data not found.'}, status=404)
+                return JsonResponse({'message': 'Location data not found.'}, status=404)
         except Exception as e:
             error_message = f"Error: Unable to detect your location. {str(e)}"
             # Log the error for debugging
-            print(error_message)
-            return JsonResponse({'error': error_message}, status=500)
+            return JsonResponse({'message': error_message}, status=500)
         
         # Fetch hospitals from the database
-        hospitals = Hospital.objects.all()
+        hospitals = Hospital.objects.filter(profile = False)
         hospital_data = []
         for hospital in hospitals:
             # Calculate distance between user and hospital
@@ -44,5 +43,4 @@ def nearby_hospitals(request):
     except Exception as e:
         error_message = f"Error: Unable to fetch nearby hospitals. {str(e)}"
         # Log the error for debugging
-        print(error_message)
-        return JsonResponse({'error': error_message}, status=500)
+        return JsonResponse({'message': error_message}, status=500)

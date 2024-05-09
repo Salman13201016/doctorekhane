@@ -18,7 +18,7 @@ class BlogManagementSerializer(serializers.ModelSerializer):
         Validate that the name of the community is unique.
         """
         if Blog.objects.filter(title=value).exists():
-            raise serializers.ValidationError("A Blog with this title already exists.")
+            raise serializers.ValidationError({"message":"A Blog with this title already exists."})
         return value
     
     def create(self, validated_data):
