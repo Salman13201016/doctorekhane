@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.utils import timezone
 from django.shortcuts import render
 import requests
 from rest_framework import  status, viewsets
@@ -67,7 +68,7 @@ class BlogManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.request.user,
                 action=f"{request.user.username} write a blog {instance.title}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -90,7 +91,7 @@ class BlogManagementView(viewsets.GenericViewSet):
                 ActionLog.objects.create(
                     user=request.user,
                     action=f"{request.user.username} {'published' if instance.published else 'unpublished'} a blog '{instance.title}'",
-                    timestamp=datetime.now()
+                    timestamp=timezone.now()
                 )
 
             # Log action for other field changes
@@ -100,7 +101,7 @@ class BlogManagementView(viewsets.GenericViewSet):
                 ActionLog.objects.create(
                     user=request.user,
                     action=f"{request.user.username} updated a blog {action_description}",
-                    timestamp=datetime.now()
+                    timestamp=timezone.now()
                 )
 
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
@@ -111,7 +112,7 @@ class BlogManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} deleted a blog {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)

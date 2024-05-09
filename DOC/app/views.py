@@ -80,7 +80,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} created specialist {instance.specialist_name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -96,7 +96,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} updated specialist {instance.specialist_name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -106,7 +106,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} deleted specialist {instance.specialist_name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
@@ -154,7 +154,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} created services {instance.service_name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -170,7 +170,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} update services {instance.service_name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -180,7 +180,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
             user=request.user,
             action=f"{request.user.username} created services {instance.service_name}",
-            timestamp=datetime.now()
+            timestamp=timezone.now()
         )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
@@ -242,7 +242,7 @@ class TeamManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} add team member info {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -258,7 +258,7 @@ class TeamManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} update team member info {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -268,7 +268,7 @@ class TeamManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
             user=request.user,
             action=f"{request.user.username} delete team member info {instance.name}",
-            timestamp=datetime.now()
+            timestamp=timezone.now()
         )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)

@@ -21,6 +21,7 @@ from rest_framework.pagination import  LimitOffsetPagination
 # filter search sort
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 
 # Create your views here.
 
@@ -156,7 +157,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} created doctor {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -167,7 +168,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} update doctor doctor {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
@@ -176,7 +177,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} deleted doctor {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
@@ -197,13 +198,13 @@ class DoctorManagementView(viewsets.GenericViewSet):
                 ActionLog.objects.create(
                     user=request.user,
                     action=f"{request.user.username} deleted {chamber.doctor.name} chamber {chamber.name}",
-                    timestamp=datetime.now()
+                    timestamp=timezone.now()
                 )
             else:
                 ActionLog.objects.create(
                     user=request.user,
                     action=f"{request.user.username} deleted doctor {chamber.hospital.name}",
-                    timestamp=datetime.now()
+                    timestamp=timezone.now()
                 )
             chamber.delete()  # Delete the chamber
             return Response({'message': 'Chamber deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
@@ -216,7 +217,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} deleted {experience.doctor.name} experience",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             experience.delete()  # Delete the chamber
             return Response({'message': 'Experience deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)

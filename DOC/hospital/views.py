@@ -17,6 +17,7 @@ from rest_framework.pagination import  LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsSuperAdmin,IsHospital,IsModerator
 from django.db.models import Q
+from django.utils import timezone
 
 # Create your views here.
 
@@ -82,7 +83,7 @@ class TestManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} created test {instance.test_name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -98,7 +99,7 @@ class TestManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} update test {instance.test_name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -108,7 +109,7 @@ class TestManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
             user=request.user,
             action=f"{request.user.username} deleted test {instance.test_name}",
-            timestamp=datetime.now()
+            timestamp=timezone.now()
         )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
@@ -185,7 +186,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} created hospital {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -201,7 +202,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} update hospital {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -211,7 +212,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} deleted hospital {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
@@ -268,7 +269,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} created ambulance {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -284,7 +285,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
             ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} update ambulance {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -294,7 +295,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
         ActionLog.objects.create(
                 user=request.user,
                 action=f"{request.user.username} deleted ambulance {instance.name}",
-                timestamp=datetime.now()
+                timestamp=timezone.now()
             )
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)

@@ -22,6 +22,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from DOC.settings import DEFAULT_FROM_EMAIL
 from django.core.mail import send_mail
+from django.utils import timezone
+
 # Create your views here.
 class DoctorAppointmentManagementView(viewsets.GenericViewSet):
     # permission_classes = [IsAuthenticated,IsModerator]
