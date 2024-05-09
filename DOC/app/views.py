@@ -79,7 +79,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
             instance = serializer.save()
             ActionLog.objects.create(
                 user=request.user,
-                action=f"{request.user.username} created specialist {instance.name}",
+                action=f"{request.user.username} created specialist {instance.specialist_name}",
                 timestamp=datetime.now()
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -95,7 +95,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
             instance = serializer.save()
             ActionLog.objects.create(
                 user=request.user,
-                action=f"{request.user.username} updated specialist {instance.name}",
+                action=f"{request.user.username} updated specialist {instance.specialist_name}",
                 timestamp=datetime.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
@@ -105,7 +105,7 @@ class SpecialistManagementView(viewsets.GenericViewSet):
         instance = self.get_object()
         ActionLog.objects.create(
                 user=request.user,
-                action=f"{request.user.username} deleted specialist {instance.name}",
+                action=f"{request.user.username} deleted specialist {instance.specialist_name}",
                 timestamp=datetime.now()
             )
         instance.delete()
@@ -153,7 +153,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
             instance = serializer.save()
             ActionLog.objects.create(
                 user=request.user,
-                action=f"{request.user.username} created services {instance.name}",
+                action=f"{request.user.username} created services {instance.service_name}",
                 timestamp=datetime.now()
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -169,7 +169,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
             instance = serializer.save()
             ActionLog.objects.create(
                 user=request.user,
-                action=f"{request.user.username} update services {instance.name}",
+                action=f"{request.user.username} update services {instance.service_name}",
                 timestamp=datetime.now()
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
@@ -179,7 +179,7 @@ class ServicesManagementView(viewsets.GenericViewSet):
         instance = self.get_object()
         ActionLog.objects.create(
             user=request.user,
-            action=f"{request.user.username} created services {instance.name}",
+            action=f"{request.user.username} created services {instance.service_name}",
             timestamp=datetime.now()
         )
         instance.delete()
