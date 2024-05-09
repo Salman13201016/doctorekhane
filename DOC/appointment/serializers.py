@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from doctor.serializers import ChamberSerializer
 from .models import DoctorAppointment,TestAppointment
 
 class DoctorAppointmentManagementSerializer(serializers.ModelSerializer):
@@ -30,27 +32,22 @@ class DoctorAppointmentManagementSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation['user_id'] = instance.user.id
+        representation['doctor_id'] = instance.doctor.id
+        representation['chamber_id'] = instance.chamber.id
         representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
         representation['doctor'] = instance.doctor.name
         representation['doctor_image'] = instance.doctor.name
         representation['doctor_specialists'] = [specialist.specialist_name for specialist in instance.doctor.specialists.all()]
         representation['doctor_specialists_bn'] = [specialist.specialist_name_bn for specialist in instance.doctor.specialists.all()]
 
-        if instance.chamber.personal:
-            representation['chamber'] = instance.chamber.name 
-            representation['chamber_address'] = instance.chamber.address
-        else:
-            representation['chamber'] = instance.chamber.hospital.name
-            address = instance.chamber.hospital.address
-            location = instance.chamber.hospital.location
-            union_name = location.union_name if location else ""
-            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
-        
-            representation["chamber_address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+        # Serialize the chamber object
+        chamber_serializer = ChamberSerializer(instance.chamber)
+        representation['chamber'] = chamber_serializer.data
+
         return representation
-    
+
+        
 class TestAppointmentManagementSerializer(serializers.ModelSerializer):
     class Meta:
         model=TestAppointment
@@ -77,6 +74,10 @@ class TestAppointmentManagementSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation['user_id'] = instance.user.id
+        representation['test_id'] = instance.test.id
+        representation['hospital_id'] = instance.hospital.id
+        representation['hospital_availability'] = instance.hospital.availability
         representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
         representation['test'] = instance.test.test_name 
         representation['hospital'] = instance.hospital.name
@@ -86,10 +87,11 @@ class TestAppointmentManagementSerializer(serializers.ModelSerializer):
         upazila_name = location.upazila.upazila_name if location and location.upazila else ""
         district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
         division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
-    
+        
         representation["hospital_address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
 
         return representation
+
     
 
 
