@@ -79,6 +79,7 @@ class Services(models.Model):
     service_logo = ResizedImageField(upload_to = 'services_logo/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
     slug = models.SlugField(unique=True,blank=True, null = True)
     slug_bn = models.SlugField(unique=True,blank=True, null = True)
+    link = models.CharField(max_length=100,blank=True,null=True)
     
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -146,6 +147,19 @@ class Notifications(models.Model):
     content = models.TextField( blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_seen = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
+
+
+class Notice(models.Model):
+    title = models.CharField(max_length=200,null=True,blank =  True)
+    title_bn = models.CharField(max_length=200,null=True,blank =  True)
+    content = models.TextField(null=True,blank =  True)
+    content_bn = models.TextField(null=True,blank =  True)
+    start_date = models.DateTimeField(null=True,blank =  True)
+    end_date = models.DateTimeField(null=True,blank =  True)
+    published = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

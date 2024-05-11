@@ -201,6 +201,8 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
         chambers_data = doctor_data.pop('chamber', None)
         experiences_data = doctor_data.pop('experiences', None)
         services_data = doctor_data.pop('services', None)
+        if services_data is not None:
+            instance.services.clear()
         if 'specialists' in doctor_data:
             instance.doctor.specialists.set(doctor_data.pop('specialists'))
 
@@ -351,6 +353,9 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         chambers_data = validated_data.pop('chamber', None)
         experiences_data = validated_data.pop('experiences', None)
         services_data = validated_data.pop('services', None)
+        if services_data is not None:
+            instance.services.clear()
+
         if 'specialists' in validated_data:
             instance.specialists.set(validated_data.pop('specialists'))
             

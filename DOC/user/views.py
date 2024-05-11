@@ -53,8 +53,15 @@ class UserManagementView(viewsets.GenericViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
     # filterset_fields = ['is_superuser','is_staff',]
-    filterset_fields = ['role']
+    filterset_fields = {
+        'profile__location__union_name': ['in'],
+        'profile__location__upazila__id': ['in'],
+        'profile__location__upazila__district__id': ['in'],
+        'profile__location__upazila__district__division__id': ['in'],
+        'role' : ['exact']
+        }
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
+    ordering_fields = ['first_name']
 
     def retrieve(self, request, pk=None):
         serializer = self.get_serializer(self.get_object())
@@ -94,8 +101,15 @@ class SuperUserManagementView(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
-    filterset_fields = ['role']
+    filterset_fields = {
+        'profile__location__union_name': ['in'],
+        'profile__location__upazila__id': ['in'],
+        'profile__location__upazila__district__id': ['in'],
+        'profile__location__upazila__district__division__id': ['in'],
+        'role' : ['exact']
+        }
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
+    ordering_fields = ['first_name']
 
     def retrieve(self, request, pk=None):
         serializer = self.get_serializer(self.get_object())

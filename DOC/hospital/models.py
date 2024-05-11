@@ -91,7 +91,7 @@ class Hospital(models.Model):
             while Hospital.objects.filter(slug=self.slug).exists():
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
-        if not self.slug_bn:
+        if not self.slug_bn and self.name_bn:
             base_slug = slugify(unidecode(self.name_bn), allow_unicode=False)
             self.slug_bn = base_slug
             m = 1

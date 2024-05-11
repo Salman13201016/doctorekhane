@@ -213,6 +213,8 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         hospital_data = validated_data.pop('hospital', {})
         services_data = hospital_data.pop('services', None)
+        if services_data is not None:
+            instance.services.clear()
 
         if 'specialists' in hospital_data:
             instance.hospital.specialists.set(hospital_data.pop('specialists'))
@@ -341,7 +343,10 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if 'specialists' in validated_data:
             instance.specialists.set(validated_data.pop('specialists'))
+
         services_data = validated_data.pop('services', None)
+        if services_data is not None:
+            instance.services.clear()
 
         if 'tests' in validated_data:
             instance.tests.set(validated_data.pop('tests'))

@@ -9,9 +9,9 @@ from hospital.models import Ambulance, Hospital
 from user.models import User
 from django.db.models import Q
 # model
-from .models import ActionLog, Districts, Divisions, Notifications, SiteSettings, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Districts, Divisions, Notice, Notifications, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 # serializer
-from .serializers import  ActionLogSerializer, NotificationSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
+from .serializers import  ActionLogSerializer, NoticeSerializer, NotificationSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsModerator,IsSuperAdmin
@@ -278,7 +278,12 @@ class SiteSettingsManagementView(viewsets.GenericViewSet):
     serializer_class = SiteSettingsSerializer
     queryset = SiteSettings.objects.all()
     pagination_class = LimitOffsetPagination
-    
+
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve":
+            self.permission_classes = []
+        return super().get_permissions()
+
     def list(self, request):
         serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
         page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
@@ -419,3 +424,91 @@ class StatisticsViewSet(viewsets.GenericViewSet):
         }
 
         return Response(statistics_data)
+
+class NoticeManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsModerator]
+    serializer_class = NoticeSerializer
+    queryset = Notice.objects.all().distinct()
+    pagination_class = LimitOffsetPagination
+
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    filterset_fields = {
+        'title': ["in"],
+        'start_date': ["range"],
+        'end_date': ["range"],
+        'published': ["exact"],
+    }
+    search_fields = ['title','title_bn']
+    ordering_fields = ['id',"start_date",'end_date']
+
+    def get_permissions(self):
+        if self.action == "list" :
+            self.permission_classes = []
+        return super().get_permissions()
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} add notice info {instance.title}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        instance = self.get_object()
+        old_publish_status = instance.published
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            instance = serializer.save()
+
+            # Check if 'published' field has been updated
+            if instance.published != old_publish_status:
+                # Log action for change in published status
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} {'published' if instance.published else 'unpublished'} a notice '{instance.title}'",
+                    timestamp=timezone.now()
+                )
+
+            # Log action for other field changes
+            other_changes = [key for key, value in serializer.validated_data.items() if key != 'published']
+            if other_changes:
+                action_description = ', '.join(other_changes)
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} updated a notice {action_description}",
+                    timestamp=timezone.now()
+                )
+
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        instance = self.get_object()
+        ActionLog.objects.create(
+            user=request.user,
+            action=f"{request.user.username} delete notice info {instance.name}",
+            timestamp=timezone.now()
+        )
+        instance.delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+    

@@ -51,7 +51,7 @@ class CategoryListAPIView(viewsets.GenericViewSet):
 class TestManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = TestSerializer
-    queryset = Test.objects.filter().distinct()
+    queryset = Test.objects.filter().distinct().order_by("-id")
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -68,7 +68,7 @@ class TestManagementView(viewsets.GenericViewSet):
         return super().get_permissions()
     
     def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset()).order_by("-id")
+        queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True, context={"request": request})
         page = self.paginate_queryset(queryset)
         if page is not None:

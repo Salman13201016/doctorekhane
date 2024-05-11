@@ -66,7 +66,7 @@ class BlogManagementView(viewsets.GenericViewSet):
         if serializer.is_valid():
             instance = serializer.save()
             ActionLog.objects.create(
-                user=request.request.user,
+                user=request.user,
                 action=f"{request.user.username} write a blog {instance.title}",
                 timestamp=timezone.now()
             )
@@ -79,15 +79,15 @@ class BlogManagementView(viewsets.GenericViewSet):
     
     def partial_update(self, request, pk=None):
         instance = self.get_object()
-        old_publish_status = instance.publish
+        old_publish_status = instance.published
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             instance = serializer.save()
 
-            # Check if 'publish' field has been updated
-            if instance.publish != old_publish_status:
-                # Log action for change in publish status
+            # Check if 'published' field has been updated
+            if instance.published != old_publish_status:
+                # Log action for change in published status
                 ActionLog.objects.create(
                     user=request.user,
                     action=f"{request.user.username} {'published' if instance.published else 'unpublished'} a blog '{instance.title}'",
@@ -111,7 +111,7 @@ class BlogManagementView(viewsets.GenericViewSet):
         instance = self.get_object()
         ActionLog.objects.create(
                 user=request.user,
-                action=f"{request.user.username} deleted a blog {instance.name}",
+                action=f"{request.user.username} deleted a blog {instance.title}",
                 timestamp=timezone.now()
             )
         instance.delete()
