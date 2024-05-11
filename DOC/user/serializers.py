@@ -36,8 +36,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        request = self.context.get("request")
         if 'profile_image' in data and data['profile_image']:
-            data['profile_image'] = instance.profile_image.url
+            data['profile_image'] = request.build_absolute_uri(instance.profile_image.url)
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
@@ -111,7 +112,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         data = super().to_representation(instance)
         if 'profile_image' in data and data['profile_image']:
-            data['profile_image'] = request.build_absolute_uri(instance.hospital_image.url)
+            data['profile_image'] = request.build_absolute_uri(instance.profile_image.url)
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
