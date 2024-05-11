@@ -32,18 +32,20 @@ class DoctorAppointmentManagementSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user_id'] = instance.user.id
-        representation['doctor_id'] = instance.doctor.id
-        representation['chamber_id'] = instance.chamber.id
-        representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
-        representation['doctor'] = instance.doctor.name
-        representation['doctor_image'] = instance.doctor.name
-        representation['doctor_specialists'] = [specialist.specialist_name for specialist in instance.doctor.specialists.all()]
-        representation['doctor_specialists_bn'] = [specialist.specialist_name_bn for specialist in instance.doctor.specialists.all()]
+        if instance.user:
+            representation['user_id'] = instance.user.id
+            representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
+
+        if instance.doctor:
+            representation['doctor_id'] = instance.doctor.id
+            representation['doctor'] = instance.doctor.name
+            representation['doctor_specialists'] = [specialist.specialist_name for specialist in instance.doctor.specialists.all()]
+            representation['doctor_specialists_bn'] = [specialist.specialist_name_bn for specialist in instance.doctor.specialists.all()]
 
         # Serialize the chamber object
-        chamber_serializer = ChamberSerializer(instance.chamber)
-        representation['chamber'] = chamber_serializer.data
+        if instance.chamber:
+            chamber_serializer = ChamberSerializer(instance.chamber)
+            representation['chamber'] = chamber_serializer.data
 
         return representation
 
@@ -74,21 +76,31 @@ class TestAppointmentManagementSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user_id'] = instance.user.id
-        representation['test_id'] = instance.test.id
-        representation['hospital_id'] = instance.hospital.id
-        representation['hospital_availability'] = instance.hospital.availability
-        representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
-        representation['test'] = instance.test.test_name 
-        representation['hospital'] = instance.hospital.name
-        address = instance.hospital.address
-        location = instance.hospital.location
-        union_name = location.union_name if location else ""
-        upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-        district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-        division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
         
-        representation["hospital_address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+        # Serialize the user object
+        if instance.user:
+            representation['user_id'] = instance.user.id
+            representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
+
+        # Serialize the test object
+        if instance.test:
+            representation['test_id'] = instance.test.id
+            representation['test'] = instance.test.test_name
+
+        # Serialize the hospital object
+        if instance.hospital:
+            representation['hospital_id'] = instance.hospital.id
+            representation['hospital'] = instance.hospital.name
+            representation['hospital_availability'] = instance.hospital.availability
+            
+            address = instance.hospital.address
+            location = instance.hospital.location
+            union_name = location.union_name if location else ""
+            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
+            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
+            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+
+            representation["hospital_address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
 
         return representation
 

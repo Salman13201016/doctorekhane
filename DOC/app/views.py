@@ -506,7 +506,7 @@ class NoticeManagementView(viewsets.GenericViewSet):
         instance = self.get_object()
         ActionLog.objects.create(
             user=request.user,
-            action=f"{request.user.username} delete notice info {instance.name}",
+            action=f"{request.user.username} delete notice info {instance.title}",
             timestamp=timezone.now()
         )
         instance.delete()
