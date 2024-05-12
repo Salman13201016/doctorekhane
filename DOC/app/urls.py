@@ -19,6 +19,6 @@ urlpatterns = [
     path('upazilas/<int:district_id>/', views.UpazilaListAPIView.as_view(), name='upazila-list'),
     path('unions/<str:upazila_id>/', views.UnionListAPIView.as_view(), name='Unions-list'), 
     path('action-log/', views.ActionLogList.as_view(), name='action-log'),
-    path('notification/', views.NotificationList.as_view(), name='appointment-list'), 
-    path('notification/bulk-update/<str:pk_list>/', views.NotificationDetail.as_view(), name='notification-bulk-update'),
+    path('notifications/', views.NotificationAPI.as_view(), name='notification-list'),
+
 ]

@@ -79,6 +79,7 @@ class Hospital(models.Model):
     hospital_image = ResizedImageField(upload_to='hospital/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     website = models.URLField(null=True, blank=True)
     profile = models.BooleanField(default = False)
+    position = models.IntegerField(null = True,blank= True)
 
     def __str__(self):
         return self.name
@@ -128,6 +129,7 @@ class Ambulance(models.Model):
     address_bn = models.TextField(max_length=500, blank=True, null=False)
     slug = models.SlugField(unique=True)
     slug_bn = models.SlugField(unique=True,blank = True, null =True)
+    position = models.IntegerField(null = True,blank= True)
     def __str__(self):
         return self.name
     

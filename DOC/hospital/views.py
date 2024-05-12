@@ -146,7 +146,7 @@ class HospitalProfileView(viewsets.GenericViewSet):
 class HospitalManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsHospital]
     serializer_class = HospitalManagementSerializer
-    queryset = Hospital.objects.filter(profile=False).order_by("-id").distinct()
+    queryset = Hospital.objects.filter(profile=False).order_by("position").distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -163,7 +163,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
     }
 
     search_fields = ['name',"address",'name_bn',"address_bn",'hospital_no','hospital_no_bn']
-    ordering_fields = ['name','name_bn']
+    ordering_fields = ['name','name_bn',"position"]
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or self.action=="get_hospital_by_slug":
@@ -230,7 +230,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
 class AmbulanceManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = AmbulanceListSerializer
-    queryset = Ambulance.objects.all().order_by('-id').distinct()
+    queryset = Ambulance.objects.all().order_by('-id').order_by("position").distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -242,7 +242,7 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
         'location__upazila__district__division__id': ['in'],
         }
     search_fields = ['name','address','name_bn','address_bn','phone_number']
-    ordering_fields = ['name','name_bn']
+    ordering_fields = ['name','name_bn','position']
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve" or self.action=="get_ambulance_by_slug":

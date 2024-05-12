@@ -21,6 +21,7 @@ from rest_framework.pagination import  LimitOffsetPagination
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from rest_framework.views import APIView
 
 
 class DivisionListAPIView(generics.ListAPIView):
@@ -320,44 +321,23 @@ class ActionLogList(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
-class NotificationList(generics.ListAPIView):
-    queryset = Notifications.objects.all()
-    serializer_class = NotificationSerializer
-
-
-class NotificationDetail(generics.RetrieveUpdateAPIView):
-    queryset = Notifications.objects.all()
-    serializer_class = NotificationSerializer
-
-    def update(self, request, *args, **kwargs):
-        # Extract the list of primary keys from the URL
-        pk_list = [int(pk) for pk in kwargs['pk_list'].split(',')]
-        
-        # Get the instances with the given primary keys
-        instances = self.get_queryset().filter(pk__in=pk_list)
-
-        # Check if it's a bulk update request
-        data = request.data
-        if isinstance(data, list):
-            serializer = self.get_serializer(instances, data=data, partial=True, many=True)
-        else:
-            serializer = self.get_serializer(instances, data=data, partial=True)
-
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
+class NotificationAPI(APIView):
+    def get(self, request):
+        notifications = Notifications.objects.all().order_by("-id")
+        serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data)
 
-    # Add the following method to handle bulk updates
-    def perform_update(self, serializer):
-        for obj, validated_data in zip(serializer.instance, serializer.validated_data):
-            self.update_instance(obj, validated_data)
-
-    def update_instance(self, instance, validated_data):
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-
-        instance.save()
+    def patch(self, request):
+        # Update all notifications' is_seen to True
+        notifications = Notifications.objects.all()
+        for notification in notifications:
+            notification.is_seen = True
+            notification.save()
+        
+        # Retrieve all notifications again after update
+        serializer = NotificationSerializer(Notifications.objects.all(), many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 from django.db.models import Count, Q,Sum
 class StatisticsViewSet(viewsets.GenericViewSet):
