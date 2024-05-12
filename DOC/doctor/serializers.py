@@ -33,17 +33,17 @@ class ChamberSerializer(serializers.ModelSerializer):
         if hospital_name is not None:
             if hospital_has_profile:
                 if self.instance:
-                    if Chamber.objects.filter(Q(availability=attrs.get('availability'))|Q(availability_bn=attrs.get('availability_bn')),hospital__name=attrs.get('hospital')).exclude(id=self.instance.id).exists():
+                    if Chamber.objects.filter(Q(availability=attrs.get('availability'))&Q(availability_bn=attrs.get('availability_bn')),hospital__name=attrs.get('hospital')).exclude(id=self.instance.id).exists():
                         raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
-                elif Chamber.objects.filter(Q(availability=attrs.get('availability'))|Q(availability_bn=attrs.get('availability_bn')),hospital__name=attrs.get('hospital')).exists():
+                elif Chamber.objects.filter(Q(availability=attrs.get('availability'))&Q(availability_bn=attrs.get('availability_bn')),hospital__name=attrs.get('hospital')).exists():
                     raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
             else:
                 raise serializers.ValidationError({"message": 'This is not a valid chamber'})
         else:
             if self.instance:
-                if Chamber.objects.filter(Q(name=attrs.get('name'))|Q(name_bn=attrs.get('name_bn')), Q(availability=attrs.get('availability'))|Q(availability_bn=attrs.get('availability_bn'))).exclude(id=self.instance.id).exists():
+                if Chamber.objects.filter(Q(name=attrs.get('name'))&Q(name_bn=attrs.get('name_bn')), Q(availability=attrs.get('availability'))&Q(availability_bn=attrs.get('availability_bn'))).exclude(id=self.instance.id).exists():
                     raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
-            elif Chamber.objects.filter(Q(name=attrs.get('name'))|Q(name_bn=attrs.get('name_bn')), Q(availability=attrs.get('availability'))|Q(availability_bn=attrs.get('availability_bn'))).exists():
+            elif Chamber.objects.filter(Q(name=attrs.get('name'))&Q(name_bn=attrs.get('name_bn')), Q(availability=attrs.get('availability'))&Q(availability_bn=attrs.get('availability_bn'))).exists():
                 raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
         return super().validate(attrs)
     
@@ -82,9 +82,9 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.instance:
-            if Experience.objects.filter(Q(working_place__iexact=attrs.get('working_place'))|Q(working_place_bn__iexact=attrs.get('working_place_bn')), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
+            if Experience.objects.filter(Q(working_place__iexact=attrs.get('working_place'))&Q(working_place_bn__iexact=attrs.get('working_place_bn')), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError({"message": 'Doctor With Same Working Place Experience already exists'})
-        elif Experience.objects.filter(Q(working_place__iexact=attrs.get('working_place'))|Q(working_place_bn__iexact=attrs.get('working_place_bn')), doctor=attrs.get('doctor')).exists():
+        elif Experience.objects.filter(Q(working_place__iexact=attrs.get('working_place'))&Q(working_place_bn__iexact=attrs.get('working_place_bn')), doctor=attrs.get('doctor')).exists():
             raise serializers.ValidationError({"message": 'Doctor With Same Working Place Experience already exists'})
         return attrs
     
@@ -317,9 +317,9 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         }
     def validate(self , attrs):
         if self.instance:
-            if  Doctor.objects.filter(Q(license_no__iexact=attrs.get('license_no'))|Q(license_no_bn__iexact=attrs.get('license_no_bn')),profile=False).exclude(id=self.instance.id).exists():
+            if  Doctor.objects.filter(Q(license_no__iexact=attrs.get('license_no'))&Q(license_no_bn__iexact=attrs.get('license_no_bn')),profile=False).exclude(id=self.instance.id).exists():
                         raise serializers.ValidationError({"message": 'License No already exists'})
-        elif Doctor.objects.filter(Q(license_no__iexact=attrs.get('license_no'))|Q(license_no_bn__iexact=attrs.get('license_no_bn')),profile=False).exists():
+        elif Doctor.objects.filter(Q(license_no__iexact=attrs.get('license_no'))&Q(license_no_bn__iexact=attrs.get('license_no_bn')),profile=False).exists():
             raise serializers.ValidationError({"message": 'License No already exists.'})
         if self.instance:
             if  Doctor.objects.filter(profile=False,phone_number__iexact=attrs.get('phone_number')).exclude(id=self.instance.id).exists():

@@ -1,4 +1,5 @@
 import datetime
+from django.shortcuts import get_object_or_404
 from rest_framework import  status, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -9,9 +10,9 @@ from hospital.models import Ambulance, Hospital
 from user.models import User
 from django.db.models import Q
 # model
-from .models import ActionLog, Districts, Divisions, Notice, Notifications, SiteSettings, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Districts, Divisions, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 # serializer
-from .serializers import  ActionLogSerializer, NoticeSerializer, NotificationSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
+from .serializers import  ActionLogSerializer, GoalSerializer, NoticeSerializer, NotificationSerializer, OthersContentSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsModerator,IsSuperAdmin
@@ -492,3 +493,116 @@ class NoticeManagementView(viewsets.GenericViewSet):
         instance.delete()
         return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
     
+
+class GoalManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = GoalSerializer
+    queryset = Goal.objects.all().distinct()
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+
+    search_fields = ['title','title_bn']
+    ordering_fields = ['title','title_bn']
+
+    def get_permissions(self):
+        if self.action == "list":
+            self.permission_classes = []
+        return super().get_permissions()
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created Goal {instance.title}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} updated Goal {instance.title}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted Goal {instance.title}",
+                timestamp=timezone.now()
+            )
+        instance.delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
+    
+
+class OthersContentManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OthersContentSerializer
+    queryset = OthersContent.objects.all().distinct()
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+
+    def get_permissions(self):
+        if self.action == "list":
+            self.permission_classes = []
+        return super().get_permissions()
+
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many=True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None):
+        fields = request.query_params.get('fields')
+        if fields:
+            fields = [field.strip() for field in fields.split(',')]
+
+        instance = get_object_or_404(OthersContent, pk=pk)
+        if fields:
+            data = {field: getattr(instance, field) for field in fields if hasattr(instance, field)}
+        else:
+            data = self.get_serializer(instance).data
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            updated_fields = list(serializer.validated_data.keys())
+
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} updated Others Content, Updated fields: {', '.join(updated_fields)}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

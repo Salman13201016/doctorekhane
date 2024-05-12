@@ -2,6 +2,7 @@ from django.db import models
 from django_resized import ResizedImageField
 from django.utils.text import slugify
 from unidecode import unidecode
+from ckeditor.fields import RichTextField
 
 # Create your models here.
 ROLES = [
@@ -163,3 +164,28 @@ class Notice(models.Model):
 
     def __str__(self):
         return self.title
+    
+
+class Goal(models.Model):
+    title = models.CharField(max_length=100,blank=True,null=True)
+    title_bn = models.CharField(max_length=100,blank=True,null=True)
+    content = models.TextField(blank=True,null=True)
+    content_bn = models.TextField(blank=True,null=True)
+    icon = ResizedImageField(upload_to = 'goal_icon/',max_length=1500,null=True,blank=True, force_format='WEBP', quality=100)
+
+    def delete(self, *args, **kwargs):
+        if self.icon:
+            # You have to prepare what you need before delete the model
+            storage, path = self.icon.storage, self.icon.path
+            # Delete the model before the file
+            super(Specialist, self).delete(*args, **kwargs)
+            # Delete the file after the model
+            storage.delete(path)
+
+class OthersContent(models.Model):
+    about_us_content = RichTextField(blank=True, null=True)
+    about_us_content_bn = RichTextField(blank=True, null=True)
+    termsncondition_content = RichTextField(blank=True, null=True)
+    termsncondition_content_bn = RichTextField(blank=True, null=True)
+    privacy_policy_content = RichTextField(blank=True, null=True)
+    privacy_policy_content_bn = RichTextField(blank=True, null=True)

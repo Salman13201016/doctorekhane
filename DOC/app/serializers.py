@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 #model
-from .models import ActionLog, Divisions, Districts, Notice, Notifications, SiteSettings, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Divisions, Districts, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Unions,Services,Specialist
 
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -55,7 +55,7 @@ class ServicesSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if self.instance:
             if Services.objects.filter(Q(service_name__iexact=attrs.get('service_name')) | Q(service_name_bn__iexact=attrs.get('service_name_bn'))).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError({"message": 'Category already exists.'})
+                raise serializers.ValidationError({"message": 'Service already exists.'})
             
         elif Services.objects.filter(Q(service_name__iexact=attrs.get('service_name')) | Q(service_name_bn__iexact=attrs.get('service_name_bn'))).exists():
             raise serializers.ValidationError({"message": 'Service Name already exists.'})
@@ -102,3 +102,25 @@ class NoticeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notice
         fields = "__all__"
+
+class GoalSerializer(serializers.ModelSerializer):
+    icon = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Goal
+        fields ="__all__"
+
+    def validate(self, attrs):
+        if self.instance:
+            if Goal.objects.filter(Q(title__iexact=attrs.get('title')) | Q(title_bn__iexact=attrs.get('title_bn'))).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'Title already exists.'})
+            
+        elif Goal.objects.filter(Q(title__iexact=attrs.get('title')) | Q(title_bn__iexact=attrs.get('title_bn'))).exists():
+            raise serializers.ValidationError({"message": 'Title already exists.'})
+        return attrs
+    
+class OthersContentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OthersContent
+        fields ="__all__"

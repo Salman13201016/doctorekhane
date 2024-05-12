@@ -11,6 +11,8 @@ router.register('site-settings', views.SiteSettingsManagementView, basename='sit
 router.register('landing-page-report', views.LandingPageReportView, basename='landing_page_report')
 router.register('statistic-report', views.StatisticsViewSet, basename='statistic_report')
 router.register('notice-management', views.NoticeManagementView, basename='notice')
+router.register('goal-management', views.GoalManagementView, basename='goal')
+router.register('others-content', views.OthersContentManagementView, basename='others-content')
 
 urlpatterns = [
     path('', include(router.urls)),
