@@ -33,18 +33,26 @@ class ChamberSerializer(serializers.ModelSerializer):
         if hospital_name is not None:
             if hospital_has_profile:
                 if self.instance:
-                    if Chamber.objects.filter(Q(availability=attrs.get('availability'),hospital__name=attrs.get('hospital'))|Q(availability_bn=attrs.get('availability_bn'),hospital__name=attrs.get('hospital'))).exclude(id=self.instance.id).exists():
+                    # If updating an existing instance
+                    if Chamber.objects.filter(Q(availability=attrs.get('availability'), hospital__name=attrs.get('hospital')) | Q(availability_bn=attrs.get('availability_bn'), hospital__name=attrs.get('hospital'))
+                        ).exclude(id=self.instance.id).exists():
                         raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
-                elif Chamber.objects.filter(Q(availability=attrs.get('availability'),hospital__name=attrs.get('hospital'))|Q(availability_bn=attrs.get('availability_bn'),hospital__name=attrs.get('hospital'))).exists():
-                    raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
+                else:
+                    # If creating a new instance
+                    if Chamber.objects.filter( Q(availability=attrs.get('availability'), hospital__name=attrs.get('hospital')) | Q(availability_bn=attrs.get('availability_bn'), hospital__name=attrs.get('hospital'))).exists():
+                        raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
             else:
                 raise serializers.ValidationError({"message": 'This is not a valid chamber'})
         else:
             if self.instance:
-                if Chamber.objects.filter(Q(name=attrs.get('name'),availability=attrs.get('availability'))|Q(name_bn=attrs.get('name_bn'),availability_bn=attrs.get('availability_bn'))).exclude(id=self.instance.id).exists():
-                    raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
-            elif Chamber.objects.filter(Q(name=attrs.get('name'),availability=attrs.get('availability'))|Q(name_bn=attrs.get('name_bn'),availability_bn=attrs.get('availability_bn'))).exists():
-                raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
+                # If updating an existing instance
+                if Chamber.objects.filter(Q(name=attrs.get('name'), availability=attrs.get('availability')) | Q(name_bn=attrs.get('name_bn'), availability_bn=attrs.get('availability_bn'))
+                    ).exclude(id=self.instance.id).exists():
+                        raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
+                else:
+                    # If creating a new instance
+                    if Chamber.objects.filter(Q(name=attrs.get('name'), availability=attrs.get('availability')) | Q(name_bn=attrs.get('name_bn'), availability_bn=attrs.get('availability_bn')) ).exists():
+                        raise serializers.ValidationError({"message": 'Same Chamber Time already exists'})
         return super().validate(attrs)
     
     def to_representation(self, instance):
@@ -82,11 +90,22 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.instance:
-            if Experience.objects.filter(Q(working_place__iexact=attrs.get('working_place'))|Q(working_place_bn__iexact=attrs.get('working_place_bn')), doctor=attrs.get('doctor')).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError({"message": 'Doctor With Same Working Place Experience already exists'})
-        elif Experience.objects.filter(Q(working_place__iexact=attrs.get('working_place'))|Q(working_place_bn__iexact=attrs.get('working_place_bn')), doctor=attrs.get('doctor')).exists():
-            raise serializers.ValidationError({"message": 'Doctor With Same Working Place Experience already exists'})
-        return attrs
+            # If updating an existing instance
+            if Experience.objects.filter(
+                (Q(working_place__iexact=attrs.get('working_place')) |
+                Q(working_place_bn__iexact=attrs.get('working_place_bn'))) &
+                Q(doctor=attrs.get('doctor'))
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'Doctor with the same working place experience already exists'})
+        else:
+            # If creating a new instance
+            if Experience.objects.filter(
+                Q(working_place__iexact=attrs.get('working_place')) |
+                Q(working_place_bn__iexact=attrs.get('working_place_bn')),
+                doctor=attrs.get('doctor')
+            ).exists():
+                raise serializers.ValidationError({"message": 'Doctor with the same working place experience already exists'})
+
     
 class DoctorServiceSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
@@ -258,7 +277,7 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                         service_instance.save()
                 else:
                     service_instance, _ = DoctorService.objects.get_or_create(service_name=service_data.get("service_name"))
-                    instance.services.add(service_instance)
+                instance.services.add(service_instance)
 
         return instance
     
@@ -317,10 +336,22 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         }
     def validate(self , attrs):
         if self.instance:
-            if  Doctor.objects.filter(Q(license_no__iexact=attrs.get('license_no'))|Q(license_no_bn__iexact=attrs.get('license_no_bn')),profile=False).exclude(id=self.instance.id).exists():
-                        raise serializers.ValidationError({"message": 'License No already exists'})
-        elif Doctor.objects.filter(Q(license_no__iexact=attrs.get('license_no'))|Q(license_no_bn__iexact=attrs.get('license_no_bn')),profile=False).exists():
-            raise serializers.ValidationError({"message": 'License No already exists.'})
+            # If updating an existing instance
+            if Doctor.objects.filter(
+                (Q(license_no__iexact=attrs.get('license_no')) |
+                Q(license_no_bn__iexact=attrs.get('license_no_bn'))) &
+                Q(profile=False)
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'License number already exists'})
+        else:
+            # If creating a new instance
+            if Doctor.objects.filter(
+                Q(license_no__iexact=attrs.get('license_no')) |
+                Q(license_no_bn__iexact=attrs.get('license_no_bn')),
+                profile=False
+            ).exists():
+                raise serializers.ValidationError({"message": 'License number already exists.'})
+
         if self.instance:
             if  Doctor.objects.filter(profile=False,phone_number__iexact=attrs.get('phone_number')).exclude(id=self.instance.id).exists():
                         raise serializers.ValidationError({"message": 'Phone Number already exists'})
@@ -407,8 +438,18 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
                             setattr(service_instance, attr, value)
                         service_instance.save()
                 else:
-                    service_instance, _ = DoctorService.objects.get_or_create(service_name=service_data.get("service_name"),service_name_bn=service_data.get("service_name_bn"))
-                    instance.services.add(service_instance)
+                    # Try to get the instance based on service_name
+                    service_instance, created = DoctorService.objects.get_or_create(
+                        service_name=service_data.get("service_name")
+                    )
+
+                    # If not found, try to get the instance based on service_name_bn
+                    if not service_instance:
+                        service_instance, created = DoctorService.objects.get_or_create(
+                            service_name_bn=service_data.get("service_name_bn")
+                        )
+
+                instance.services.add(service_instance)
 
 
         return instance

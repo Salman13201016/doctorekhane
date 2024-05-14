@@ -33,11 +33,22 @@ class TestSerializer(serializers.ModelSerializer):
         catagory_name_bn = catagory_data.get('name_bn')
         catagory_instance = TestCatagory.objects.filter(Q(name=catagory_name)&Q(name_bn = catagory_name_bn)).first()
         if self.instance:
-            if Test.objects.filter(Q(test_name__iexact=attrs.get('test_name'))&Q(test_name_bn__iexact=attrs.get('test_name_bn')), catagory=catagory_instance).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError({'message': 'Test with this catagory already exists.'})
+            # If updating an existing instance
+            if Test.objects.filter(
+                (Q(test_name__iexact=attrs.get('test_name')) &
+                Q(test_name_bn__iexact=attrs.get('test_name_bn'))) &
+                Q(catagory=catagory_instance)
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({'message': 'Test with this category already exists.'})
         else:
-            if Test.objects.filter(Q(test_name__iexact=attrs.get('test_name'))&Q(test_name_bn__iexact=attrs.get('test_name_bn')), catagory=catagory_instance).exists():
-                raise serializers.ValidationError({'message': 'Test with this catagory already exists.'})
+            # If creating a new instance
+            if Test.objects.filter(
+                Q(test_name__iexact=attrs.get('test_name')) &
+                Q(test_name_bn__iexact=attrs.get('test_name_bn')),
+                catagory=catagory_instance
+            ).exists():
+                raise serializers.ValidationError({'message': 'Test with this category already exists.'})
+
         return attrs
 
     
@@ -181,10 +192,10 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
         hospitalProfile = attrs.get('hospital', None)
         if hospitalProfile:
             if self.instance:
-                if  Hospital.objects.filter(Q(hospital_no__iexact=attrs.get('hospital_no'))&Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn')),profile=False).exclude(id=self.instance.id).exists():
+                if  Hospital.objects.filter(hospital_no__iexact=attrs.get('hospital_no'),profile=False).exclude(id=self.instance.id).exists():
                     raise serializers.ValidationError({"message": 'Hospital No already exists'})
             else:
-                if Hospital.objects.filter(Q(hospital_no__iexact=attrs.get('hospital_no'))&Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn')),profile=False).exists():
+                if Hospital.objects.filter(hospital_no__iexact=attrs.get('hospital_no'),profile=False).exists():
                     raise serializers.ValidationError({"message": 'Hospital No already exists.'})
 
             if self.instance:
@@ -240,7 +251,7 @@ class HospitalProfileManagementSerializer(serializers.ModelSerializer):
                         service_instance.save()
                 else:
                     service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"))
-                    instance.services.add(service_instance)
+                instance.services.add(service_instance)
         return instance
     
     def to_representation(self, instance):
@@ -297,12 +308,40 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
             'website': {'required': False},
         }
     def validate(self, attrs):
+        # Validate hospital name and address
         if self.instance:
-            if Hospital.objects.filter(Q(name__iexact=attrs.get('name'))&Q(name_bn__iexact=attrs.get('name_bn')),Q(address=attrs.get('address'))&Q(address_bn=attrs.get('address_bn')),profile=False).exclude(id=self.instance.id).exists():
+            # If updating an existing instance
+            if Hospital.objects.filter(
+                (Q(name__iexact=attrs.get('name')) & Q(name_bn__iexact=attrs.get('name_bn'))) &
+                (Q(address=attrs.get('address')) & Q(address_bn=attrs.get('address_bn')))
+                & Q(profile=False)
+            ).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError({'message': 'Hospital at this address already exists.'})
         else:
-            if Hospital.objects.filter(Q(name__iexact=attrs.get('name'))&Q(name_bn__iexact=attrs.get('name_bn')),Q(address=attrs.get('address'))&Q(address_bn=attrs.get('address_bn')),profile=False).exists():
+            # If creating a new instance
+            if Hospital.objects.filter(
+                Q(name__iexact=attrs.get('name')) & Q(name_bn__iexact=attrs.get('name_bn')) &
+                Q(address=attrs.get('address')) & Q(address_bn=attrs.get('address_bn'))
+                & Q(profile=False)
+            ).exists():
                 raise serializers.ValidationError({'message': 'Hospital at this address already exists.'})
+
+        # Validate hospital number
+        if self.instance:
+            # If updating an existing instance
+            if Hospital.objects.filter(
+                (Q(hospital_no__iexact=attrs.get('hospital_no')) | Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn')))
+                & Q(profile=False)
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({"message": 'Hospital number already exists.'})
+        else:
+            # If creating a new instance
+            if Hospital.objects.filter(
+                Q(hospital_no__iexact=attrs.get('hospital_no')) | Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn'))
+                & Q(profile=False)
+            ).exists():
+                raise serializers.ValidationError({"message": 'Hospital number already exists.'})
+
 
         if self.instance:
             if Hospital.objects.filter(profile=False, email__iexact=attrs.get('email')).exclude(id=self.instance.id).exists():
@@ -317,12 +356,7 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
         else:
             if Hospital.objects.filter(profile=False, phone_number__iexact=attrs.get('phone_number')).exists():
                 raise serializers.ValidationError({'message': 'Phone number already exists.'})
-        if self.instance:
-            if Hospital.objects.filter(Q(hospital_no__iexact=attrs.get('hospital_no')) | Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn')), profile=False).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError({"message": 'Hospital No already exists'})
-        else:
-            if Hospital.objects.filter(Q(hospital_no__iexact=attrs.get('hospital_no')) | Q(hospital_no_bn__iexact=attrs.get('hospital_no_bn')), profile=False).exists():
-                raise serializers.ValidationError({"message": 'Hospital No already exists.'})
+
         return attrs
     
     def create(self, validated_data):
@@ -367,8 +401,17 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
                             setattr(service_instance, attr, value)
                         service_instance.save()
                 else:
-                    service_instance, _ = HospitalService.objects.get_or_create(service_name=service_data.get("service_name"),service_name_bn=service_data.get("service_name_bn"))
-                    instance.services.add(service_instance)
+                    # Try to get the instance based on service_name
+                    service_instance, created = HospitalService.objects.get_or_create(
+                        service_name=service_data.get("service_name")
+                    )
+
+                    # If not found, try to get the instance based on service_name_bn
+                    if not service_instance:
+                        service_instance, created = HospitalService.objects.get_or_create(
+                            service_name_bn=service_data.get("service_name_bn")
+                        )
+                instance.services.add(service_instance)
         return instance
     
     def to_representation(self, instance):
@@ -476,10 +519,30 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
             'slug_bn':{'read_only':True},
         }
 
-    def validate(self, data):
-        if data.get('hospital') and not data.get('hospital_name') and not data.get('hospital_name_bn'):
+    def validate(self, attrs):
+        if attrs.get('hospital') and not attrs.get('hospital_name') and not attrs.get('hospital_name_bn'):
             raise serializers.ValidationError({"message":"Hospital name cannot be empty if hospital is True."})
-        return data
+        if self.instance:
+            # If updating an existing instance
+            if Hospital.objects.filter(
+                (Q(name__iexact=attrs.get('name')) & Q(name_bn__iexact=attrs.get('name_bn'))) &
+                (Q(address=attrs.get('address')) & Q(address_bn=attrs.get('address_bn')))
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({'message': 'Hospital at this address already exists.'})
+        else:
+            # If creating a new instance
+            if Hospital.objects.filter(
+                Q(name__iexact=attrs.get('name')) & Q(name_bn__iexact=attrs.get('name_bn')) &
+                Q(address=attrs.get('address')) & Q(address_bn=attrs.get('address_bn'))
+            ).exists():
+                raise serializers.ValidationError({'message': 'Hospital at this address already exists.'})
+        if self.instance:
+            if Hospital.objects.filter(phone_number__iexact=attrs.get('phone_number')).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({'message': 'Phone number already exists.'})
+        else:
+            if Hospital.objects.filter(phone_number__iexact=attrs.get('phone_number')).exists():
+                raise serializers.ValidationError({'message': 'Phone number already exists.'})
+        return attrs
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
