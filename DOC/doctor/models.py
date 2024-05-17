@@ -56,6 +56,7 @@ class Doctor(models.Model):
     gender = models.CharField(max_length=6, blank=True, null=True, choices=GENDER_CHOCIES)
     profile = models.BooleanField(default = False)
     position = models.IntegerField(null = True,blank= True)
+    published = models.BooleanField(default = True)
     def __str__(self):
         return self.name
     

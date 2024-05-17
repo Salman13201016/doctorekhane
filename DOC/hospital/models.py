@@ -27,9 +27,15 @@ class Test(models.Model):
     fee_bn = models.CharField(max_length=200,null=True,blank= True)
     delivery_time = models.CharField(max_length=200,null=True,blank= True)
     delivery_time_bn = models.CharField(max_length=200,null=True,blank= True)
+    description = models.TextField(null=True,blank= True)
+    description_bn = models.TextField(null=True,blank= True)
+    short_description = models.CharField(max_length=200,null=True,blank= True)
+    short_description_bn = models.CharField(max_length=200,null=True,blank= True)
     slug = models.CharField(max_length=200,null=True,blank=True)
     slug_bn = models.CharField(max_length=200,null=True,blank=True)
-
+    position = models.IntegerField(null = True,blank= True)
+    published = models.BooleanField(default = True)
+        
     def __str__(self): 
         return str(self.test_name)
     
@@ -80,6 +86,7 @@ class Hospital(models.Model):
     website = models.URLField(null=True, blank=True)
     profile = models.BooleanField(default = False)
     position = models.IntegerField(null = True,blank= True)
+    published = models.BooleanField(default = True)
 
     def __str__(self):
         return self.name
@@ -130,6 +137,7 @@ class Ambulance(models.Model):
     slug = models.SlugField(unique=True)
     slug_bn = models.SlugField(unique=True,blank = True, null =True)
     position = models.IntegerField(null = True,blank= True)
+    published = models.BooleanField(default = True)
     def __str__(self):
         return self.name
     

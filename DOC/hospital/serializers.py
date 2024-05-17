@@ -403,14 +403,8 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
                 else:
                     # Try to get the instance based on service_name
                     service_instance, created = HospitalService.objects.get_or_create(
-                        service_name=service_data.get("service_name")
+                        service_name=service_data.get("service_name"),service_name_bn=service_data.get("service_name_bn")
                     )
-
-                    # If not found, try to get the instance based on service_name_bn
-                    if not service_instance:
-                        service_instance, created = HospitalService.objects.get_or_create(
-                            service_name_bn=service_data.get("service_name_bn")
-                        )
                 instance.services.add(service_instance)
         return instance
     
