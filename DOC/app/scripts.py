@@ -1,5 +1,5 @@
 import json
-from app.models import Divisions, Districts, Upazilas , Unions
+from app.models import Divisions, Districts, Upazilas 
 with open('app/divisions.json', 'r', encoding='utf-8') as file:
     divisions_data = json.load(file)['divisions']
 
@@ -27,13 +27,3 @@ for upazila_data in upazilas_data:
     upazila_name = upazila_data['name']
     district = Districts.objects.get(id=district_id)
     Upazilas.objects.create(id=id,district=district, upazila_name=upazila_name)
-
-with open('app/unions.json', 'r', encoding='utf-8') as file:
-    unions_data = json.load(file)['Unions']
-
-for union_data in unions_data:
-    id = union_data['id']
-    upazilla_id=union_data['upazilla_id']
-    upazila=Upazilas.objects.get(id=upazilla_id)
-    union_name = union_data['name']
-    Unions.objects.create(id=id,upazila=upazila, union_name=union_name)

@@ -2,7 +2,7 @@ from django.db import models
 from django_resized import ResizedImageField
 # from django.contrib.auth.models import User
 from user.models import User
-from app.models import ROLES, Unions,Specialist
+from app.models import ROLES, Upazilas,Specialist
 from hospital.models import Hospital
 from django.utils.text import slugify
 from unidecode import unidecode
@@ -49,7 +49,7 @@ class Doctor(models.Model):
     slug = models.CharField(max_length=100, null = True, blank = True)
     slug_bn = models.CharField(max_length=100, null = True, blank = True)
     role = models.CharField(max_length=50, null=False, default="doctor", choices=ROLES)
-    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
+    location = models.ForeignKey(Upazilas, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
     address_bn = models.TextField(max_length=500, blank=True, null=False)
     phone_number = models.CharField(max_length=50, null=True)

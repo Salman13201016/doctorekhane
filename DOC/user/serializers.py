@@ -42,8 +42,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
-            union = instance.location
-            upazila = union.upazila
+            upazila = instance.location
             district = upazila.district
             division = district.division
 
@@ -59,10 +58,6 @@ class ProfileSerializer(serializers.ModelSerializer):
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
-                },
-                'union': {
-                    'id': union.id,
-                    'name': union.union_name,
                 },
             }
         return data
@@ -116,8 +111,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
-            union = instance.location
-            upazila = union.upazila
+            upazila = instance.location
             district = upazila.district
             division = district.division
 
@@ -133,10 +127,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
-                },
-                'union': {
-                    'id': union.id,
-                    'name': union.union_name,
                 },
             }
         return data
@@ -233,8 +223,7 @@ class UserManagementSerializer(serializers.ModelSerializer):
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
-            union = instance.location
-            upazila = union.upazila
+            upazila = instance.location
             district = upazila.district
             division = district.division
 
@@ -250,10 +239,6 @@ class UserManagementSerializer(serializers.ModelSerializer):
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
-                },
-                'union': {
-                    'id': union.id,
-                    'name': union.union_name,
                 },
             }
 
@@ -356,8 +341,7 @@ class SuperUserManagementSerializer(serializers.ModelSerializer):
 
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
-            union = instance.location
-            upazila = union.upazila
+            upazila = instance.location
             district = upazila.district
             division = district.division
 
@@ -374,10 +358,6 @@ class SuperUserManagementSerializer(serializers.ModelSerializer):
                     'id': upazila.id,
                     'name': upazila.upazila_name,
                 },
-                'union': {
-                    'id': union.id,
-                    'name': union.union_name,
-                },
             }
 
         return data
@@ -393,7 +373,6 @@ class DonorListSerializer(serializers.ModelSerializer):
         address = instance.profile.address
         location = instance.profile.location
 
-        union_name = location.union_name if location else ""
         upazila_name = location.upazila.upazila_name if location and location.upazila else ""
         district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
         division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
@@ -401,6 +380,6 @@ class DonorListSerializer(serializers.ModelSerializer):
         data['Profile Image'] = request.build_absolute_uri(instance.profile.profile_image.url) if instance.profile.profile_image else None
         data['Blood Group'] = instance.profile.blood_group
         data['Phone Number'] = instance.profile.phone_number
-        data["Address"] = ", ".join(filter(None, [address, union_name, upazila_name, district_name, division_name]))
+        data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
         
         return data

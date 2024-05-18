@@ -31,11 +31,6 @@ class Upazilas(models.Model):
     def __str__(self):
         return str(self.upazila_name)
 
-class Unions(models.Model):
-    upazila = models.ForeignKey(Upazilas, on_delete=models.CASCADE)
-    union_name = models.CharField(max_length=50, null=False, blank=True)
-    def __str__(self):
-        return str(self.union_name)
 
 class Specialist(models.Model):
     specialist_name = models.CharField(max_length=100,blank=True,null=True)

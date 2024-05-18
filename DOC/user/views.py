@@ -54,10 +54,9 @@ class UserManagementView(viewsets.GenericViewSet):
 
     # filterset_fields = ['is_superuser','is_staff',]
     filterset_fields = {
-        'profile__location__union_name': ['in'],
-        'profile__location__upazila__id': ['in'],
-        'profile__location__upazila__district__id': ['in'],
-        'profile__location__upazila__district__division__id': ['in'],
+        'profile__location__id': ['in'],
+        'profile__location__district__id': ['in'],
+        'profile__location__district__division__id': ['in'],
         'role' : ['exact']
         }
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
@@ -102,10 +101,9 @@ class SuperUserManagementView(viewsets.GenericViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
     filterset_fields = {
-        'profile__location__union_name': ['in'],
-        'profile__location__upazila__id': ['in'],
-        'profile__location__upazila__district__id': ['in'],
-        'profile__location__upazila__district__division__id': ['in'],
+        'profile__location__id': ['in'],
+        'profile__location__district__id': ['in'],
+        'profile__location__district__division__id': ['in'],
         'role' : ['exact']
         }
     search_fields = ['first_name', 'last_name', 'email','profile__phone_number']
@@ -147,10 +145,9 @@ class DonorListView(viewsets.GenericViewSet):
 
     filterset_fields = {
         'profile__blood_group': ['in'],
-        'profile__location__union_name': ['in'],
-        'profile__location__upazila__id': ['in'],
-        'profile__location__upazila__district__id': ['in'],
-        'profile__location__upazila__district__division__id': ['in'],
+        'profile__location__id': ['in'],
+        'profile__location__district__id': ['in'],
+        'profile__location__district__division__id': ['in'],
         }
     search_fields = ['profile__blood_group','profile__address']
 
@@ -170,58 +167,45 @@ class DonorFilterApi(viewsets.GenericViewSet):
 
     filterset_fields = {
         'profile__blood_group': ['in'],
-        'profile__location__union_name': ['in'],
-        'profile__location__upazila__id': ['in'],
-        'profile__location__upazila__district__id': ['in'],
-        'profile__location__upazila__district__division__id': ['in'],
+        'profile__location__id': ['in'],
+        'profile__location__district__id': ['in'],
+        'profile__location__district__division__id': ['in'],
         }
     search_fields = ['profile__blood_group','profile__address']
 
     def list(self, request):
         blood_group_data = request.GET.get("profile__blood_group__in").split(",") if "profile__blood_group__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__blood_group', flat=True).distinct())
-        union_data = request.GET.get("profile__location__union_name__in").split(",") if "profile__location__union_name__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__union_name', flat=True).distinct())
-        upazila_data = request.GET.get("profile__location__upazila__id__in").split(",") if "profile__location__upazila__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__id', flat=True).distinct())
-        district_data = request.GET.get("profile__location__upazila__district__id__in").split(",") if "profile__location__upazila__district__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__district__id', flat=True).distinct())
-        division_data = request.GET.get("profile__location__upazila__district__division__id__in").split(",") if "profile__location__upazila__district__division__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__upazila__district__division__id', flat=True).distinct())
+        upazila_data = request.GET.get("profile__location__id__in").split(",") if "profile__location__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__id', flat=True).distinct())
+        district_data = request.GET.get("profile__location__district__id__in").split(",") if "profile__location__district__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__district__id', flat=True).distinct())
+        division_data = request.GET.get("profile__location__district__division__id__in").split(",") if "profile__location__district__division__id__in" in request.GET else list(User.objects.filter(role="general").exclude(profile__donor = False).values_list('profile__location__district__division__id', flat=True).distinct())
         filter_blood_group = list(
             User.objects.filter(
-                profile__location__upazila__district__id__in = district_data,
-                profile__location__upazila__district__division__id__in = division_data,
-                profile__location__upazila__id__in = upazila_data,
-                profile__location__union_name__in = union_data,
+                profile__location__district__id__in = district_data,
+                profile__location__district__division__id__in = division_data,
+                profile__location__id__in = upazila_data,
             ).values_list('profile__blood_group').distinct()
         )
         filter_district = list(
             User.objects.filter(
                 profile__blood_group__in = blood_group_data,
-                profile__location__upazila__district__division__id__in = division_data,
-                profile__location__upazila__id__in = upazila_data,
-                profile__location__union_name__in = union_data,
-            ).values_list('profile__location__upazila__district__id', 'profile__location__upazila__district__district_name').distinct()
+                profile__location__district__division__id__in = division_data,
+                profile__location__id__in = upazila_data,
+            ).values_list('profile__location__district__id', 'profile__location__district__district_name').distinct()
         )
         filter_division = list(
             User.objects.filter(
                 profile__blood_group__in = blood_group_data,
-                profile__location__upazila__district__id__in = district_data,
-                profile__location__upazila__id__in = upazila_data,
-                profile__location__union_name__in = union_data,
-            ).values_list('profile__location__upazila__district__division__id', 'profile__location__upazila__district__division__division_name').distinct()
+                profile__location__district__id__in = district_data,
+                profile__location__id__in = upazila_data,
+            ).values_list('profile__location__district__division__id', 'profile__location__district__division__division_name').distinct()
         )
-        filter_union = list(
-            User.objects.filter(
-                profile__blood_group__in = blood_group_data,
-                profile__location__upazila__district__id__in = district_data,
-                profile__location__upazila__id__in = upazila_data,
-                profile__location__upazila__district__division__id__in = division_data,
-            ).values_list('profile__location__union_name', 'profile__location__union_name').distinct()
-        )
+        
         filter_upazila = list(
             User.objects.filter(
                 profile__blood_group__in = blood_group_data,
-                profile__location__upazila__district__id__in = district_data,
-                profile__location__union_name__in = union_data,
-                profile__location__upazila__district__division__id__in = division_data,
-            ).values_list('profile__location__upazila__id', 'profile__location__upazila__upazila_name').distinct()
+                profile__location__district__id__in = district_data,
+                profile__location__district__division__id__in = division_data,
+            ).values_list('profile__location__id', 'profile__location_upazila_name').distinct()
         )
 
         # Additional filters
@@ -240,7 +224,7 @@ class DonorFilterApi(viewsets.GenericViewSet):
             division_data = {
                 "id": division_id,
                 "division_name": division_name,
-                "count": len(User.objects.filter(profile__location__upazila__district__division__id=division_id,profile__donor=True).distinct())
+                "count": len(User.objects.filter(profile__location__district__division__id=division_id,profile__donor=True).distinct())
             }
             # Initialize an empty list to hold district filters
             division_data["district_filter"] = []
@@ -249,12 +233,12 @@ class DonorFilterApi(viewsets.GenericViewSet):
             for district_item in filter_district:
                 district_id, district_name = district_item
                 # Check if the district belongs to the current division
-                if User.objects.filter(profile__location__upazila__district__id=district_id, profile__location__upazila__district__division__id=division_id,profile__donor=True).exists():
+                if User.objects.filter(profile__location__district__id=district_id, profile__location__district__division__id=division_id,profile__donor=True).exists():
                     # Initialize district data
                     district_data = {
                         "id": district_id,
                         "district_name": district_name,
-                        "count": len(User.objects.filter(profile__location__upazila__district__id=district_id,profile__donor=True).distinct())
+                        "count": len(User.objects.filter(profile__location__district__id=district_id,profile__donor=True).distinct())
                     }
                     # Initialize an empty list to hold upazila filters
                     district_data["upazila_filter"] = []
@@ -263,27 +247,14 @@ class DonorFilterApi(viewsets.GenericViewSet):
                     for upazila_item in filter_upazila:
                         upazila_id, upazila_name = upazila_item
                         # Check if the upazila belongs to the current district
-                        if User.objects.filter(profile__location__upazila__id=upazila_id, profile__location__upazila__district__id=district_id,profile__donor=True).exists():
+                        if User.objects.filter(profile__location__id=upazila_id, profile__location__district__id=district_id,profile__donor=True).exists():
                             # Initialize upazila data
                             upazila_data = {
                                 "id": upazila_id,
                                 "upazila_name": upazila_name,
-                                "count": len(User.objects.filter(profile__location__upazila__id=upazila_id,profile__donor=True).distinct())
+                                "count": len(User.objects.filter(profile__location__id=upazila_id,profile__donor=True).distinct())
                             }
-                            # Initialize an empty list to hold union filters
-                            upazila_data["union_filter"] = []
-
-                            # Iterate over union filters
-                            for union_item in filter_union:
-                                union_name = union_item[0]
-                                # Check if the union belongs to the current upazila
-                                if User.objects.filter(profile__location__union_name=union_name, profile__location__upazila__id=upazila_id,profile__donor=True).exists():
-                                    # Add union data
-                                    union_data = {
-                                        "union_name": union_name,
-                                        "count": len(User.objects.filter(profile__location__union_name=union_name,profile__donor=True).distinct())
-                                    }
-                                    upazila_data["union_filter"].append(union_data)
+                            
 
                             district_data["upazila_filter"].append(upazila_data)
 

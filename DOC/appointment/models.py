@@ -17,6 +17,7 @@ PAYMENT_STATUS_CHOICES = [
 
 STATUS_CHOICES = (
     ('pending', 'Pending'),
+    ('approved', 'Approved'),
     ('cancel', 'Cancelled'),
     ('done', 'Done'),
 )

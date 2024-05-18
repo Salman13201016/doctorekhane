@@ -2,7 +2,7 @@ from django.db import models
 from django_resized import ResizedImageField
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
-from app.models import ROLES, Unions,Services,Specialist
+from app.models import ROLES, Upazilas,Services,Specialist
 from unidecode import unidecode
 from user.models import User
 
@@ -62,7 +62,7 @@ class Hospital(models.Model):
     name_bn = models.CharField(max_length=255,null=True, blank=True)
     hospital_no = models.CharField(max_length=255,null=True, blank=True)
     hospital_no_bn = models.CharField(max_length=255,null=True, blank=True)
-    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
+    location = models.ForeignKey(Upazilas, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
     address_bn = models.TextField(max_length=500, blank=True, null=False)
     email = models.EmailField(null=True, blank=True)
@@ -89,7 +89,7 @@ class Hospital(models.Model):
     published = models.BooleanField(default = True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
     
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -131,7 +131,7 @@ class Ambulance(models.Model):
     hospital_name = models.ForeignKey(Hospital,on_delete=models.CASCADE,blank = True, null = True)
     ac = models.BooleanField(default = False)
     phone_number = models.CharField(max_length=100,null=True, blank=True)
-    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank = True , null = True)
+    location = models.ForeignKey(Upazilas, on_delete=models.CASCADE, blank = True , null = True)
     address = models.TextField(max_length=500, blank=True, null=False)
     address_bn = models.TextField(max_length=500, blank=True, null=False)
     slug = models.SlugField(unique=True)

@@ -31,8 +31,11 @@ class ChamberSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         if not instance.personal:
             data["hospital_id"] = instance.hospital.id if instance.hospital else None
+            data["slug"] = instance.hospital.slug if instance.hospital else None
             data["chamber_name"] = instance.hospital.name if instance.hospital else None
             data["chamber_address"] = instance.hospital.address if instance.hospital else None
+            data["chamber_name_bn"] = instance.hospital.name_bn if instance.hospital else None
+            data["chamber_address_bn"] = instance.hospital.address_bn if instance.hospital else None
             del data["hospital"]
             del data["name"]
             del data["name_bn"]
@@ -131,8 +134,7 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
         
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
-            union = instance.location
-            upazila = union.upazila
+            upazila = instance.location
             district = upazila.district
             division = district.division
 
@@ -148,10 +150,6 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
-                },
-                'union': {
-                    'id': union.id,
-                    'name': union.union_name,
                 },
             }
         specialist_ids = data.pop('specialists', [])
@@ -268,8 +266,7 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
         
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
-            union = instance.location
-            upazila = union.upazila
+            upazila = instance.location
             district = upazila.district
             division = district.division
 
@@ -285,10 +282,6 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
-                },
-                'union': {
-                    'id': union.id,
-                    'name': union.union_name,
                 },
             }
         data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
@@ -434,8 +427,7 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         
         # Including division, district, and upazila information in the representation
         if 'location' in data and data['location']:
-            union = instance.location
-            upazila = union.upazila
+            upazila = instance.location
             district = upazila.district
             division = district.division
 
@@ -451,10 +443,6 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
-                },
-                'union': {
-                    'id': union.id,
-                    'name': union.union_name,
                 },
             }
         specialist_ids = data.pop('specialists', [])

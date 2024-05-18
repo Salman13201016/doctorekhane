@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 #model
-from .models import ActionLog, Divisions, Districts, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Divisions, Districts, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Services,Specialist
 
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,10 +18,6 @@ class UpazilaSerializer(serializers.ModelSerializer):
         model = Upazilas
         fields = ['id','district','upazila_name']
 
-class UnionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Unions
-        fields = ['id','upazila','union_name']
 
 class SpecialistSerializer(serializers.ModelSerializer):
     specialist_logo = Base64ImageField(required=False,allow_null=True)

@@ -10,9 +10,9 @@ from hospital.models import Ambulance, Hospital
 from user.models import User
 from django.db.models import Q
 # model
-from .models import ActionLog, Districts, Divisions, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Unions,Services,Specialist
+from .models import ActionLog, Districts, Divisions, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Services,Specialist
 # serializer
-from .serializers import  ActionLogSerializer, GoalSerializer, NoticeSerializer, NotificationSerializer, OthersContentSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer, UnionSerializer,ServicesSerializer
+from .serializers import  ActionLogSerializer, GoalSerializer, NoticeSerializer, NotificationSerializer, OthersContentSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsModerator,IsSuperAdmin
@@ -43,12 +43,6 @@ class UpazilaListAPIView(generics.ListAPIView):
         district_id = self.kwargs['district_id']
         return Upazilas.objects.filter(district_id=district_id)
     
-class UnionListAPIView(generics.ListAPIView):
-    serializer_class = UnionSerializer
-
-    def get_queryset(self):
-        upazila = self.kwargs['upazila_id']
-        return Unions.objects.filter(upazila=upazila)
 
 class SpecialistManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]

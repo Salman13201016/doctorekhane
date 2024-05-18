@@ -1,5 +1,5 @@
 from django.db import models
-from app.models import Unions
+from app.models import Upazilas
 # from django.contrib.auth.models import User
 from django_resized import ResizedImageField
 from app.models import ROLES
@@ -38,7 +38,7 @@ class Profile(models.Model):
     profile_image = ResizedImageField(upload_to='Profile/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     gender = models.CharField(max_length=6, blank=True, null=True, choices=GENDER_CHOCIES)
     date_of_birth = models.DateField(null=True, blank=True)
-    location = models.ForeignKey(Unions, on_delete=models.CASCADE, blank=True, null=True)
+    location = models.ForeignKey(Upazilas, on_delete=models.CASCADE, blank=True, null=True)
     address = models.TextField(max_length=500, blank=True, null=False)
     donor = models.BooleanField(blank=True, null=True, default=False)
     blood_group = models.CharField(max_length=6, blank=True, null=True, choices=BLOOD_GROUPS)
