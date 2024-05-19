@@ -1,3 +1,4 @@
+import json
 from rest_framework import serializers
 
 from doctor.serializers import ChamberSerializer
@@ -21,12 +22,12 @@ class DoctorAppointmentManagementSerializer(serializers.ModelSerializer):
         
         # Generate appointment_id based on specified format
         validated_data['appointment_id'] = f"{doctor_id}{chamber_id}{date}{time}{user_id}"
-        
-        # Set fee from chamber.fee
+
+        fee_data = json.loads(validated_data['chamber'].fee)
         if validated_data['patientstatus'] == 'new':
-            validated_data['fee'] = int(validated_data['chamber'].fee.split('|')[1])
+            validated_data['fee'] = int(fee_data['new_fee'])
         else:
-            validated_data['fee'] = int(validated_data['chamber'].fee.split('|')[0])
+            validated_data['fee'] = int(fee_data['old_fee'])
         
         return super().create(validated_data)
     

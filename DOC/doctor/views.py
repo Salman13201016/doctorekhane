@@ -428,22 +428,33 @@ class DoctorProfileListView(viewsets.GenericViewSet):
     
 class ReviewViewSet(viewsets.GenericViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsModerator]
     queryset =Review.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    filterset_fields = {
+        'published': ["exact"], 
+        'user': ["exact"], 
+    }
     search_fields = ['user__first_name']
 
     def get_permissions(self):
-        if self.action == "list":
+        if self.action == "list" or self.action == "retrieve" or self.action == "partial_update":
             self.permission_classes = []
-        if self.action == "delete":
-            self.permission_classes = [IsAuthenticated, IsModerator]
         return super().get_permissions()
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and user.role == "admin" or user.is_staff:
+            return Review.objects.filter().order_by("-id")
+        else:
+            # Non-admin user, show only published blog posts
+            return Review.objects.filter(published=True).order_by("id")
+        
     def list(self, request):
-        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True)
-        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, context={"request": request})
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
@@ -455,28 +466,25 @@ class ReviewViewSet(viewsets.GenericViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-    @action(detail=False, methods=['PATCH'])
-    def update_reviews(self, request):
-        if request.method == 'PATCH':
-            for data in request.data:
-                new_rating = data.get("rating")
-                new_content = data.get("content")
-                order_id = data.get("order")
-                product_id = data.get("product")
-                try:
-                    review = get_object_or_404(Review, order=order_id, product=product_id)
-                    review.rating = new_rating
-                    review.content = new_content
-                    review.save()
-                except Review.DoesNotExist:
-                    pass
-
-            return Response({"message": "Reviews updated successfully"})
-
-        return Response(status=400, data={"message": "Invalid request method"})
     
+    def partial_update(self, request, pk=None):
+        instance = self.get_object()
+        old_publish_status = instance.published
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            instance = serializer.save()
+
+            # Check if 'published' field has been updated
+            if instance.published != old_publish_status:
+                # Log action for change in published status
+                ActionLog.objects.create(
+                    user=request.user,
+                    action=f"{request.user.username} {'published' if instance.published else 'unpublished'} a '{instance.user}' review",
+                    timestamp=timezone.now()
+                )
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
     def destroy(self, request, pk=None):
         self.get_object().delete()

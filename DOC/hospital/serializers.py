@@ -5,7 +5,7 @@ from user.models import User
 
 from .models import Hospital,Ambulance,Test,TestCatagory,HospitalService
 from app.models import Specialist
-from doctor.models import Chamber
+from doctor.models import Chamber, Review
 from django.db.models import Q
 
 
@@ -440,6 +440,8 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
                 tests.append({"id": test.id,"name": test.test_name,"name_bn": test.test_name_bn})  # Replace 'specialist_name' with the correct attribute name
         data['test'] = tests
         data['doctor_count'] = Chamber.objects.filter(hospital=instance).count()
+        data['reviews'] = list(Review.objects.filter(hospital=instance.id,published = True).values("user__first_name","user__last_name","created_at","content","rating"))
+
         return data
 
 

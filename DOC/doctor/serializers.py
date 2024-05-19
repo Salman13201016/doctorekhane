@@ -452,7 +452,7 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
             if specialist:
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name,"name_bn": specialist.specialist_name_bn})
         data['specialist'] = specialists
-        data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
+        data['reviews'] = list(Review.objects.filter(doctor=instance.id,published = True).values("user__first_name","user__last_name","created_at","content","rating"))
         return data
 
 
@@ -460,40 +460,35 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
-        # read_only_fields = ('user',)
-        lookup_fields = ['product']
-
-    def validate(self, attrs):
-        appointment = attrs.get('appointment')
-        doctor = attrs.get('doctor')
-
-        
-        if self.instance:
-            return attrs
-
-        if not DoctorAppointment.objects.filter(id=appointment.id, doctor=doctor).exists():
-            raise serializers.ValidationError({"message":"You haven't appointment this doctor yet."})
-        
-        if Review.objects.filter(appointment=appointment, doctor=doctor).exists():
-            raise serializers.ValidationError({"message":"You have already written a review for this doctor."})
-    
-        return super().validate(attrs)
     
     def update(self, instance, validated_data):
-        # Prevent updating the user and order fields
-        validated_data.pop('user', None)
-        validated_data.pop('appointment', None)
-
-        # Update the remaining fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
+        request = self.context.get('request', None)
+        
+        if request and hasattr(request, 'user'):
+            user = request.user
+            print(user)
+            if user.is_staff or user.role == "admin":
+                # Admin can only change the 'published' field
+                if 'published' in validated_data:
+                    instance.published = validated_data['published']
+            elif user == instance.user:
+                # Non-admin user can only update if they are the owner of the review
+                # They can change all fields except 'published'
+                for field, value in validated_data.items():
+                    if field != 'published':
+                        setattr(instance, field, value)
+            else:
+                raise serializers.ValidationError("You do not have permission to edit this review.")
+        
         instance.save()
         return instance
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
-        representation['appointment'] = instance.appointment.appointment_id 
-        representation['doctor'] = instance.doctor.name   
+        if instance.user:
+            representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
+        else:
+            representation['user'] = None
+        representation['doctor'] = instance.doctor.name if instance.doctor else None
+        representation['hospital'] = instance.hospital.name if instance.hospital else None
         return representation

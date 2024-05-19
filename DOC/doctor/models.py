@@ -122,11 +122,9 @@ class DoctorService(models.Model):
 
 class Review(models.Model):
     user = models.ForeignKey(User, null=True,on_delete=models.SET_NULL,blank=True)
-    appointment = models.ForeignKey("appointment.DoctorAppointment", on_delete=models.CASCADE,null=True,blank=True)
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='review',null=True,blank=True)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE,related_name='doctor_review',null=True,blank=True)
+    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE,related_name='hospital_review',null=True,blank=True)
     rating=models.IntegerField(choices=RATING_TYPE_CHOICES,blank=True,null=True)
     content = models.TextField(max_length=1500,blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'doctor',"appointment")
+    published = models.BooleanField(default = False)
