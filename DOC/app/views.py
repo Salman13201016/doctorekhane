@@ -10,9 +10,9 @@ from hospital.models import Ambulance, Hospital
 from user.models import User
 from django.db.models import Q
 # model
-from .models import ActionLog, Districts, Divisions, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Services,Specialist
+from .models import FAQ, ActionLog, Districts, Divisions, Goal, Notice, Notifications, OthersContent, SiteSettings, Team, Upazilas,Services,Specialist
 # serializer
-from .serializers import  ActionLogSerializer, GoalSerializer, NoticeSerializer, NotificationSerializer, OthersContentSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer,ServicesSerializer
+from .serializers import  ActionLogSerializer, FAQSerializer, GoalSerializer, NoticeSerializer, NotificationSerializer, OthersContentSerializer, SiteSettingsSerializer, SpecialistSerializer, DivisionSerializer, DistrictSerializer, TeamSerializer, UpazilaSerializer,ServicesSerializer
 # permissions
 from rest_framework.permissions import IsAuthenticated
 from auth_app.permissions import IsModerator,IsSuperAdmin
@@ -489,7 +489,7 @@ class NoticeManagementView(viewsets.GenericViewSet):
     
 
 class GoalManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,IsModerator]
     serializer_class = GoalSerializer
     queryset = Goal.objects.all().distinct()
     pagination_class = LimitOffsetPagination
@@ -553,7 +553,7 @@ class GoalManagementView(viewsets.GenericViewSet):
     
 
 class OthersContentManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,IsModerator]
     serializer_class = OthersContentSerializer
     queryset = OthersContent.objects.all().distinct()
     pagination_class = LimitOffsetPagination
@@ -600,3 +600,64 @@ class OthersContentManagementView(viewsets.GenericViewSet):
             )
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class FAQManagementView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsModerator]
+    serializer_class = FAQSerializer
+    queryset = FAQ.objects.all().distinct()
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+
+    def get_permissions(self):
+        if self.action == "list":
+            self.permission_classes = []
+        return super().get_permissions()
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset().order_by("position")), many =True)
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset().order_by("position")))
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created FAQ {instance.f_ques}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} updated FAQ {instance.f_ques}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted FAQ {instance.f_ques}",
+                timestamp=timezone.now()
+            )
+        instance.delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)

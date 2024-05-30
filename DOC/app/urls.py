@@ -13,6 +13,7 @@ router.register('statistic-report', views.StatisticsViewSet, basename='statistic
 router.register('notice-management', views.NoticeManagementView, basename='notice')
 router.register('goal-management', views.GoalManagementView, basename='goal')
 router.register('others-content', views.OthersContentManagementView, basename='others-content')
+router.register('faq', views.FAQManagementView, basename='faq')
 
 urlpatterns = [
     path('', include(router.urls)),

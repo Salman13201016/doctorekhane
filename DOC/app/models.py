@@ -187,3 +187,11 @@ class OthersContent(models.Model):
     termsncondition_content_bn = RichTextField(blank=True, null=True)
     privacy_policy_content = RichTextField(blank=True, null=True)
     privacy_policy_content_bn = RichTextField(blank=True, null=True)
+
+
+class FAQ(models.Model):
+    f_ques = models.CharField(max_length=200,blank=True,null=True)
+    f_ques_bn = models.CharField(max_length=200,blank=True,null=True)
+    f_and = models.CharField(max_length=200,blank=True,null=True)
+    f_and_bn = models.CharField(max_length=200,blank=True,null=True)
+    position = models.IntegerField(null =True, blank = True)

@@ -9,7 +9,7 @@ from unidecode import unidecode
 
 
 # Create your models here.
-GENDER_CHOCIES=[
+GENDER_CHOICES=[
         ('male',"Male"),
         ("female","Female"),
         ("other","Other")
@@ -53,7 +53,7 @@ class Doctor(models.Model):
     address = models.TextField(max_length=500, blank=True, null=False)
     address_bn = models.TextField(max_length=500, blank=True, null=False)
     phone_number = models.CharField(max_length=50, null=True)
-    gender = models.CharField(max_length=6, blank=True, null=True, choices=GENDER_CHOCIES)
+    gender = models.CharField(max_length=6, blank=True, null=True, choices=GENDER_CHOICES)
     profile = models.BooleanField(default = False)
     position = models.IntegerField(null = True,blank= True)
     published = models.BooleanField(default = True)
