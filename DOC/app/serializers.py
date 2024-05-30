@@ -74,6 +74,9 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'logo':{'required':False},
             'banner':{'required':False},
+            'phone':{'required':False},
+            'mail':{'required':False},
+            'whatsapp':{'required':False},
         }
 
 

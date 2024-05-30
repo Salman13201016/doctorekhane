@@ -127,6 +127,9 @@ class Team(models.Model):
 class SiteSettings(models.Model):
     logo = ResizedImageField(upload_to='logo/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     banner = ResizedImageField(upload_to='banner/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
+    mail = models.EmailField(max_length=255,null = True, blank = True)
+    phone = models.CharField(max_length=255,null = True, blank = True)
+    whatsapp = models.CharField(max_length=255,null = True, blank = True)
 
 class ActionLog(models.Model):
     user = models.ForeignKey("user.User", on_delete=models.CASCADE)

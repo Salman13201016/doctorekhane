@@ -373,9 +373,9 @@ class DonorListSerializer(serializers.ModelSerializer):
         address = instance.profile.address
         location = instance.profile.location
 
-        upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-        district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-        division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+        upazila_name = location.upazila_name if location and location else ""
+        district_name = location.district.district_name if location and location and location.district else ""
+        division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
         
         data['Profile Image'] = request.build_absolute_uri(instance.profile.profile_image.url) if instance.profile.profile_image else None
         data['Blood Group'] = instance.profile.blood_group

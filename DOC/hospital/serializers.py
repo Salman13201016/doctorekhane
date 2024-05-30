@@ -466,9 +466,9 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
             address_bn = hospital.address_bn
             location = hospital.location
 
-            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+            upazila_name = location.upazila_name if location and location else ""
+            district_name = location.district.district_name if location and location and location.district else ""
+            division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
             
             data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
             data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name, district_name, division_name]))
@@ -478,9 +478,9 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
             address_bn = instance.address_bn
             location = instance.location
 
-            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+            upazila_name = location.upazila_name if location and location else ""
+            district_name = location.district.district_name if location and location and location.district else ""
+            division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
         
             data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
             data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name, district_name, division_name]))
@@ -534,9 +534,9 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
             address_bn = hospital.address_bn
             location = hospital.location
 
-            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+            upazila_name = location.upazila_name if location and location else ""
+            district_name = location.district.district_name if location and location and location.district else ""
+            division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
             
             data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
             data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name, district_name, division_name]))
