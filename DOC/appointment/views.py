@@ -38,7 +38,7 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
         'time': ['range'],
         'status': ['exact'],
     }
-    search_fields = ['appointment_id',"user__first_name","user__last_name","doctor__name"]
+    search_fields = ['appointment_id',"user__first_name","user__last_name","doctor__name","user__username","user__id"]
     ordering_fields = ['id']
 
     
@@ -161,7 +161,7 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
         'time': ['range'],
         'status': ['exact'],
     }
-    search_fields = ['appointment_id',"user__first_name","user__last_name","test__test_name"]
+    search_fields = ['appointment_id',"user__first_name","user__last_name","test__test_name","user__username","user__id"]
     ordering_fields = ['id']
 
     

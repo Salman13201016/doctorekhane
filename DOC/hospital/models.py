@@ -89,7 +89,7 @@ class Hospital(models.Model):
     published = models.BooleanField(default = True)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name) or ""
     
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -122,7 +122,7 @@ class HospitalService(models.Model):
     service_name_bn = models.CharField(max_length=500, null = True, blank = True)
 
     def __str__(self):
-        return self.service_name
+        return str(self.service_name) or ""
 
 class Ambulance(models.Model):
     name = models.CharField(max_length=100,null=True, blank=True)

@@ -16,18 +16,21 @@ ROLES = [
 class Divisions(models.Model):
     id = models.IntegerField(primary_key=True)
     division_name = models.CharField(max_length=50, null=False, blank=True)
+    division_name_bn = models.CharField(max_length=50, null=False, blank=True)
     def __str__(self):
         return str(self.division_name)
 
 class Districts(models.Model):
     division = models.ForeignKey(Divisions, on_delete=models.CASCADE)
     district_name = models.CharField(max_length=50, null=False, blank=True)
+    district_name_bn = models.CharField(max_length=50, null=False, blank=True)
     def __str__(self):
         return str(self.district_name)
 
 class Upazilas(models.Model):
     district = models.ForeignKey(Districts, on_delete=models.CASCADE)
     upazila_name = models.CharField(max_length=50, null=False, blank=True)
+    upazila_name_bn = models.CharField(max_length=50, null=False, blank=True)
     def __str__(self):
         return str(self.upazila_name)
 

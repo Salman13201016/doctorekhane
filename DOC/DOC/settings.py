@@ -60,12 +60,13 @@ INSTALLED_APPS = [
     'doctor',
     'hospital',
     'appointment',
-
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'dj_rest_auth.registration',
+    
+    
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
 ]

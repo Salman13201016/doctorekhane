@@ -1436,6 +1436,13 @@
             "url": "mohammadpur.magura.gov.bd"
         },
         {
+            "id": "495",
+            "district_id": "27",
+            "name": "Khulna City",
+            "bn_name": "খুলনা সদর",
+            "url": "paikgasa.khulna.gov.bd"
+        },
+        {
             "id": "206",
             "district_id": "27",
             "name": "Paikgasa",

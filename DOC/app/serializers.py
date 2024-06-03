@@ -6,17 +6,17 @@ from .models import FAQ, ActionLog, Divisions, Districts, Goal, Notice, Notifica
 class DivisionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Divisions
-        fields = ['id', 'division_name']
+        fields = "__all__"
 
 class DistrictSerializer(serializers.ModelSerializer):
     class Meta:
         model = Districts
-        fields = ['id', 'division','district_name']
+        fields = "__all__"
 
 class UpazilaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Upazilas
-        fields = ['id','district','upazila_name']
+        fields = "__all__"
 
 
 class SpecialistSerializer(serializers.ModelSerializer):

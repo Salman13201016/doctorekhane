@@ -11,6 +11,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets,status
 from rest_framework.response import Response
+from rest_framework.pagination import  LimitOffsetPagination
 
 @csrf_exempt
 def contact_view(request):
@@ -45,6 +46,7 @@ def contact_view(request):
 class ContactMessageViewSet(viewsets.GenericViewSet):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
+    pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, OrderingFilter,DjangoFilterBackend]
     filterset_fields = {
         'created_at': ['range'],

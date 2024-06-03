@@ -435,6 +435,10 @@ class ReviewViewSet(viewsets.GenericViewSet):
     filterset_fields = {
         'published': ["exact"], 
         'user': ["exact"], 
+        'doctor': ["exact"], 
+        'hospital': ["exact"], 
+        'rating': ["exact"], 
+        'created_at': ["range"],
     }
     search_fields = ['user__first_name']
 
@@ -445,11 +449,21 @@ class ReviewViewSet(viewsets.GenericViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated and user.role == "admin" or user.is_staff:
-            return Review.objects.filter().order_by("-id")
-        else:
-            # Non-admin user, show only published blog posts
-            return Review.objects.filter(published=True).order_by("id")
+        queryset = Review.objects.all()
+
+        # Filter based on user role
+        if not (user.is_authenticated and (user.role == "admin" or user.is_staff)):
+            # Non-admin users should only see published reviews
+            queryset = queryset.filter(published=True)
+        
+        # Custom filter based on the role query parameter
+        role = self.request.query_params.get('role', None)
+        if role == 'doctor':
+            queryset = queryset.filter(doctor__isnull=False)
+        elif role == 'hospital':
+            queryset = queryset.filter(hospital__isnull=False)
+
+        return queryset.order_by("-id")
         
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
