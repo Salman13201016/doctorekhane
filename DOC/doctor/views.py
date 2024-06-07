@@ -271,7 +271,6 @@ class DoctorFilterApi(viewsets.GenericViewSet):
         'location__district__id': ['in'],
         'location__district__division__id': ['in'],
         'published': ["exact"],
-
     }
 
     search_fields = ['name',"address",'name_bn',"address_bn",'chamber__hospital__name']
@@ -464,7 +463,9 @@ class ReviewViewSet(viewsets.GenericViewSet):
             queryset = queryset.filter(hospital__isnull=False)
 
         return queryset.order_by("-id")
-        
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)    
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, context={"request": request})

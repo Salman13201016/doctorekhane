@@ -10,12 +10,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from app.models import ActionLog
 from .models import Hospital,Ambulance, HospitalService,Test, TestCatagory
 from user.models import User
-from .serializers import HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer, HospitalServiceSerializer, TestCatagorySerializer,TestSerializer
+from .serializers import AmbulanceProfileManagementSerializer, HospitalProfileManagementSerializer,HospitalManagementSerializer,AmbulanceListSerializer,AmbulanceManagementSerializer, HospitalServiceSerializer, TestCatagorySerializer,TestSerializer
 # pagination
 from rest_framework.pagination import  LimitOffsetPagination
 # permissions
 from rest_framework.permissions import IsAuthenticated
-from auth_app.permissions import IsSuperAdmin,IsHospital,IsModerator
+from auth_app.permissions import IsAmbulance, IsSuperAdmin,IsHospital,IsModerator
 from django.db.models import Q
 from django.utils import timezone
 
@@ -267,7 +267,27 @@ class HospitalManagementView(viewsets.GenericViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Hospital.DoesNotExist:
             return Response({'message': 'Hospital not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
+
+class AmbulanceProfileView(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated,IsAmbulance]
+    serializer_class = AmbulanceProfileManagementSerializer
+    queryset = User.objects.filter(role='ambulance')
+    
+    def get_object(self):
+        return self.request.user
+
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class AmbulanceManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = AmbulanceListSerializer
@@ -667,6 +687,36 @@ class HospitalProfileListView(viewsets.GenericViewSet):
         'location__district__division__id': ['in'],
         'category': ['in'],
     }
+    search_fields = ["user__first_name","user__last_name","user__email","address","hospital_no"]
+    ordering_fields = ['user__first_name']
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def list(self, request):
+        serializer = self.get_serializer(self.filter_queryset(self.get_queryset()), many =True, context={"request":request})
+        page = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class AmbulanceProfileListView(viewsets.GenericViewSet):
+    permission_classes = [IsAmbulance,IsHospital,IsAuthenticated]
+    serializer_class = AmbulanceManagementSerializer
+    queryset = Ambulance.objects.filter(profile=True)
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
+
+    filterset_fields = {
+        'ac': ['exact'],
+        'location__id': ['in'],
+        'location__district__id': ['in'],
+        'location__district__division__id': ['in'],
+        'published': ["exact"],
+
+        }
     search_fields = ["user__first_name","user__last_name","user__email","address","hospital_no"]
     ordering_fields = ['user__first_name']
     

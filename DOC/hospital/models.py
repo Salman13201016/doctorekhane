@@ -125,9 +125,10 @@ class HospitalService(models.Model):
         return str(self.service_name) or ""
 
 class Ambulance(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100,null=True, blank=True)
     name_bn = models.CharField(max_length=100,null=True, blank=True)
-    hospital = models.BooleanField(default = True)
+    hospital = models.BooleanField(default = False)
     hospital_name = models.ForeignKey(Hospital,on_delete=models.CASCADE,blank = True, null = True)
     ac = models.BooleanField(default = False)
     phone_number = models.CharField(max_length=100,null=True, blank=True)
@@ -138,6 +139,8 @@ class Ambulance(models.Model):
     slug_bn = models.SlugField(unique=True,blank = True, null =True)
     position = models.IntegerField(null = True,blank= True)
     published = models.BooleanField(default = True)
+    profile = models.BooleanField(default = False)
+
     def __str__(self):
         return self.name
     
@@ -149,7 +152,7 @@ class Ambulance(models.Model):
             while Ambulance.objects.filter(slug=self.slug).exists():
                 self.slug = '{}-{}'.format(base_slug, n)
                 n += 1
-        if not self.slug_bn:
+        if not self.slug_bn and self.name_bn:
             base_slug = slugify(unidecode(self.name_bn), allow_unicode=False)
             self.slug_bn = base_slug
             m = 1

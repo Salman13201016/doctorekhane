@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
-from django.db.models import Q
+from django.db.models import Q,Avg
 from hospital.models import Hospital
 from .models import Doctor, Chamber , DoctorService , Experience, Review
 from appointment.models import DoctorAppointment
@@ -160,6 +160,7 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name ,"name_bn": specialist.specialist_name_bn})
         data['specialist'] = specialists
         data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
+        data['average_rating'] = Review.objects.filter(doctor=instance.id).aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
 
         return data
 
@@ -285,7 +286,8 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                 },
             }
         data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
-        return data
+
+        data['average_rating'] = Review.objects.filter(doctor=instance.id).aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
 
 class DoctorManagementSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
@@ -453,6 +455,7 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name,"name_bn": specialist.specialist_name_bn})
         data['specialist'] = specialists
         data['reviews'] = list(Review.objects.filter(doctor=instance.id,published = True).values("user__first_name","user__last_name","created_at","content","rating"))
+        data['average_rating'] = Review.objects.filter(doctor=instance.id).aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
         return data
 
 
@@ -487,8 +490,11 @@ class ReviewSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         if instance.user:
             representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
+            representation['user_id'] = instance.user.id
         else:
             representation['user'] = None
         representation['doctor'] = instance.doctor.name if instance.doctor else None
+        representation['doctor_id'] = instance.doctor.id if instance.doctor else None
         representation['hospital'] = instance.hospital.name if instance.hospital else None
+        representation['hospital_id'] = instance.hospital.id if instance.hospital else None
         return representation

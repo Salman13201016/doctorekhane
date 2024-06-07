@@ -11,6 +11,7 @@ ROLES = [
     ('superadmin', 'Super Admin'),
     ('doctor', 'Doctor'),
     ('hospital', 'Hospital'),
+    ('ambulance', 'Ambulance'),
 ]
 # Create your models here.
 class Divisions(models.Model):

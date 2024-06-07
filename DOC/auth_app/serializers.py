@@ -9,7 +9,7 @@ from django.contrib.auth.password_validation import validate_password
 # from django.contrib.auth.models import User
 from user.models import User
 from doctor.models import Doctor
-from hospital.models import Hospital
+from hospital.models import Ambulance, Hospital
 from user.models import Profile
 from drf_extra_fields.fields import Base64ImageField
 
@@ -173,4 +173,49 @@ class HospitalRegistrationSerializer(serializers.ModelSerializer):
     
         user.hospital.specialists.set(specialists_data)
         user.hospital.save()
+        return user
+
+class UserAmbulanceSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ambulance
+        fields = ["phone_number","location","address"]
+        extra_kwargs = {
+             'location' : { 'required': True }, 
+             'address' : { 'required': True },
+             'phone_number' : { 'required': True }, 
+             'slug': {'read_only': True},
+        }
+
+class AmbulanceRegistrationSerializer(serializers.ModelSerializer):
+    ambulance = UserAmbulanceSerializer(required=True)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'role', 'password', 'ambulance']
+        
+    
+    def validate(self, attrs):
+        
+        if attrs.get('ambulance', None).get('phone_number', None):
+            if Ambulance.objects.filter(phone_number=attrs.get('ambulance', None).get('phone_number', None),profile=True).exists():
+                raise serializers.ValidationError({"message": 'Phone number already exists.'})
+        
+        return super().validate(attrs)
+    
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        first_name = validated_data.pop('first_name')
+        random_number = random.randint(100000, 999999)
+        ambulance_data = validated_data.pop('ambulance', {})
+
+        username = first_name+str(random_number)
+
+        user = User.objects.create(username=username, first_name=first_name,role='ambulance')
+        user.set_password(password)
+        user.save()
+        for item, value in ambulance_data.items():
+            setattr(user.ambulance, item, value)
+    
+        user.ambulance.save()
         return user

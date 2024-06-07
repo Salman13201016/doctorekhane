@@ -13,12 +13,12 @@ from django.utils.crypto import get_random_string
 # model
 from user.models import Profile
 from doctor.models import Doctor
-from hospital.models import Hospital
+from hospital.models import Ambulance, Hospital
 # from django.contrib.auth.models import User
 from user.models import User
 from .models import OTP
 # serializer
-from .serializers import UserRegistrationSerializer,DoctorRegistrationSerializer,HospitalRegistrationSerializer
+from .serializers import AmbulanceRegistrationSerializer, UserRegistrationSerializer,DoctorRegistrationSerializer,HospitalRegistrationSerializer
 from DOC.settings import DEFAULT_FROM_EMAIL
 from rest_framework.permissions import IsAuthenticated
 
@@ -189,6 +189,59 @@ class HospitalLoginView(LoginView):
                     "profile" : {
                         "phone_number" : hospital.phone_number,
                         "profile_image": request.build_absolute_uri(hospital.hospital_image.url) if hospital.hospital_image else None,
+                    },
+                }
+            }
+            return Response(response_data)
+        except Profile.DoesNotExist:
+            return Response({"message": "Profile not found."}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response({"message": "Unable to log in with provided credentials."}, status=status.HTTP_400_BAD_REQUEST)
+
+# Create your views here.
+class AmbulanceRegistrationView(viewsets.GenericViewSet):
+    serializer_class = AmbulanceRegistrationSerializer
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            # subject = 'Welcome To DOC'
+            # message = f"Dear {request.data['first_name']},\n\nWelcome to DOC – Your Comprehensive Medical Companion!\n\nWe are delighted to have you on board. With DOC, you gain access to a wealth of information about hospitals, doctors, ambulances, and more, all at your fingertips.\n\nWhether you're seeking the right healthcare professional, need emergency assistance, or simply want to stay informed about medical facilities in your area, DOC is here to simplify your healthcare journey.\n\nFeel free to explore the platform and discover the range of features designed to make your healthcare experience seamless. If you have any questions or need assistance, our support team is ready to help.\n\nThank you for choosing DOC. We look forward to being your trusted partner in health.\n\nBest regards,\nThe DOC Team"
+            # from_email = DEFAULT_FROM_EMAIL
+            # to_email = request.data["email"]
+            # send_mail(subject, message, from_email, [to_email], fail_silently=True)
+            return Response({"message":"account created successfully"} , status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AmbulanceLoginView(LoginView):
+    def post(self, request, *args, **kwargs):
+        try:
+            user = self.request.data.get('user')
+
+            if not user:
+                raise ValueError({"message": "Phone number is required for login."})
+
+            ambulance = Ambulance.objects.get(phone_number=user,profile=True)
+            self.request.data['username'] = ambulance.user.username
+            self.request = request
+            self.serializer = self.get_serializer(data=self.request.data)
+            self.serializer.is_valid(raise_exception=True)
+            self.login()
+
+            # Include profile_image in the response
+            response_data = {
+                "access": self.get_response().data['access'],
+                "refresh": self.get_response().data['refresh'],
+                "user": {
+                    "pk": ambulance.user.pk,
+                    "username": ambulance.user.username,
+                    "email": ambulance.user.email,
+                    "first_name": ambulance.user.first_name,
+                    "role" : ambulance.user.role,
+                    "is_superuser" : ambulance.user.is_superuser,
+                    "profile" : {
+                        "phone_number" : ambulance.phone_number,
                     },
                 }
             }

@@ -8,6 +8,7 @@ router = DefaultRouter()
 router.register('signup', views.UserRegistrationView, basename='signup')
 router.register('signup-doctor', views.DoctorRegistrationView, basename='signup-doctor')
 router.register('signup-hospital', views.HospitalRegistrationView, basename='signup-hospital')
+router.register('signup-ambulance', views.AmbulanceRegistrationView, basename='signup-ambulance')
 
 urlpatterns = [
     path('', include(router.urls)),   
@@ -15,6 +16,7 @@ urlpatterns = [
     path('login/', views.UserLoginView.as_view()),
     path('login-doctor/', views.DoctorLoginView.as_view()),
     path('login-hospital/', views.HospitalLoginView.as_view()),
+    path('login-ambulance/', views.AmbulanceLoginView.as_view()),
     path('password-reset-otp/', views.SendOTPView.as_view()),
     path('verify-reset-otp/', views.VerifyOTPView.as_view()),
     path('change-password/', views.UpdatePasswordView.as_view()),

@@ -27,3 +27,10 @@ class IsHospital(BasePermission):
             return True
         else:
             return False
+        
+class IsAmbulance(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.role == "ambulance" or request.user.role == "admin" or request.user.is_superuser:
+            return True
+        else:
+            return False
