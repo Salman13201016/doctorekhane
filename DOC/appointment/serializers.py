@@ -95,12 +95,19 @@ class TestAppointmentManagementSerializer(serializers.ModelSerializer):
             representation['hospital_availability'] = instance.hospital.availability
             
             address = instance.hospital.address
+            address_bn = instance.hospital.address_bn
             location = instance.hospital.location
-            upazila_name = location.upazila.upazila_name if location and location.upazila else ""
-            district_name = location.upazila.district.district_name if location and location.upazila and location.upazila.district else ""
-            division_name = location.upazila.district.division.division_name if location and location.upazila and location.upazila.district and location.upazila.district.division else ""
+            upazila_name = location.upazila_name if location and location.upazila else ""
+            district_name = location.district.district_name if location  and location.district else ""
+            division_name = location.district.division.division_name if location  and location.district and location.district.division else ""
 
             representation["hospital_address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
+
+            upazila_name_bn = location.upazila_name_bn if location and location.upazila else ""
+            district_name_bn = location.district.district_name_bn if location and location.district else ""
+            division_name_bn = location.district.division.division_name_bn if location and location.district and location.district.division else ""
+
+            representation["hospital_address_bn"] = ", ".join(filter(None, [address_bn, upazila_name_bn, district_name_bn, division_name_bn]))
 
         return representation
 

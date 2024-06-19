@@ -414,14 +414,17 @@ class HospitalManagementSerializer(serializers.ModelSerializer):
                 'division': {
                     'id': division.id,
                     'name': division.division_name,
+                    'name_bn': division.division_name_bn,
                 },
                 'district': {
                     'id': district.id,
                     'name': district.district_name,
+                    'name_bn': district.district_name_bn,
                 },
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
+                    'name_bn': upazila.upazila_name_bn,
                 },
             }
         specialist_ids = data.pop('specialists', [])
@@ -470,9 +473,12 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
             upazila_name = location.upazila_name if location and location else ""
             district_name = location.district.district_name if location and location and location.district else ""
             division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
+            upazila_name_bn = location.upazila_name_bn if location and location else ""
+            district_name_bn = location.district.district_name_bn if location and location and location.district else ""
+            division_name_bn = location.district.division.division_name_bn if location and location and location.district and location.district.division else ""
             
             data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
-            data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name, district_name, division_name]))
+            data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name_bn, district_name_bn, division_name_bn]))
             data.pop("location", None)
         else:
             address = instance.address
@@ -482,9 +488,13 @@ class AmbulanceListSerializer(serializers.ModelSerializer):
             upazila_name = location.upazila_name if location and location else ""
             district_name = location.district.district_name if location and location and location.district else ""
             division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
+
+            upazila_name_bn = location.upazila_name_bn if location and location else ""
+            district_name_bn = location.district.district_name_bn if location and location and location.district else ""
+            division_name_bn = location.district.division.division_name_bn if location and location and location.district and location.district.division else ""
         
             data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
-            data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name, district_name, division_name]))
+            data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name_bn, district_name_bn, division_name_bn]))
             data.pop("location", None)
         return data
 
@@ -573,11 +583,20 @@ class AmbulanceProfileManagementSerializer(serializers.ModelSerializer):
                 if Hospital.objects.filter(phone_number__iexact=attrs.get('phone_number')).exists():
                     raise serializers.ValidationError({'message': 'Phone number already exists.'})
         return attrs
-    
+    def update(self, instance, validated_data):
+        ambulance_data = validated_data.pop('ambulance', {})
+        
+
+        # Update ambulance fields
+        for attr, value in ambulance_data.items():
+            setattr(instance.ambulance, attr, value)
+        instance.ambulance.save()
+
+        return instance
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.ambulance.hospital :# Including division, district, and upazila information in the representation
-            hospital = Hospital.objects.get(id = instance.hospital_name.id)
+            hospital = Hospital.objects.get(id = instance.ambulance.hospital_name.id)
             data['hospital_name'] = hospital.name
             data['hospital_name_bn'] = hospital.name_bn
             data['hospital_id'] = hospital.id
@@ -590,7 +609,6 @@ class AmbulanceProfileManagementSerializer(serializers.ModelSerializer):
             division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
             
             data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
-            data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name, district_name, division_name]))
             data.pop("location", None)
         else:
             if 'location' in data and data['location']:
@@ -667,9 +685,13 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
             upazila_name = location.upazila_name if location and location else ""
             district_name = location.district.district_name if location and location and location.district else ""
             division_name = location.district.division.division_name if location and location and location.district and location.district.division else ""
+
+            upazila_name_bn = location.upazila_name_bn if location  else ""
+            district_name_bn = location.district.district_name_bn if location and location.district else ""
+            division_name_bn = location.district.division.division_name_bn if location  and location.district and location.district.division else ""
             
             data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
-            data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name, district_name, division_name]))
+            data["Address_BN"] = ", ".join(filter(None, [address_bn, upazila_name_bn, district_name_bn, division_name_bn]))
             data.pop("location", None)
         else:
             if 'location' in data and data['location']:
@@ -681,14 +703,17 @@ class AmbulanceManagementSerializer(serializers.ModelSerializer):
                     'division': {
                         'id': division.id,
                         'name': division.division_name,
+                        'name_bn': division.division_name_bn,
                     },
                     'district': {
                         'id': district.id,
                         'name': district.district_name,
+                        'name_bn': district.district_name_bn,
                     },
                     'upazila': {
                         'id': upazila.id,
                         'name': upazila.upazila_name,
+                        'name_bn': upazila.upazila_name_bn,
                     },
                 }
         

@@ -21,9 +21,13 @@ class CustomUserAdmin(UserAdmin):
 
 class ProfileModelAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'user',
         'phone_number',
         'address',
+    )
+    list_filter = (
+        'donor',
     )
 
 admin.site.register(User, CustomUserAdmin)

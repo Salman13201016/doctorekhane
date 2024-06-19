@@ -437,14 +437,17 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
                 'division': {
                     'id': division.id,
                     'name': division.division_name,
+                    'name_bn': division.division_name_bn,
                 },
                 'district': {
                     'id': district.id,
                     'name': district.district_name,
+                    'name_bn': district.district_name_bn,
                 },
                 'upazila': {
                     'id': upazila.id,
                     'name': upazila.upazila_name,
+                    'name_bn': upazila.upazila_name_bn,
                 },
             }
         specialist_ids = data.pop('specialists', [])
@@ -469,7 +472,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         
         if request and hasattr(request, 'user'):
             user = request.user
-            print(user)
             if user.is_staff or user.role == "admin":
                 # Admin can only change the 'published' field
                 if 'published' in validated_data:
@@ -487,10 +489,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         return instance
     
     def to_representation(self, instance):
+        request = self.context.get("request")
         representation = super().to_representation(instance)
+        print(representation)
         if instance.user:
             representation['user'] = f"{instance.user.first_name} {instance.user.last_name}"
             representation['user_id'] = instance.user.id
+            representation['user_img'] = request.build_absolute_uri(instance.user.profile.profile_image.url) if instance.user.profile.profile_image else None
         else:
             representation['user'] = None
         representation['doctor'] = instance.doctor.name if instance.doctor else None

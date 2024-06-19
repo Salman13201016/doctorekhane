@@ -140,7 +140,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
         'location__district__division__id': ['in'],
         'published': ["exact"],
     }
-    search_fields = ['name',"address",'name_bn',"address_bn",'license_no','license_no_bn']
+    search_fields = ['name',"address",'name_bn',"address_bn",'license_no','license_no_bn','phone_number']
     ordering_fields = ['name','name_bn',"position"]
 
     def get_permissions(self):
@@ -307,7 +307,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
                 published = True
-            ).values_list('location__district__id', 'location__district__district_name').distinct()
+            ).values_list('location__district__id', 'location__district__district_name','location__district__district_name_bn').distinct()
         )
         filter_division = list(
             Doctor.objects.filter(
@@ -316,7 +316,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__district__id__in = district_data,
                 location__id__in = upazila_data,
                 published = True
-            ).values_list('location__district__division__id', 'location__district__division__division_name').distinct()
+            ).values_list('location__district__division__id', 'location__district__division__division_name','location__district__division__division_name_bn').distinct()
         )
         
         filter_upazila = list(
@@ -326,7 +326,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__district__id__in = district_data,
                 location__district__division__id__in = division_data,
                 published = True
-            ).values_list('location__id', 'location__upazila_name').distinct()
+            ).values_list('location__id', 'location__upazila_name','location__upazila_name_bn').distinct()
         )
         # Additional filters
         filter_keys = {
@@ -349,11 +349,12 @@ class DoctorFilterApi(viewsets.GenericViewSet):
         }
         # Iterate over division filters
         for division_item in filter_division:
-            division_id, division_name = division_item
+            division_id, division_name,division_name_bn = division_item
             # Initialize division data
             division_data = {
                 "id": division_id,
                 "division_name": division_name,
+                "division_name_bn": division_name_bn,
                 "count": len(Doctor.objects.filter(location__district__division__id=division_id,published = True).distinct())
             }
             # Initialize an empty list to hold district filters
@@ -361,13 +362,14 @@ class DoctorFilterApi(viewsets.GenericViewSet):
             
             # Iterate over district filters
             for district_item in filter_district:
-                district_id, district_name = district_item
+                district_id, district_name,district_name_bn = district_item
                 # Check if the district belongs to the current division
                 if Doctor.objects.filter(location__district__id=district_id, location__district__division__id=division_id,published = True).exists():
                     # Initialize district data
                     district_data = {
                         "id": district_id,
                         "district_name": district_name,
+                        "district_name_bn": district_name_bn,
                         "count": len(Doctor.objects.filter(location__district__id=district_id,published = True).distinct())
                     }
                     # Initialize an empty list to hold upazila filters
@@ -375,13 +377,14 @@ class DoctorFilterApi(viewsets.GenericViewSet):
 
                     # Iterate over upazila filters
                     for upazila_item in filter_upazila:
-                        upazila_id, upazila_name = upazila_item
+                        upazila_id, upazila_name,upazila_name_bn = upazila_item
                         # Check if the upazila belongs to the current district
                         if Doctor.objects.filter(location__id=upazila_id, location__district__id=district_id,published = True).exists():
                             # Initialize upazila data
                             upazila_data = {
                                 "id": upazila_id,
                                 "upazila_name": upazila_name,
+                                "upazila_name_bn": upazila_name_bn,
                                 "count": len(Doctor.objects.filter(location__id=upazila_id,published = True).distinct())
                             }
                             
@@ -427,8 +430,8 @@ class DoctorProfileListView(viewsets.GenericViewSet):
     
 class ReviewViewSet(viewsets.GenericViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated, IsModerator]
-    queryset =Review.objects.all()
+    permission_classes = [IsAuthenticated]
+    queryset = Review.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     filterset_fields = {
@@ -442,7 +445,7 @@ class ReviewViewSet(viewsets.GenericViewSet):
     search_fields = ['user__first_name']
 
     def get_permissions(self):
-        if self.action == "list" or self.action == "retrieve" or self.action == "partial_update":
+        if self.action in ["list", "retrieve", "partial_update"]:
             self.permission_classes = []
         return super().get_permissions()
 
@@ -463,44 +466,47 @@ class ReviewViewSet(viewsets.GenericViewSet):
             queryset = queryset.filter(hospital__isnull=False)
 
         return queryset.order_by("-id")
+
     def retrieve(self, request, pk=None):
         serializer = self.get_serializer(self.get_object())
-        return Response(serializer.data, status=status.HTTP_200_OK)    
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
-        serializer = self.get_serializer(queryset, context={"request": request})
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, many=True, context={"request": request})
             return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request):
-        serializer = self.get_serializer(data=request.data, many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        if isinstance(request.data, list):
+            serializer = self.get_serializer(data=request.data, many=True)
+        else:
+            serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     def partial_update(self, request, pk=None):
         instance = self.get_object()
         old_publish_status = instance.published
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            instance = serializer.save()
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
 
-            # Check if 'published' field has been updated
-            if instance.published != old_publish_status:
-                # Log action for change in published status
-                ActionLog.objects.create(
-                    user=request.user,
-                    action=f"{request.user.username} {'published' if instance.published else 'unpublished'} a '{instance.user}' review",
-                    timestamp=timezone.now()
-                )
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+        # Check if 'published' field has been updated
+        if instance.published != old_publish_status:
+            # Log action for change in published status
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} {'published' if instance.published else 'unpublished'} a '{instance.user}' review",
+                timestamp=timezone.now()
+            )
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
     def destroy(self, request, pk=None):
         self.get_object().delete()
-        return Response({'status':'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'status': 'Successfully deleted.'}, status=status.HTTP_204_NO_CONTENT)

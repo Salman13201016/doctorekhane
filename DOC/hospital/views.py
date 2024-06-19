@@ -182,7 +182,7 @@ class HospitalManagementView(viewsets.GenericViewSet):
 
     }
 
-    search_fields = ['name',"address",'name_bn',"address_bn",'hospital_no','hospital_no_bn']
+    search_fields = ['name',"address",'name_bn',"address_bn",'hospital_no','hospital_no_bn','phone_number']
     ordering_fields = ['name','name_bn',"position"]
 
     def get_permissions(self):
@@ -313,10 +313,10 @@ class AmbulanceManagementView(viewsets.GenericViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and user.role == "admin" or user.is_staff:
-            return Ambulance.objects.filter().order_by("position").distinct()
+            return Ambulance.objects.filter(profile=False).order_by("position").distinct()
         else:
             # Non-admin user, show only published blog posts
-            return Ambulance.objects.filter(published=True).order_by("position").distinct()
+            return Ambulance.objects.filter(published=True,profile=False).order_by("position").distinct()
     def get_serializer_class(self):
         if self.action == "retrieve" or self.action == "create" or self.action == "partial_update":
             return AmbulanceManagementSerializer
@@ -409,7 +409,7 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
                 published = True
-            ).values_list('location__district__id', 'location__district__district_name').distinct()
+            ).values_list('location__district__id', 'location__district__district_name','location__district__district_name_bn').distinct()
         )
         filter_division = list(
             Ambulance.objects.filter(
@@ -417,7 +417,7 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
                 location__district__id__in = district_data,
                 location__id__in = upazila_data,
                 published = True
-            ).values_list('location__district__division__id', 'location__district__division__division_name').distinct()
+            ).values_list('location__district__division__id', 'location__district__division__division_name','location__district__division__division_name_bn').distinct()
         )
 
         filter_upazila = list(
@@ -426,7 +426,7 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
                 location__district__id__in = district_data,
                 location__district__division__id__in = division_data,
                 published = True
-            ).values_list('location__id', 'location__upazila_name').distinct()
+            ).values_list('location__id', 'location__upazila_name','location__upazila_name_bn').distinct()
         )
 
         filter_ac = list(
@@ -463,11 +463,12 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
         }
         # Iterate over division filters
         for division_item in filter_division:
-            division_id, division_name = division_item
+            division_id, division_name,division_name_bn = division_item
             # Initialize division data
             division_data = {
                 "id": division_id,
                 "division_name": division_name,
+                "division_name_bn": division_name_bn,
                 "count": len(Ambulance.objects.filter(location__district__division__id=division_id,published = True).distinct())
             }
             # Initialize an empty list to hold district filters
@@ -475,13 +476,14 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
             
             # Iterate over district filters
             for district_item in filter_district:
-                district_id, district_name = district_item
+                district_id, district_name,district_name_bn = district_item
                 # Check if the district belongs to the current division
                 if Ambulance.objects.filter(location__district__id=district_id, location__district__division__id=division_id,published = True).exists():
                     # Initialize district data
                     district_data = {
                         "id": district_id,
                         "district_name": district_name,
+                        "district_name_bn": district_name_bn,
                         "count": len(Ambulance.objects.filter(location__district__id=district_id,published = True).distinct())
                     }
                     # Initialize an empty list to hold upazila filters
@@ -489,13 +491,14 @@ class AmbulanceFilterApi(viewsets.GenericViewSet):
 
                     # Iterate over upazila filters
                     for upazila_item in filter_upazila:
-                        upazila_id, upazila_name = upazila_item
+                        upazila_id, upazila_name,upazila_name_bn = upazila_item
                         # Check if the upazila belongs to the current district
                         if Ambulance.objects.filter(location__id=upazila_id, location__district__id=district_id,published = True).exists():
                             # Initialize upazila data
                             upazila_data = {
                                 "id": upazila_id,
                                 "upazila_name": upazila_name,
+                                "upazila_name_bn": upazila_name_bn,
                                 "count": len(Ambulance.objects.filter(location__id=upazila_id,published = True).distinct())
                             }
                             
@@ -564,7 +567,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__id__in = upazila_data,
                 category__in = category_data,
                 published = True
-            ).values_list('location__district__id', 'location__district__district_name').distinct()
+            ).values_list('location__district__id', 'location__district__district_name','location__district__district_name_bn').distinct()
         )
         filter_division = list(
             Hospital.objects.filter(
@@ -574,7 +577,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__id__in = upazila_data,
                 category__in = category_data,
                 published = True
-            ).values_list('location__district__division__id', 'location__district__division__division_name').distinct()
+            ).values_list('location__district__division__id', 'location__district__division__division_name','location__district__division__division_name_bn').distinct()
         )
         
         filter_upazila = list(
@@ -585,7 +588,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__district__division__id__in = division_data,
                 category__in = category_data,
                 published = True
-            ).values_list('location__id', 'location__upazila_name').distinct()
+            ).values_list('location__id', 'location__upazila_name','location__upazila_name_bn').distinct()
         )
         filter_category = list(
             Hospital.objects.filter(
@@ -625,11 +628,11 @@ class HospitalFilterApi(viewsets.GenericViewSet):
         }
         # Iterate over division filters
         for division_item in filter_division:
-            division_id, division_name = division_item
+            division_id, division_name,division_name_bn = division_item
             # Initialize division data
             division_data = {
                 "id": division_id,
-                "division_name": division_name,
+                "division_name_bn": division_name_bn,
                 "count": len(Hospital.objects.filter(location__district__division__id=division_id,published = True).distinct())
             }
             # Initialize an empty list to hold district filters
@@ -637,13 +640,14 @@ class HospitalFilterApi(viewsets.GenericViewSet):
             
             # Iterate over district filters
             for district_item in filter_district:
-                district_id, district_name = district_item
+                district_id, district_name,district_name_bn = district_item
                 # Check if the district belongs to the current division
                 if Hospital.objects.filter(location__district__id=district_id, location__district__division__id=division_id,published = True).exists():
                     # Initialize district data
                     district_data = {
                         "id": district_id,
                         "district_name": district_name,
+                        "district_name_bn": district_name_bn,
                         "count": len(Hospital.objects.filter(location__district__id=district_id,published = True).distinct())
                     }
                     # Initialize an empty list to hold upazila filters
@@ -651,13 +655,14 @@ class HospitalFilterApi(viewsets.GenericViewSet):
 
                     # Iterate over upazila filters
                     for upazila_item in filter_upazila:
-                        upazila_id, upazila_name = upazila_item
+                        upazila_id, upazila_name,upazila_name_bn = upazila_item
                         # Check if the upazila belongs to the current district
                         if Hospital.objects.filter(location__id=upazila_id, location__district__id=district_id,published = True).exists():
                             # Initialize upazila data
                             upazila_data = {
                                 "id": upazila_id,
                                 "upazila_name": upazila_name,
+                                "upazila_name_bn": upazila_name_bn,
                                 "count": len(Hospital.objects.filter(location__id=upazila_id,published = True).distinct())
                             }
                             
