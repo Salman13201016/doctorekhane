@@ -78,9 +78,9 @@ class DoctorAppointmentManagementView(viewsets.GenericViewSet):
 
     def list(self, request):
         if request.user.role == 'doctor':
-            queryset = DoctorAppointment.objects.filter(doctor__email=request.user.email)
+            queryset = DoctorAppointment.objects.filter(deleted = False,doctor__email=request.user.email)
         elif request.user.role == 'general':
-            queryset = DoctorAppointment.objects.filter(user=request.user)
+            queryset = DoctorAppointment.objects.filter(deleted = False,user=request.user)
         else:
             queryset = DoctorAppointment.objects.all()
         
@@ -201,9 +201,9 @@ class TestAppointmentManagementView(viewsets.GenericViewSet):
 
     def list(self, request):
         if request.user.role == 'hospital':
-            queryset = TestAppointment.objects.filter(hospital__user=request.user)
+            queryset = TestAppointment.objects.filter(deleted = False,hospital__user=request.user)
         elif request.user.role == 'general':
-            queryset = TestAppointment.objects.filter(user=request.user)
+            queryset = TestAppointment.objects.filter(deleted = False,user=request.user)
         else:
             queryset = TestAppointment.objects.all()
         

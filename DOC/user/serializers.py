@@ -370,20 +370,17 @@ class DonorListSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         request = self.context.get('request')
         data = super().to_representation(instance)
-        try:
-            address = instance.profile.address
-            location = instance.profile.location
-            upazila_name = location.upazila_name_bn if location else ""
-            district_name = location.district.district_name_bn if location and location.district else ""
-            division_name = location.district.division.division_name_bn if location and location.district and location.district.division else ""
-            
-            data['Profile Image'] = request.build_absolute_uri(instance.profile.profile_image.url) if instance.profile.profile_image else None
-            data['Blood Group'] = instance.profile.blood_group
-            data['Phone Number'] = instance.profile.phone_number
-            data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
-        except Exception as e:
-            print(data)
+        address = instance.profile.address
+        location = instance.profile.location
 
+
+        upazila_name = location.upazila_name_bn if location else ""
+        district_name = location.district.district_name_bn if location and location.district else ""
+        division_name = location.district.division.division_name_bn if location and location.district and location.district.division else ""
         
+        data['Profile Image'] = request.build_absolute_uri(instance.profile.profile_image.url) if instance.profile.profile_image else None
+        data['Blood Group'] = instance.profile.blood_group
+        data['Phone Number'] = instance.profile.phone_number
+        data["Address"] = ", ".join(filter(None, [address, upazila_name, district_name, division_name]))
         
         return data

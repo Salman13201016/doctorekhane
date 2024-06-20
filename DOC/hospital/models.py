@@ -35,7 +35,8 @@ class Test(models.Model):
     slug_bn = models.CharField(max_length=200,null=True,blank=True)
     position = models.IntegerField(null = True,blank= True)
     published = models.BooleanField(default = True)
-        
+    deleted = models.BooleanField(default=False)
+    
     def __str__(self): 
         return str(self.test_name)
     
@@ -55,6 +56,11 @@ class Test(models.Model):
                 self.slug_bn = '{}-{}'.format(base_slug, n)
                 m += 1
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.deleted = True
+        self.save()
+        return True
 
 class Hospital(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -79,14 +85,15 @@ class Hospital(models.Model):
     services = models.ManyToManyField("HospitalService", blank = True,)
     tests = models.ManyToManyField(Test,blank=True)
     role = models.CharField(max_length=50, null=False, default="hospital", choices=ROLES)
-    slug = models.SlugField(unique=True)
-    slug_bn = models.SlugField(unique=True,blank = True,null = True)
+    slug = models.CharField(max_length=200,null=True,blank=True)
+    slug_bn = models.CharField(max_length=200,null=True,blank=True)
     # Hospital Profile Fields
     hospital_image = ResizedImageField(upload_to='hospital/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
     website = models.URLField(null=True, blank=True)
     profile = models.BooleanField(default = False)
     position = models.IntegerField(null = True,blank= True)
     published = models.BooleanField(default = True)
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.name) or ""
@@ -109,13 +116,9 @@ class Hospital(models.Model):
         super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
-        if self.hospital_image:
-            # You have to prepare what you need before delete the model
-            storage, path = self.hospital_image.storage, self.hospital_image.path
-            # Delete the model before the file
-            super(Hospital, self).delete(*args, **kwargs)
-            # Delete the file after the model
-            storage.delete(path)
+        self.deleted = True
+        self.save()
+        return True
 
 class HospitalService(models.Model):
     service_name = models.CharField(max_length=500, null = True, blank = True)
@@ -140,6 +143,7 @@ class Ambulance(models.Model):
     position = models.IntegerField(null = True,blank= True)
     published = models.BooleanField(default = True)
     profile = models.BooleanField(default = False)
+    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -160,3 +164,8 @@ class Ambulance(models.Model):
                 self.slug_bn = '{}-{}'.format(base_slug, n)
                 m += 1
         super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        self.deleted = True
+        self.save()
+        return True

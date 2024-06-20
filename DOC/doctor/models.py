@@ -56,6 +56,8 @@ class Doctor(models.Model):
     profile = models.BooleanField(default = False)
     position = models.IntegerField(null = True,blank= True)
     published = models.BooleanField(default = True)
+    deleted = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
     
@@ -77,12 +79,9 @@ class Doctor(models.Model):
         super().save(*args, **kwargs)
     
     def delete(self, *args, **kwargs):
-        if self.profile_image:# You have to prepare what you need before delete the model
-            storage, path = self.profile_image.storage, self.profile_image.path
-            # Delete the model before the file
-            super(Doctor, self).delete(*args, **kwargs)
-            # Delete the file after the model
-            storage.delete(path)
+        self.deleted = True
+        self.save()
+        return True
         
 class Chamber(models.Model):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='chamber', null=True, blank=True)

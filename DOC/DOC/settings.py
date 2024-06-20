@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_cleanup.apps.CleanupConfig",
     # django rest api
     'rest_framework',
     'django_filters',
@@ -183,7 +184,12 @@ if 'MYSQL' in os.environ and os.environ['MYSQL']==1:
     DATABASES['default']['OPTIONS'] = {
         'sql_mode':'traditional'
     }
-
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 AUTH_USER_MODEL = 'user.User'
 
 

@@ -141,10 +141,10 @@ class DoctorManagementView(viewsets.GenericViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and user.role == "admin" or user.is_staff:
-            return Doctor.objects.filter(profile=False).order_by("position").distinct()
+            return Doctor.objects.filter(profile=False,deleted = False).order_by("position").distinct()
         else:
             # Non-admin user, show only published blog posts
-            return Doctor.objects.filter(published=True,profile=False).order_by("position").distinct()
+            return Doctor.objects.filter(published=True,profile=False,deleted = False).order_by("position").distinct()
         
     def retrieve(self, request, pk=None):
         serializer = self.get_serializer(self.get_object())
@@ -234,7 +234,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
             return Response({'message': 'Experience not found.'}, status=status.HTTP_404_NOT_FOUND)
             
 class DoctorFilterApi(viewsets.GenericViewSet):
-    queryset = Doctor.objects.filter(profile=False,published = True)
+    queryset = Doctor.objects.filter(profile=False,published = True,deleted = False)
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
 
@@ -251,18 +251,19 @@ class DoctorFilterApi(viewsets.GenericViewSet):
     ordering_fields = ['name','name_bn']
 
     def list(self, request):
-        specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('specialists__id', flat=True).distinct())
-        doctorservices_data = request.GET.get("specialists__specialist__id__in").split(",") if "specialists__specialist__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('specialists__specialist__id', flat=True).distinct())
-        upazila_data = request.GET.get("location__id__in").split(",") if "location__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('location__id', flat=True).distinct())
-        district_data = request.GET.get("location__district__id__in").split(",") if "location__district__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('location__district__id', flat=True).distinct())
-        division_data = request.GET.get("location__district__division__id__in").split(",") if "location__district__division__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('location__district__division__id', flat=True).distinct())
+        specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.filter(deleted = False,profile=False,published = True).values_list('specialists__id', flat=True).distinct())
+        doctorservices_data = request.GET.get("specialists__specialist__id__in").split(",") if "specialists__specialist__id__in" in request.GET else list(Doctor.objects.filter(deleted = False,profile=False,published = True).values_list('specialists__specialist__id', flat=True).distinct())
+        upazila_data = request.GET.get("location__id__in").split(",") if "location__id__in" in request.GET else list(Doctor.objects.filter(deleted = False,profile=False,published = True).values_list('location__id', flat=True).distinct())
+        district_data = request.GET.get("location__district__id__in").split(",") if "location__district__id__in" in request.GET else list(Doctor.objects.filter(deleted = False,profile=False,published = True).values_list('location__district__id', flat=True).distinct())
+        division_data = request.GET.get("location__district__division__id__in").split(",") if "location__district__division__id__in" in request.GET else list(Doctor.objects.filter(deleted = False,profile=False,published = True).values_list('location__district__division__id', flat=True).distinct())
         filter_specialists = list(
             Doctor.objects.filter(
                 specialists__specialist__id__in = doctorservices_data,
                 location__district__id__in = district_data,
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
-                published = True
+                published = True,
+                deleted = False,
             ).values_list('specialists__id', 'specialists__specialist_name','specialists__specialist_name_bn').distinct()
         )
         filter_doctorservices = list(
@@ -271,7 +272,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__district__id__in = district_data,
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
-                published = True
+                published = True,
+                deleted = False
             ).values_list('specialists__specialist__id', 'specialists__specialist__service_name','specialists__specialist__service_name_bn').distinct()
         )
         filter_district = list(
@@ -289,7 +291,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 specialists__specialist__id__in = doctorservices_data,
                 location__district__id__in = district_data,
                 location__id__in = upazila_data,
-                published = True
+                published = True,
+                deleted = False
             ).values_list('location__district__division__id', 'location__district__division__division_name','location__district__division__division_name_bn').distinct()
         )
         
@@ -299,7 +302,8 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 specialists__specialist__id__in = doctorservices_data,
                 location__district__id__in = district_data,
                 location__district__division__id__in = division_data,
-                published = True
+                published = True,
+                deleted = False
             ).values_list('location__id', 'location__upazila_name','location__upazila_name_bn').distinct()
         )
         # Additional filters
@@ -338,13 +342,13 @@ class DoctorFilterApi(viewsets.GenericViewSet):
             for district_item in filter_district:
                 district_id, district_name,district_name_bn = district_item
                 # Check if the district belongs to the current division
-                if Doctor.objects.filter(location__district__id=district_id, location__district__division__id=division_id,published = True).exists():
+                if Doctor.objects.filter(location__district__id=district_id, location__district__division__id=division_id,published = True,deleted = False).exists():
                     # Initialize district data
                     district_data = {
                         "id": district_id,
                         "district_name": district_name,
                         "district_name_bn": district_name_bn,
-                        "count": len(Doctor.objects.filter(location__district__id=district_id,published = True).distinct())
+                        "count": len(Doctor.objects.filter(location__district__id=district_id,published = True,deleted = False).distinct())
                     }
                     # Initialize an empty list to hold upazila filters
                     district_data["upazila_filter"] = []
@@ -353,13 +357,13 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                     for upazila_item in filter_upazila:
                         upazila_id, upazila_name,upazila_name_bn = upazila_item
                         # Check if the upazila belongs to the current district
-                        if Doctor.objects.filter(location__id=upazila_id, location__district__id=district_id,published = True).exists():
+                        if Doctor.objects.filter(location__id=upazila_id, location__district__id=district_id,published = True,deleted = False).exists():
                             # Initialize upazila data
                             upazila_data = {
                                 "id": upazila_id,
                                 "upazila_name": upazila_name,
                                 "upazila_name_bn": upazila_name_bn,
-                                "count": len(Doctor.objects.filter(location__id=upazila_id,published = True).distinct())
+                                "count": len(Doctor.objects.filter(location__id=upazila_id,published = True,deleted = False).distinct())
                             }
                             
                             district_data["upazila_filter"].append(upazila_data)
@@ -376,7 +380,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
 class DoctorProfileListView(viewsets.GenericViewSet):
     permission_classes = [IsDoctor,IsAuthenticated]
     serializer_class = DoctorManagementSerializer
-    queryset = Doctor.objects.filter(profile=True).distinct()
+    queryset = Doctor.objects.filter(profile=True,deleted = False).distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 

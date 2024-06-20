@@ -62,14 +62,6 @@ class Specialist(models.Model):
                 m += 1
         super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        if self.specialist_logo:
-            # You have to prepare what you need before delete the model
-            storage, path = self.specialist_logo.storage, self.specialist_logo.path
-            # Delete the model before the file
-            super(Specialist, self).delete(*args, **kwargs)
-            # Delete the file after the model
-            storage.delete(path)
 
 class Services(models.Model):
     service_name = models.CharField(max_length=100,blank=True,null=True)
@@ -98,14 +90,6 @@ class Services(models.Model):
                 m += 1
         super().save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        if self.service_logo:
-            # You have to prepare what you need before delete the model
-            storage, path = self.service_logo.storage, self.service_logo.path
-            # Delete the model before the file
-            super(Services, self).delete(*args, **kwargs)
-            # Delete the file after the model
-            storage.delete(path)
 
 class Team(models.Model):
     name = models.CharField(max_length=100,blank=True,null=True)
@@ -119,14 +103,6 @@ class Team(models.Model):
     def __str__(self):
         return self.name
     
-    def delete(self, *args, **kwargs):
-        if self.image:
-            # You have to prepare what you need before delete the model
-            storage, path = self.image.storage, self.image.path
-            # Delete the model before the file
-            super(Team, self).delete(*args, **kwargs)
-            # Delete the file after the model
-            storage.delete(path)
 
 class SiteSettings(models.Model):
     logo = ResizedImageField(upload_to='logo/', max_length=1500, null=True, blank=True, force_format='WEBP', quality=100)
@@ -196,6 +172,6 @@ class OthersContent(models.Model):
 class FAQ(models.Model):
     f_ques = models.CharField(max_length=200,blank=True,null=True)
     f_ques_bn = models.CharField(max_length=200,blank=True,null=True)
-    f_and = models.CharField(max_length=200,blank=True,null=True)
-    f_and_bn = models.CharField(max_length=200,blank=True,null=True)
+    f_ans = models.CharField(max_length=200,blank=True,null=True)
+    f_ans_bn = models.CharField(max_length=200,blank=True,null=True)
     position = models.IntegerField(null =True, blank = True)

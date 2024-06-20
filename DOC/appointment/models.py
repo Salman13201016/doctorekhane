@@ -34,10 +34,15 @@ class DoctorAppointment(models.Model):
     patientstatus = models.CharField(max_length=50, choices=(('new', 'New Patient'), ('old', 'Old Patient')))
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    deleted = models.BooleanField(default=False)
     def __str__(self):
         return str(self.user)
     class Meta:
         unique_together = ('user', 'doctor', "chamber", "date","time") 
+    def delete(self, *args, **kwargs):
+        self.deleted = True
+        self.save()
+        return True
 
 # Create your models here.
 class TestAppointment(models.Model):
@@ -52,10 +57,15 @@ class TestAppointment(models.Model):
     private = models.BooleanField(default=False)
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    deleted = models.BooleanField(default=False)
     def __str__(self):
         return str(self.user)
     class Meta:
         unique_together = ('user', 'test', "hospital", "date","time") 
+    def delete(self, *args, **kwargs):
+        self.deleted = True
+        self.save()
+        return True
 
 class AppointmentInfo(models.Model):
     invoice_id = models.CharField(max_length=100, null = True, blank = True)
@@ -72,3 +82,8 @@ class AppointmentInfo(models.Model):
     file_upload = models.FileField(upload_to='file/',null = True, blank = True)
     district = models.CharField(max_length=100,null = True, blank = True)
     amount = models.DecimalField(max_digits=10, decimal_places=2,null = True, blank = True)
+    deleted = models.BooleanField(default=False)
+    def delete(self, *args, **kwargs):
+        self.deleted = True
+        self.save()
+        return True
