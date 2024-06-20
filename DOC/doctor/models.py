@@ -41,7 +41,6 @@ class Doctor(models.Model):
     experience_year = models.CharField(max_length=100, null = True, blank = True)
     experience_year_bn = models.CharField(max_length=100, null = True, blank = True)
     specialists = models.ManyToManyField(Specialist, blank = True,)
-    services = models.ManyToManyField("DoctorService", blank = True,)
     license_no = models.CharField(max_length=100, null = True, blank = True)
     license_no_bn = models.CharField(max_length=100, null = True, blank = True)
     nid = models.CharField(max_length=100, null = True, blank = True)
@@ -116,6 +115,7 @@ class Experience(models.Model):
 class DoctorService(models.Model):
     service_name = models.CharField(max_length=500, null = True, blank = True)
     service_name_bn = models.CharField(max_length=500, null = True, blank = True)
+    specialist = models.ForeignKey(Specialist, on_delete=models.CASCADE,related_name='specialist',null=True,blank=True)
 
     def __str__(self):
         return self.service_name or ""

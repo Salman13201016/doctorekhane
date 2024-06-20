@@ -98,19 +98,11 @@ class DoctorServiceSerializer(serializers.ModelSerializer):
             'id' : {'read_only': False},
         }
 
-    # def validate(self, attrs):
-    #     if self.instance:
-    #         if DoctorService.objects.filter(service_name__iexact=attrs.get('service_name')).exclude(id=self.instance.id).exists():
-    #             raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
-    #     elif DoctorService.objects.filter(service_name__iexact=attrs.get('service_name')).exists():
-    #         raise serializers.ValidationError({"message": 'Doctor With Same Service already exists'})
-    #     return attrs
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
     chamber = ChamberSerializer(required = False, allow_null = True, many = True)
     experiences = ExperienceSerializer(required = False, allow_null = True, many = True)
-    services = DoctorServiceSerializer(required = False, allow_null = True, many = True)
     class Meta:
         model = Doctor
         fields = "__all__"
@@ -158,6 +150,14 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name ,"name_bn": specialist.specialist_name_bn})
+            # Fetch DoctorService instances related to this specialist
+            doctor_services = DoctorService.objects.filter(specialist=specialist)
+            data['services'] = []
+
+            for service in doctor_services:
+                doctor_service_serializer = DoctorServiceSerializer(service)
+                data['services'].append(doctor_service_serializer.data)
+
         data['specialist'] = specialists
         data['reviews'] = list(Review.objects.filter(doctor=instance.id).values("user__first_name","user__last_name","created_at","content","rating"))
         data['average_rating'] = Review.objects.filter(doctor=instance.id).aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
@@ -197,19 +197,13 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
         doctor_data = validated_data.pop('doctor', {})
         chambers_data = doctor_data.pop('chamber', None)
         experiences_data = doctor_data.pop('experiences', None)
-        services_data = doctor_data.pop('services', None)
-        if services_data is not None:
-            instance.services.clear()
         if 'specialists' in doctor_data:
             instance.doctor.specialists.set(doctor_data.pop('specialists'))
 
         # Update doctor fields
         for attr, value in doctor_data.items():
             setattr(instance.doctor, attr, value)
-        
-        # Set location ID to the Doctor instance's location field
-        # instance.doctor.location = doctor_data.get('location')
-
+    
         # Save doctor instance
         instance.doctor.save()
         # Update related chamber
@@ -241,21 +235,6 @@ class DoctorProfileManagementSerializer(serializers.ModelSerializer):
                 else:
                     # Create new experience
                     Experience.objects.create(doctor=instance.doctor, **experience_data)
-
-        # Update related services
-        if services_data:
-            for service_data in services_data:
-                service_id = service_data.get('id')
-                if service_id:
-                    service_instance = DoctorService.objects.filter(id=service_id).first()
-                    if service_instance:
-                        # Update service instance attributes
-                        for attr, value in service_data.items():
-                            setattr(service_instance, attr, value)
-                        service_instance.save()
-                else:
-                    service_instance, _ = DoctorService.objects.get_or_create(service_name=service_data.get("service_name"))
-                instance.services.add(service_instance)
 
         return instance
     
@@ -293,7 +272,6 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
     profile_image = Base64ImageField(required=False,allow_null=True)
     chamber = ChamberSerializer(required = False, allow_null = True, many = True)
     experiences = ExperienceSerializer(required = False, allow_null = True, many = True)
-    services = DoctorServiceSerializer(required = False, allow_null = True, many = True)
     class Meta:
         model = Doctor
         fields = "__all__"
@@ -336,7 +314,6 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         getchamberInfo = validated_data.pop('chamber', [])
         getexperience_detailsInfo = validated_data.pop('experiences', [])
-        getdoctor_serviceInfo = validated_data.pop('services', [])
         specialists_data = validated_data.pop('specialists', [])
 
         doctor = Doctor.objects.create(**validated_data)
@@ -348,18 +325,11 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
         for experience_data in getexperience_detailsInfo:
             Experience.objects.create(doctor=doctor, **experience_data)
 
-        for service_data in getdoctor_serviceInfo:
-            service_instance, _ = DoctorService.objects.get_or_create(service_name_bn=service_data.get("service_name_bn"),service_name=service_data.get("service_name"))
-            doctor.services.add(service_instance)
-
         return doctor
 
     def update(self, instance, validated_data):
         chambers_data = validated_data.pop('chamber', None)
         experiences_data = validated_data.pop('experiences', None)
-        services_data = validated_data.pop('services', None)
-        if services_data is not None:
-            instance.services.clear()
 
         if 'specialists' in validated_data:
             instance.specialists.set(validated_data.pop('specialists'))
@@ -399,25 +369,6 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
                     # Create new experience
                     Experience.objects.create(doctor=instance, **experience_data)
 
-        if services_data:
-            for service_data in services_data:
-                service_id = service_data.get('id')
-                if service_id:
-                    service_instance = DoctorService.objects.filter(id=service_id).first()
-                    if service_instance:
-                        # Update service instance attributes
-                        for attr, value in service_data.items():
-                            setattr(service_instance, attr, value)
-                        service_instance.save()
-                else:
-                    # Try to get the instance based on service_name
-                    service_instance, created = DoctorService.objects.get_or_create(
-                        service_name=service_data.get("service_name"),service_name_bn=service_data.get("service_name_bn")
-                    )
-
-                instance.services.add(service_instance)
-
-
         return instance
 
     
@@ -456,6 +407,14 @@ class DoctorManagementSerializer(serializers.ModelSerializer):
             specialist = Specialist.objects.filter(id=specialist_id).first()
             if specialist:
                 specialists.append({"id": specialist.id,"name": specialist.specialist_name,"name_bn": specialist.specialist_name_bn})
+            # Fetch DoctorService instances related to this specialist
+            doctor_services = DoctorService.objects.filter(specialist=specialist)
+            data['services'] = []
+
+            for service in doctor_services:
+                doctor_service_serializer = DoctorServiceSerializer(service)
+                data['services'].append(doctor_service_serializer.data)
+
         data['specialist'] = specialists
         data['reviews'] = list(Review.objects.filter(doctor=instance.id,published = True).values("user__first_name","user__last_name","created_at","content","rating"))
         data['average_rating'] = Review.objects.filter(doctor=instance.id).aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0

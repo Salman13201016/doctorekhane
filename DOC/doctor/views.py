@@ -112,16 +112,6 @@ class DoctorProfileView(viewsets.GenericViewSet):
         except Experience.DoesNotExist:
             return Response({'message': 'Experience not found.'}, status=status.HTTP_404_NOT_FOUND)
         
-    @action(detail=False, methods=['DELETE'], url_path='delete-own-service/(?P<id>[^/.]+)')
-    def delete_service(self, request, id=None, doctor_id = None):
-        try:
-            service = DoctorService.objects.get(id=id)
-            doctor = request.user
-            if service in doctor.services.all():
-                doctor.services.remove(service)
-            return Response({'message': 'Doctor Service deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-        except service.DoesNotExist:
-            return Response({'message': 'Doctor Service not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -134,7 +124,7 @@ class DoctorManagementView(viewsets.GenericViewSet):
 
     filterset_fields = {
         'specialists__id': ['in'],
-        'services__id': ['in'],
+        'specialists__specialist__id': ['in'],
         'location__id': ['in'],
         'location__district__id': ['in'],
         'location__district__division__id': ['in'],
@@ -242,22 +232,6 @@ class DoctorManagementView(viewsets.GenericViewSet):
             return Response({'message': 'Experience deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
         except Experience.DoesNotExist:
             return Response({'message': 'Experience not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-    @action(detail=False, methods=['DELETE'], url_path='delete-service/(?P<doctor_id>[^/.]+)/(?P<id>[^/.]+)')
-    def delete_service(self, request, id=None, doctor_id = None):
-        try:
-            service = DoctorService.objects.get(id=id)
-            doctor = Doctor.objects.get(id=doctor_id)
-            if service in doctor.services.all():
-                doctor.services.remove(service)
-            ActionLog.objects.create(
-                user=request.user,
-                action=f"{request.user.username} deleted {service.service_name} from {doctor.name} service",
-                timestamp=timezone.now()
-            )
-            return Response({'message': 'Doctor Service deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-        except service.DoesNotExist:
-            return Response({'message': 'Doctor Service not found.'}, status=status.HTTP_404_NOT_FOUND)
             
 class DoctorFilterApi(viewsets.GenericViewSet):
     queryset = Doctor.objects.filter(profile=False,published = True)
@@ -266,7 +240,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
 
     filterset_fields = {
         'specialists__id': ['in'],
-        'services__id': ['in'],
+        'specialists__specialist__id': ['in'],
         'location': ['in'],
         'location__district__id': ['in'],
         'location__district__division__id': ['in'],
@@ -278,13 +252,13 @@ class DoctorFilterApi(viewsets.GenericViewSet):
 
     def list(self, request):
         specialists_data = request.GET.get("specialists__id__in").split(",") if "specialists__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('specialists__id', flat=True).distinct())
-        doctorservices_data = request.GET.get("services__id__in").split(",") if "services__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('services__id', flat=True).distinct())
+        doctorservices_data = request.GET.get("specialists__specialist__id__in").split(",") if "specialists__specialist__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('specialists__specialist__id', flat=True).distinct())
         upazila_data = request.GET.get("location__id__in").split(",") if "location__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('location__id', flat=True).distinct())
         district_data = request.GET.get("location__district__id__in").split(",") if "location__district__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('location__district__id', flat=True).distinct())
         division_data = request.GET.get("location__district__division__id__in").split(",") if "location__district__division__id__in" in request.GET else list(Doctor.objects.filter(profile=False,published = True).values_list('location__district__division__id', flat=True).distinct())
         filter_specialists = list(
             Doctor.objects.filter(
-                services__id__in = doctorservices_data,
+                specialists__specialist__id__in = doctorservices_data,
                 location__district__id__in = district_data,
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
@@ -298,12 +272,12 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
                 published = True
-            ).values_list('services__id', 'services__service_name','services__service_name_bn').distinct()
+            ).values_list('specialists__specialist__id', 'specialists__specialist__service_name','specialists__specialist__service_name_bn').distinct()
         )
         filter_district = list(
             Doctor.objects.filter(
                 specialists__id__in = specialists_data,
-                services__id__in = doctorservices_data,
+                specialists__specialist__id__in = doctorservices_data,
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
                 published = True
@@ -312,7 +286,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
         filter_division = list(
             Doctor.objects.filter(
                 specialists__id__in = specialists_data,
-                services__id__in = doctorservices_data,
+                specialists__specialist__id__in = doctorservices_data,
                 location__district__id__in = district_data,
                 location__id__in = upazila_data,
                 published = True
@@ -322,7 +296,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
         filter_upazila = list(
             Doctor.objects.filter(
                 specialists__id__in = specialists_data,
-                services__id__in = doctorservices_data,
+                specialists__specialist__id__in = doctorservices_data,
                 location__district__id__in = district_data,
                 location__district__division__id__in = division_data,
                 published = True
@@ -343,7 +317,7 @@ class DoctorFilterApi(viewsets.GenericViewSet):
                     "id": item[0],
                     "services_name": item[1],
                     "services_name_bn": item[1],
-                    "count": len(Doctor.objects.filter(services__id=item[0],published = True).distinct())
+                    "count": len(Doctor.objects.filter(specialists__specialist__id=item[0],published = True).distinct())
                 } for item in filter_doctorservices
             ],
         }
@@ -408,7 +382,7 @@ class DoctorProfileListView(viewsets.GenericViewSet):
 
     filterset_fields = {
         'specialists__id': ['in'],
-        'services__id': ['in'],
+        'specialists__specialist__id': ['in'],
         'location': ['in'],
         'location__district__id': ['in'],
         'location__district__division__id': ['in'],
