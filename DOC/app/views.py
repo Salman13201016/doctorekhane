@@ -608,7 +608,9 @@ class FAQManagementView(viewsets.GenericViewSet):
     queryset = FAQ.objects.all().distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-
+    search_fields = ['f_ques',"f_ques_bn"]
+    ordering_fields = ["position"]
+    
     def get_permissions(self):
         if self.action == "list":
             self.permission_classes = []

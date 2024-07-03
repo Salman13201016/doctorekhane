@@ -241,6 +241,7 @@ class UserManagementSerializer(serializers.ModelSerializer):
                     'name': upazila.upazila_name,
                 },
             }
+        data["role"] = instance.role
 
         return data
 
@@ -359,6 +360,7 @@ class SuperUserManagementSerializer(serializers.ModelSerializer):
                     'name': upazila.upazila_name,
                 },
             }
+        data["role"] = instance.role
 
         return data
 

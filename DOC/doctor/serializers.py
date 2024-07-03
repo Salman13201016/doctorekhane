@@ -97,6 +97,11 @@ class DoctorServiceSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'id' : {'read_only': False},
         }
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['specialist_name'] = instance.specialist.specialist_name
+        data['specialist_name_bn'] = instance.specialist.specialist_name_bn
+        return data
 
 
 class DoctorProfileSerializer(serializers.ModelSerializer):

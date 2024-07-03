@@ -64,9 +64,14 @@ from django.utils import timezone
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DoctorServiceManagementView(viewsets.GenericViewSet):
-    permission_classes = [IsDoctor,IsModerator,IsSuperAdmin]
+    permission_classes = [IsDoctor,IsModerator]
     serializer_class = DoctorServiceSerializer
     queryset = DoctorService.objects.all()
+    
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve":
+            self.permission_classes = []
+        return super().get_permissions()
 
     def list(self, request):
         queryset = self.filter_queryset(self.get_queryset())
@@ -76,6 +81,42 @@ class DoctorServiceManagementView(viewsets.GenericViewSet):
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def retrieve(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data, context={"request":request})
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} created service {instance.service_name}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def partial_update(self, request, pk=None):
+        serializer = self.get_serializer(self.get_object() ,data=request.data, partial=True, context={"request":request})
+        if serializer.is_valid():
+            instance = serializer.save()
+            ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} update service {instance.service_name}",
+                timestamp=timezone.now()
+            )
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
+    def destroy(self, request, pk=None):
+        instance = self.get_object()
+        ActionLog.objects.create(
+                user=request.user,
+                action=f"{request.user.username} deleted service {instance.service_name}",
+                timestamp=timezone.now()
+            )
+        instance.delete()
+        return Response({'message':'Successfully deleted.'}, status=status.HTTP_200_OK)
 
 
 class DoctorProfileView(viewsets.GenericViewSet):

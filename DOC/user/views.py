@@ -48,7 +48,7 @@ class ProfileView(viewsets.GenericViewSet):
 class UserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsModerator]
     serializer_class = UserManagementSerializer
-    queryset = User.objects.filter(role="general").exclude(is_superuser=True).distinct()
+    queryset = User.objects.exclude(role="admin").exclude(is_superuser=True).distinct()
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
@@ -96,7 +96,7 @@ class UserManagementView(viewsets.GenericViewSet):
 class SuperUserManagementView(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
     serializer_class = SuperUserManagementSerializer
-    queryset = User.objects.filter(role="general").exclude(is_superuser=True)
+    queryset = User.objects.filter().exclude(is_superuser=True)
     pagination_class = LimitOffsetPagination
     filter_backends = [SearchFilter, DjangoFilterBackend,OrderingFilter]
 
