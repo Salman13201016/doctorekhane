@@ -115,6 +115,7 @@ class DoctorService(models.Model):
     service_name = models.CharField(max_length=500, null = True, blank = True)
     service_name_bn = models.CharField(max_length=500, null = True, blank = True)
     specialist = models.ForeignKey(Specialist, on_delete=models.CASCADE,related_name='specialist',null=True,blank=True)
+    position = models.IntegerField(null = True,blank= True)
 
     def __str__(self):
         return self.service_name or ""

@@ -552,7 +552,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__id__in = upazila_data,
                 category__in = category_data,
                 published = True,
-                deleted=False
+                deleted = False,profile = False
             ).values_list('specialists__id', 'specialists__specialist_name','specialists__specialist_name_bn').distinct()
         )
         filter_services = list(
@@ -563,7 +563,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__id__in = upazila_data,
                 category__in = category_data,
                 published = True,
-                deleted=False
+                deleted = False,profile = False
             ).values_list('services__id', 'services__service_name','services__service_name_bn').distinct()
         )
         filter_district = list(
@@ -574,7 +574,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__id__in = upazila_data,
                 category__in = category_data,
                 published = True,
-                deleted=False
+                deleted = False,profile = False
             ).values_list('location__district__id', 'location__district__district_name','location__district__district_name_bn').distinct()
         )
         filter_division = list(
@@ -585,7 +585,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__id__in = upazila_data,
                 category__in = category_data,
                 published = True,
-                deleted=False
+                deleted = False,profile = False
             ).values_list('location__district__division__id', 'location__district__division__division_name','location__district__division__division_name_bn').distinct()
         )
         
@@ -597,7 +597,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__district__division__id__in = division_data,
                 category__in = category_data,
                 published = True,
-                deleted=False
+                deleted = False,profile = False
             ).values_list('location__id', 'location__upazila_name','location__upazila_name_bn').distinct()
         )
         filter_category = list(
@@ -608,7 +608,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                 location__district__division__id__in = division_data,
                 location__id__in = upazila_data,
                 published = True,
-                deleted=False
+                deleted = False,profile = False
             ).values_list('category').distinct()
         )
 
@@ -619,7 +619,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                     "id": item[0],
                     "specialist_name": item[1],
                     "specialist_name_bn": item[2],
-                    "count": len(Hospital.objects.filter(deleted=False,specialists__id=item[0],published = True).distinct())
+                    "count": len(Hospital.objects.filter(deleted = False,profile = False,specialists__id=item[0],published = True).distinct())
                 } for item in filter_specialists
             ],
             "services_filter": [
@@ -627,13 +627,13 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                     "id": item[0],
                     "services_name": item[1],
                     "services_name_bn": item[2],
-                    "count": len(Hospital.objects.filter(deleted=False,services__id=item[0],published = True).distinct())
+                    "count": len(Hospital.objects.filter(deleted = False,profile = False,services__id=item[0],published = True).distinct())
                 } for item in filter_services
             ],
             "category_filters": [
                 {
                     "category": item[0],
-                    "count": len(Hospital.objects.filter(deleted=False,category=item[0],published = True).distinct())
+                    "count": len(Hospital.objects.filter(deleted = False,profile = False,category=item[0],published = True).distinct())
                 } for item in filter_category
             ],
         }
@@ -644,7 +644,7 @@ class HospitalFilterApi(viewsets.GenericViewSet):
             division_data = {
                 "id": division_id,
                 "division_name_bn": division_name_bn,
-                "count": len(Hospital.objects.filter(deleted = False,location__district__division__id=division_id,published = True).distinct())
+                "count": len(Hospital.objects.filter(deleted = False,profile = False,location__district__division__id=division_id,published = True).distinct())
             }
             # Initialize an empty list to hold district filters
             division_data["district_filter"] = []
@@ -653,13 +653,13 @@ class HospitalFilterApi(viewsets.GenericViewSet):
             for district_item in filter_district:
                 district_id, district_name,district_name_bn = district_item
                 # Check if the district belongs to the current division
-                if Hospital.objects.filter(deleted = False,location__district__id=district_id, location__district__division__id=division_id,published = True).exists():
+                if Hospital.objects.filter(deleted = False,profile = False,location__district__id=district_id, location__district__division__id=division_id,published = True).exists():
                     # Initialize district data
                     district_data = {
                         "id": district_id,
                         "district_name": district_name,
                         "district_name_bn": district_name_bn,
-                        "count": len(Hospital.objects.filter(deleted = False,location__district__id=district_id,published = True).distinct())
+                        "count": len(Hospital.objects.filter(deleted = False,profile = False,location__district__id=district_id,published = True).distinct())
                     }
                     # Initialize an empty list to hold upazila filters
                     district_data["upazila_filter"] = []
@@ -668,13 +668,13 @@ class HospitalFilterApi(viewsets.GenericViewSet):
                     for upazila_item in filter_upazila:
                         upazila_id, upazila_name,upazila_name_bn = upazila_item
                         # Check if the upazila belongs to the current district
-                        if Hospital.objects.filter(deleted = False,location__id=upazila_id, location__district__id=district_id,published = True).exists():
+                        if Hospital.objects.filter(deleted = False,profile = False,location__id=upazila_id, location__district__id=district_id,published = True).exists():
                             # Initialize upazila data
                             upazila_data = {
                                 "id": upazila_id,
                                 "upazila_name": upazila_name,
                                 "upazila_name_bn": upazila_name_bn,
-                                "count": len(Hospital.objects.filter(deleted = False,location__id=upazila_id,published = True).distinct())
+                                "count": len(Hospital.objects.filter(deleted = False,profile = False,location__id=upazila_id,published = True).distinct())
                             }
                             
 
